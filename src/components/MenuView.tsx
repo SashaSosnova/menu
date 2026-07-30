@@ -3,6 +3,7 @@ import { weeks } from '../data/weeks'
 import { getDish, formatMacros } from '../data/dishes'
 import { monthlyFreezer } from '../data/shopping'
 import { getWeekPlan } from '../data/weekPlans'
+import { plateGuide, people, familyMeal, dryPerFamilyMeal } from '../data/portions'
 import type { MealPart } from '../data/types'
 import { MacrosBadge } from './MacrosBadge'
 import { Checklist } from './Checklist'
@@ -55,7 +56,9 @@ export function MenuView() {
         <div className="view-heading-row">
           <div>
             <h2>Неделя {weekNumber}</h2>
-            <p className="muted">Меню, закупки и готовка.</p>
+            <p className="muted">
+              Белок + гарнир + овощи. На тарелку гарнир: 80 / 200 / 130 г (ты / муж / ребёнок).
+            </p>
           </div>
           <button type="button" className="print-btn" onClick={() => window.print()}>
             Печать
@@ -107,13 +110,34 @@ export function MenuView() {
             <summary>Закупка на месяц</summary>
             <div className="fold-body">
               <p className="muted">
-                Мясо и рыба в морозилку. Овощи — свежие каждую неделю (кроме брокколи). В заметке —
-                как нарезать и разложить.
+                В морозилку: мясо, рыба, брокколи, горошек, кукуруза. Остальные овощи — только
+                свежие. В заметке — как разложить по пакетам.
               </p>
               <Checklist storageKey="checklist-monthly-freezer" items={monthlyFreezer} />
             </div>
           </details>
         )}
+
+        <details className="fold">
+          <summary>Порции на тарелку</summary>
+          <div className="fold-body">
+            <p className="muted">
+              Цели ккал на обед/ужин: {people.map((p) => `${p.label} ~${p.mealKcal}`).join(' · ')}.
+              Семья за приём: белок ~{familyMeal.proteinG} г · гарнир ~{familyMeal.sideCookedG} г
+              готового (рис {dryPerFamilyMeal.rice} г / гречка {dryPerFamilyMeal.buckwheat} г сухих).
+            </p>
+            {plateGuide.map((block) => (
+              <div key={block.title} className="portion-block">
+                <h4>{block.title}</h4>
+                <ul className="ingredient-list">
+                  {block.lines.map((line) => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </details>
 
         <details className="fold" open>
           <summary>Что купить на неделю</summary>
