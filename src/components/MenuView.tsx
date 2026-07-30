@@ -4,6 +4,7 @@ import { getDish, formatMacros } from '../data/dishes'
 import { monthlyFreezer } from '../data/shopping'
 import { getWeekPlan } from '../data/weekPlans'
 import { plateGuide, people, familyMeal, dryPerFamilyMeal } from '../data/portions'
+import { vegetableSalads, saladPortionNote } from '../data/salads'
 import type { MealPart } from '../data/types'
 import { MacrosBadge } from './MacrosBadge'
 import { Checklist } from './Checklist'
@@ -57,7 +58,7 @@ export function MenuView() {
           <div>
             <h2>Неделя {weekNumber}</h2>
             <p className="muted">
-              Белок + гарнир + овощи. На тарелку гарнир: 80 / 200 / 130 г (ты / муж / ребёнок).
+              На неделе: говядина + курица + рыба. Вс — доедание остатков. Порции гарнира 80/200/130 г.
             </p>
           </div>
           <button type="button" className="print-btn" onClick={() => window.print()}>
@@ -90,17 +91,35 @@ export function MenuView() {
                 <div key={d.day} className="menu-compact-row">
                   <div className="menu-compact-day">{d.day}</div>
                   <div className="menu-compact-meals">
-                    <p>
-                      <span className="menu-compact-label">Обед</span>
-                      {formatMealLine(d.lunch)}
-                    </p>
-                    <p>
-                      <span className="menu-compact-label">Ужин</span>
-                      {formatMealLine(d.dinner)}
-                    </p>
+                    {d.note ? (
+                      <p className="menu-day-note">{d.note}</p>
+                    ) : (
+                      <>
+                        <p>
+                          <span className="menu-compact-label">Обед</span>
+                          {formatMealLine(d.lunch ?? [])}
+                        </p>
+                        <p>
+                          <span className="menu-compact-label">Ужин</span>
+                          {formatMealLine(d.dinner ?? [])}
+                        </p>
+                      </>
+                    )}
                   </div>
                 </div>
               ))}
+            </div>
+            <div className="salad-list">
+              <h4>Овощные салаты — любой к приёму</h4>
+              <p className="muted">{saladPortionNote}</p>
+              <ul className="ingredient-list">
+                {vegetableSalads.map((s) => (
+                  <li key={s.name}>
+                    {s.name}
+                    {s.note ? <span className="muted"> · {s.note}</span> : null}
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
         </details>
@@ -188,12 +207,21 @@ export function MenuView() {
             {week.days.map((d) => (
               <tr key={d.day}>
                 <th scope="row">{d.day}</th>
-                <td>{formatMealLine(d.lunch)}</td>
-                <td>{formatMealLine(d.dinner)}</td>
+                {d.note ? (
+                  <td colSpan={2}>{d.note}</td>
+                ) : (
+                  <>
+                    <td>{formatMealLine(d.lunch ?? [])}</td>
+                    <td>{formatMealLine(d.dinner ?? [])}</td>
+                  </>
+                )}
               </tr>
             ))}
           </tbody>
         </table>
+        <p className="print-salads">
+          Овощной салат: {vegetableSalads.map((s) => s.name).join('; ')}.
+        </p>
       </div>
     </section>
   )

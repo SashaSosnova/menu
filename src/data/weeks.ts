@@ -10,10 +10,23 @@ function part(dishId: string, name?: string): MealPart {
   }
 }
 
+/** Основное + гарнир; салат всегда общий «Овощной салат». */
+function meal(...dishIds: string[]): MealPart[] {
+  return [...dishIds.map((id) => part(id)), { name: 'Овощной салат' }]
+}
+
+function mealNamed(parts: { id: string; name?: string }[]): MealPart[] {
+  return [...parts.map((p) => part(p.id, p.name)), { name: 'Овощной салат' }]
+}
+
+const sundayLeftovers = {
+  day: 'ВС' as const,
+  note: 'Доедаем остатки — без нового меню. Что осталось с сб и недели.',
+}
+
 /**
- * Правило дня: один приём — готовка (или заготовка), второй — только разогрев + салат.
- * Ср: заготовка → обед; ужин — тефтели (разогрев).
- * Чт ужин — рыба день в день; пт обед — остатки рыбы; пт ужин — креветки.
+ * Пн–сб: обед ≠ ужин; к приёму — овощной салат (варианты списком ниже меню).
+ * На каждой неделе: говядина + курица + рыба.
  */
 export const weeks: WeekMenu[] = [
   {
@@ -21,56 +34,39 @@ export const weeks: WeekMenu[] = [
     days: [
       {
         day: 'ПН',
-        lunch: [part('bolognese'), part('pasta'), part('salad_cabbage')],
-        dinner: [part('chicken_tomato_cream'), part('buckwheat'), part('salad_pepper_tomato')],
+        lunch: meal('bolognese', 'pasta'),
+        dinner: meal('chicken_tomato_cream', 'buckwheat'),
       },
       {
         day: 'ВТ',
-        lunch: [part('chicken_tomato_cream'), part('rice'), part('salad_tomato_cucumber')],
-        dinner: [part('bolognese'), part('buckwheat'), part('salad_cabbage_cucumber')],
+        lunch: meal('chicken_tomato_cream', 'rice'),
+        dinner: meal('bolognese', 'buckwheat'),
       },
       {
         day: 'СР',
-        lunch: [part('chicken_legs'), part('stewed_cabbage'), part('rice')],
-        dinner: [
-          part('chicken_meatballs'),
-          part('buckwheat'),
-          part('salad_tomato_herbs'),
-        ],
+        lunch: meal('chicken_legs', 'stewed_cabbage', 'rice'),
+        dinner: meal('chicken_meatballs', 'buckwheat'),
       },
       {
         day: 'ЧТ',
-        lunch: [part('chicken_legs'), part('stewed_cabbage'), part('bulgur')],
-        dinner: [
-          part('trout'),
-          part('cream_sauce'),
-          part('boiled_potato'),
-          part('salad_cabbage'),
-        ],
+        lunch: meal('chicken_legs', 'stewed_cabbage', 'bulgur'),
+        dinner: meal('trout', 'cream_sauce', 'boiled_potato'),
       },
       {
         day: 'ПТ',
-        lunch: [
-          part('leftovers_fish', 'Остатки форели'),
-          part('rice'),
-          part('salad_tomato_cucumber'),
-        ],
-        dinner: [part('shrimp_pasta'), part('salad_tomato_cucumber')],
+        lunch: mealNamed([{ id: 'leftovers_fish', name: 'Остатки форели' }, { id: 'rice' }]),
+        dinner: meal('shrimp_pasta'),
       },
       {
         day: 'СБ',
-        lunch: [part('wings'), part('buckwheat'), part('salad_cabbage')],
-        dinner: [part('wings'), part('mash'), part('peas')],
+        lunch: meal('thighs_soy', 'buckwheat'),
+        dinner: mealNamed([
+          { id: 'leftovers_fish', name: 'Остатки пасты с креветками' },
+          { id: 'mash' },
+          { id: 'peas' },
+        ]),
       },
-      {
-        day: 'ВС',
-        lunch: [part('leftovers_wings'), part('rice'), part('salad_pepper_tomato')],
-        dinner: [
-          part('leftovers_fish', 'Остатки пасты с креветками'),
-          part('mash'),
-          part('salad_tomato_herbs'),
-        ],
-      },
+      sundayLeftovers,
     ],
   },
   {
@@ -78,56 +74,39 @@ export const weeks: WeekMenu[] = [
     days: [
       {
         day: 'ПН',
-        lunch: [part('goulash'), part('pasta'), part('salad_cabbage')],
-        dinner: [part('pineapple_chicken'), part('rice'), part('salad_cabbage')],
+        lunch: meal('goulash', 'pasta'),
+        dinner: meal('pineapple_chicken', 'rice'),
       },
       {
         day: 'ВТ',
-        lunch: [part('pineapple_chicken'), part('rice'), part('salad_tomato_cucumber')],
-        dinner: [part('goulash'), part('buckwheat'), part('salad_cabbage_cucumber')],
+        lunch: meal('pineapple_chicken', 'rice'),
+        dinner: meal('goulash', 'buckwheat'),
       },
       {
         day: 'СР',
-        lunch: [part('chicken_legs'), part('veggie_stew'), part('rice')],
-        dinner: [
-          part('chicken_meatballs'),
-          part('buckwheat'),
-          part('salad_tomato_yogurt'),
-        ],
+        lunch: meal('chicken_veg_stew', 'rice'),
+        dinner: meal('chicken_cutlets', 'buckwheat'),
       },
       {
         day: 'ЧТ',
-        lunch: [part('chicken_legs'), part('veggie_stew'), part('bulgur')],
-        dinner: [
-          part('pollock'),
-          part('tomato_cream_sauce'),
-          part('boiled_potato'),
-          part('salad_cabbage'),
-        ],
+        lunch: meal('chicken_veg_stew', 'bulgur'),
+        dinner: meal('pollock', 'tomato_cream_sauce', 'boiled_potato'),
       },
       {
         day: 'ПТ',
-        lunch: [
-          part('leftovers_fish', 'Остатки минтая'),
-          part('rice'),
-          part('salad_pepper_tomato'),
-        ],
-        dinner: [part('shrimp'), part('rice'), part('salad_tomato_cucumber')],
+        lunch: mealNamed([{ id: 'leftovers_fish', name: 'Остатки минтая' }, { id: 'rice' }]),
+        dinner: meal('shrimp', 'rice'),
       },
       {
         day: 'СБ',
-        lunch: [part('thighs_soy'), part('buckwheat'), part('salad_cabbage')],
-        dinner: [part('thighs_soy'), part('baked_potato'), part('peas')],
+        lunch: meal('wings', 'buckwheat'),
+        dinner: mealNamed([
+          { id: 'leftovers_fish', name: 'Остатки креветок' },
+          { id: 'baked_potato' },
+          { id: 'peas' },
+        ]),
       },
-      {
-        day: 'ВС',
-        lunch: [part('leftovers_thighs'), part('rice'), part('salad_cabbage')],
-        dinner: [
-          part('leftovers_fish', 'Остатки креветок'),
-          part('baked_potato'),
-          part('salad_tomato_herbs'),
-        ],
-      },
+      sundayLeftovers,
     ],
   },
   {
@@ -135,56 +114,39 @@ export const weeks: WeekMenu[] = [
     days: [
       {
         day: 'ПН',
-        lunch: [part('beef_tomato'), part('pasta'), part('salad_cabbage')],
-        dinner: [part('leftovers_thighs'), part('buckwheat'), part('salad_tomato_cucumber')],
+        lunch: meal('beef_stroganoff', 'pasta'),
+        dinner: meal('chicken_mushrooms', 'buckwheat'),
       },
       {
         day: 'ВТ',
-        lunch: [part('leftovers_thighs'), part('bulgur'), part('salad_pepper_tomato')],
-        dinner: [part('beef_tomato'), part('buckwheat'), part('salad_tomato_herbs')],
+        lunch: meal('chicken_mushrooms', 'bulgur'),
+        dinner: meal('beef_stroganoff', 'buckwheat'),
       },
       {
         day: 'СР',
-        lunch: [part('chicken_legs'), part('cauliflower'), part('rice')],
-        dinner: [
-          part('chicken_meatballs'),
-          part('buckwheat'),
-          part('salad_tomato_herbs'),
-        ],
+        lunch: meal('chicken_veg_stew', 'cauliflower', 'rice'),
+        dinner: meal('chicken_cutlets', 'buckwheat'),
       },
       {
         day: 'ЧТ',
-        lunch: [part('chicken_legs'), part('cauliflower'), part('bulgur')],
-        dinner: [
-          part('trout'),
-          part('cream_sauce'),
-          part('boiled_potato'),
-          part('salad_cabbage'),
-        ],
+        lunch: meal('chicken_veg_stew', 'cauliflower', 'bulgur'),
+        dinner: meal('trout', 'cream_sauce', 'boiled_potato'),
       },
       {
         day: 'ПТ',
-        lunch: [
-          part('leftovers_fish', 'Остатки форели'),
-          part('rice'),
-          part('salad_tomato_cucumber'),
-        ],
-        dinner: [part('shrimp_pasta'), part('salad_cabbage')],
+        lunch: mealNamed([{ id: 'leftovers_fish', name: 'Остатки форели' }, { id: 'rice' }]),
+        dinner: meal('shrimp_pasta'),
       },
       {
         day: 'СБ',
-        lunch: [part('wings'), part('buckwheat'), part('salad_pepper_tomato')],
-        dinner: [part('wings'), part('boiled_potato'), part('corn_peas')],
+        lunch: meal('chicken_baked_herbs', 'buckwheat'),
+        dinner: mealNamed([
+          { id: 'leftovers_fish', name: 'Остатки пасты с креветками' },
+          { id: 'boiled_potato' },
+          { id: 'corn_peas' },
+        ]),
       },
-      {
-        day: 'ВС',
-        lunch: [part('leftovers_wings'), part('rice'), part('salad_cabbage_cucumber')],
-        dinner: [
-          part('leftovers_fish', 'Остатки пасты с креветками'),
-          part('boiled_potato'),
-          part('salad_tomato_cucumber'),
-        ],
-      },
+      sundayLeftovers,
     ],
   },
   {
@@ -192,56 +154,39 @@ export const weeks: WeekMenu[] = [
     days: [
       {
         day: 'ПН',
-        lunch: [part('rice_meat'), part('salad_tomato_cucumber')],
-        dinner: [part('chicken_mushrooms'), part('buckwheat'), part('salad_cabbage')],
+        lunch: meal('rice_meat'),
+        dinner: meal('chicken_stroganoff', 'buckwheat'),
       },
       {
         day: 'ВТ',
-        lunch: [part('chicken_mushrooms'), part('bulgur'), part('salad_pepper_tomato')],
-        dinner: [part('rice_meat'), part('salad_tomato_cucumber')],
+        lunch: meal('chicken_stroganoff', 'bulgur'),
+        dinner: meal('rice_meat'),
       },
       {
         day: 'СР',
-        lunch: [part('chicken_legs'), part('stewed_zucchini'), part('pasta')],
-        dinner: [
-          part('chicken_meatballs'),
-          part('buckwheat'),
-          part('salad_tomato_herbs'),
-        ],
+        lunch: meal('chicken_zucchini', 'pasta'),
+        dinner: meal('chicken_meatballs', 'buckwheat'),
       },
       {
         day: 'ЧТ',
-        lunch: [part('chicken_legs'), part('stewed_zucchini'), part('bulgur')],
-        dinner: [
-          part('pollock'),
-          part('cream_dill_sauce'),
-          part('boiled_potato'),
-          part('salad_cabbage'),
-        ],
+        lunch: meal('chicken_zucchini', 'bulgur'),
+        dinner: meal('pollock', 'cream_dill_sauce', 'boiled_potato'),
       },
       {
         day: 'ПТ',
-        lunch: [
-          part('leftovers_fish', 'Остатки минтая'),
-          part('rice'),
-          part('salad_cabbage'),
-        ],
-        dinner: [part('pineapple_shrimp'), part('rice'), part('salad_pepper_tomato')],
+        lunch: mealNamed([{ id: 'leftovers_fish', name: 'Остатки минтая' }, { id: 'rice' }]),
+        dinner: meal('pineapple_shrimp', 'rice'),
       },
       {
         day: 'СБ',
-        lunch: [part('wings'), part('buckwheat'), part('salad_tomato_cucumber')],
-        dinner: [part('wings'), part('mash'), part('peas')],
+        lunch: meal('chicken_potato_roast'),
+        dinner: mealNamed([
+          { id: 'leftovers_fish', name: 'Остатки креветок с ананасом' },
+          { id: 'rice' },
+          { id: 'peas' },
+        ]),
       },
-      {
-        day: 'ВС',
-        lunch: [part('leftovers_wings'), part('rice'), part('salad_tomato_herbs')],
-        dinner: [
-          part('leftovers_fish', 'Остатки креветок'),
-          part('mash'),
-          part('salad_cabbage_cucumber'),
-        ],
-      },
+      sundayLeftovers,
     ],
   },
 ]

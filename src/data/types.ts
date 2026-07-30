@@ -30,8 +30,10 @@ export type WeekDay = 'ПН' | 'ВТ' | 'СР' | 'ЧТ' | 'ПТ' | 'СБ' | 'В�
 
 export type DayMenu = {
   day: WeekDay
-  lunch: MealPart[]
-  dinner: MealPart[]
+  /** Если задано — день без расписания блюд (например вс: доедание). */
+  note?: string
+  lunch?: MealPart[]
+  dinner?: MealPart[]
 }
 
 export type WeekMenu = {

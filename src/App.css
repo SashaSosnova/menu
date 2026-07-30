@@ -168,6 +168,33 @@
   color: #3d3a34;
 }
 
+.menu-day-note {
+  margin: 0;
+  color: #6b655b;
+  font-size: 0.95rem;
+}
+
+.salad-list {
+  margin: 1rem 0 0;
+  padding-top: 0.85rem;
+  border-top: 1px solid #ece6db;
+}
+
+.salad-list h4 {
+  margin: 0 0 0.35rem;
+  font-size: 0.95rem;
+  font-weight: 650;
+}
+
+.salad-list .muted {
+  margin: 0 0 0.45rem;
+}
+
+.print-salads {
+  margin: 0.75rem 0 0;
+  font-size: 0.85rem;
+}
+
 .menu-compact-label {
   display: inline-block;
   min-width: 2.8rem;
