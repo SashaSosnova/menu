@@ -1,19 +1,19 @@
 import { useState } from 'react'
-import { weeks } from '../data/weeks'
+import { weekNumbers } from '../data/weeks'
 import { getDish, formatMacros } from '../data/dishes'
 import { monthlyFreezer } from '../data/shopping'
 import { getWeekPlan } from '../data/weekPlans'
-import { plateGuide, people, familyMeal, dryPerFamilyMeal } from '../data/portions'
+import { monthAlgorithm } from '../data/cooking'
+import { plateGuide, people, familyMeal } from '../data/portions'
 import { vegetableSalads, saladPortionNote } from '../data/salads'
-import type { MealPart } from '../data/types'
+import {
+  completeBaseLabel,
+  weekCompleteBase,
+  type BatchItem,
+  type CookBatch,
+} from '../data/types'
 import { MacrosBadge } from './MacrosBadge'
 import { Checklist } from './Checklist'
-
-function formatMealLine(parts: MealPart[]): string {
-  return parts
-    .map((part) => (part.macros ? `${part.name} (${formatMacros(part.macros)})` : part.name))
-    .join(' + ')
-}
 
 function RecipeDetails({ dishId }: { dishId: string }) {
   const dish = getDish(dishId)
@@ -22,11 +22,19 @@ function RecipeDetails({ dishId }: { dishId: string }) {
   return (
     <details className="recipe-details">
       <summary>
-        <span>{dish.name}</span>
+        <span>
+          {dish.name}
+          {dish.kind === 'complete' ? (
+            <span className="kind-tag">цельное</span>
+          ) : null}
+        </span>
         {dish.macros && <MacrosBadge macros={dish.macros} />}
       </summary>
       <div className="recipe-details-body">
         <p className="muted">{dish.recipe.servings}</p>
+        {dish.kind === 'complete' ? (
+          <p className="pairings">Гарнир уже в блюде — второй крупой не дополнять.</p>
+        ) : null}
         <h4>Ингредиенты</h4>
         <ul className="ingredient-list">
           {dish.recipe.ingredients.map((item) => (
@@ -46,10 +54,83 @@ function RecipeDetails({ dishId }: { dishId: string }) {
   )
 }
 
+function BatchItemLine({ item }: { item: BatchItem }) {
+  const dish = getDish(item.dishId)
+  if (!dish) return null
+  const macros = dish.macros ? ` (${formatMacros(dish.macros)})` : ''
+  const isBigSalad = item.dishId === 'big_salad'
+
+  return (
+    <li>
+      <span className="batch-item-name">
+        {dish.name}
+        {dish.kind === 'complete' ? <span className="kind-tag">цельное</span> : null}
+        {isBigSalad ? <span className="kind-tag">вместо гарнира</span> : null}
+        {macros}
+      </span>
+      <span className="batch-item-meta">
+        {item.portions}
+        {isBigSalad ? ' · резать в еду' : ''}
+      </span>
+    </li>
+  )
+}
+
+function CookBatchCard({ batch }: { batch: CookBatch }) {
+  const dishIds = [...batch.mains, ...batch.sides].map((i) => i.dishId)
+
+  return (
+    <details className="cook-task" open>
+      <summary className="cook-task-summary">
+        <span className="cook-task-text">
+          <strong>{batch.when}</strong>
+          <span>
+            {batch.title}
+            <span className="batch-covers"> → {batch.covers}</span>
+          </span>
+        </span>
+        <span className="time-badge">{batch.time}</span>
+      </summary>
+      <div className="cook-task-body">
+        {batch.note && <p className="cook-note">{batch.note}</p>}
+        <div className="batch-lists">
+          <div>
+            <h4>Основное</h4>
+            <ul className="batch-list">
+              {batch.mains.map((item) => (
+                <BatchItemLine key={item.dishId} item={item} />
+              ))}
+            </ul>
+          </div>
+          {batch.sides.length > 0 && (
+            <div>
+              <h4>Гарниры</h4>
+              <ul className="batch-list">
+                {batch.sides.map((item) => (
+                  <BatchItemLine key={item.dishId} item={item} />
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+        <div className="cook-recipes">
+          {dishIds.map((id) => (
+            <RecipeDetails key={id} dishId={id} />
+          ))}
+        </div>
+      </div>
+    </details>
+  )
+}
+
 export function MenuView() {
   const [weekNumber, setWeekNumber] = useState(1)
-  const week = weeks.find((w) => w.week === weekNumber)!
   const plan = getWeekPlan(weekNumber)
+  const completeName = plan.completeDishId
+    ? getDish(plan.completeDishId)?.name
+    : null
+  const completeBase = weekCompleteBase[weekNumber]
+  const completeBaseText = completeBase ? completeBaseLabel[completeBase] : null
 
   return (
     <section className="view">
@@ -58,7 +139,10 @@ export function MenuView() {
           <div>
             <h2>Неделя {weekNumber}</h2>
             <p className="muted">
-              На неделе: говядина + курица + рыба. Вс — доедание остатков. Порции гарнира 80/200/130 г.
+              Готовка вс/пн · ср · пт → запас на ~2 дня. Гарниры вкусные (не голая крупа).
+              {completeName && completeBaseText
+                ? ` Цельное недели (${completeBaseText}): ${completeName}.`
+                : ''}
             </p>
           </div>
           <button type="button" className="print-btn" onClick={() => window.print()}>
@@ -68,59 +152,50 @@ export function MenuView() {
       </div>
 
       <div className="week-tabs no-print" role="tablist" aria-label="Недели">
-        {weeks.map((w) => (
+        {weekNumbers.map((w) => (
           <button
-            key={w.week}
+            key={w}
             type="button"
             role="tab"
-            aria-selected={w.week === weekNumber}
-            className={w.week === weekNumber ? 'week-tab is-active' : 'week-tab'}
-            onClick={() => setWeekNumber(w.week)}
+            aria-selected={w === weekNumber}
+            className={w === weekNumber ? 'week-tab is-active' : 'week-tab'}
+            onClick={() => setWeekNumber(w)}
           >
-            Нед. {w.week}
+            Нед. {w}
           </button>
         ))}
       </div>
 
       <div className="week-sections no-print">
         <details className="fold" open>
-          <summary>Меню</summary>
+          <summary>Готовки на неделю</summary>
           <div className="fold-body">
-            <div className="menu-compact">
-              {week.days.map((d) => (
-                <div key={d.day} className="menu-compact-row">
-                  <div className="menu-compact-day">{d.day}</div>
-                  <div className="menu-compact-meals">
-                    {d.note ? (
-                      <p className="menu-day-note">{d.note}</p>
-                    ) : (
-                      <>
-                        <p>
-                          <span className="menu-compact-label">Обед</span>
-                          {formatMealLine(d.lunch ?? [])}
-                        </p>
-                        <p>
-                          <span className="menu-compact-label">Ужин</span>
-                          {formatMealLine(d.dinner ?? [])}
-                        </p>
-                      </>
-                    )}
-                  </div>
-                </div>
+            <ul className="muted rules-list">
+              {monthAlgorithm.map((rule) => (
+                <li key={rule}>{rule}</li>
+              ))}
+            </ul>
+            <div className="cook-plan">
+              {plan.batches.map((b) => (
+                <CookBatchCard key={`${b.when}-${b.title}`} batch={b} />
               ))}
             </div>
-            <div className="salad-list">
-              <h4>Овощные салаты — любой к приёму</h4>
-              <p className="muted">{saladPortionNote}</p>
-              <ul className="ingredient-list">
-                {vegetableSalads.map((s) => (
-                  <li key={s.name}>
-                    {s.name}
-                    {s.note ? <span className="muted"> · {s.note}</span> : null}
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <p className="free-day-note">{plan.freeDayNote}</p>
+          </div>
+        </details>
+
+        <details className="fold" open>
+          <summary>К тарелке</summary>
+          <div className="fold-body">
+            <p className="muted">{saladPortionNote}</p>
+            <ul className="ingredient-list">
+              {vegetableSalads.map((s) => (
+                <li key={s.name}>
+                  {s.name}
+                  {s.note ? <span className="muted"> · {s.note}</span> : null}
+                </li>
+              ))}
+            </ul>
           </div>
         </details>
 
@@ -129,8 +204,8 @@ export function MenuView() {
             <summary>Закупка на месяц</summary>
             <div className="fold-body">
               <p className="muted">
-                В морозилку: мясо, рыба, брокколи, горошек, кукуруза. Остальные овощи — только
-                свежие. В заметке — как разложить по пакетам.
+                Каждый пункт — один пакет. Мясо сразу нарезать или замариновать и заморозить.
+                Рыбу — порциями, без маринада.
               </p>
               <Checklist storageKey="checklist-monthly-freezer" items={monthlyFreezer} />
             </div>
@@ -138,12 +213,13 @@ export function MenuView() {
         )}
 
         <details className="fold">
-          <summary>Порции на тарелку</summary>
+          <summary>Порции</summary>
           <div className="fold-body">
             <p className="muted">
-              Цели ккал на обед/ужин: {people.map((p) => `${p.label} ~${p.mealKcal}`).join(' · ')}.
-              Семья за приём: белок ~{familyMeal.proteinG} г · гарнир ~{familyMeal.sideCookedG} г
-              готового (рис {dryPerFamilyMeal.rice} г / гречка {dryPerFamilyMeal.buckwheat} г сухих).
+              6 порций ≈ 2 семейных приёма (ты / муж / ребёнок). Цели ккал на приём:{' '}
+              {people.map((p) => `${p.label} ~${p.mealKcal}`).join(' · ')}. Белок ~
+              {familyMeal.proteinG} г · гарнир ~{familyMeal.sideCookedG} г готового на семью за
+              приём.
             </p>
             {plateGuide.map((block) => (
               <div key={block.title} className="portion-block">
@@ -164,63 +240,36 @@ export function MenuView() {
             <Checklist storageKey={`checklist-week-${weekNumber}`} items={plan.shopping} />
           </div>
         </details>
-
-        <details className="fold" open>
-          <summary>Что готовим</summary>
-          <div className="fold-body">
-            <div className="cook-plan">
-              {plan.cooking.map((task) => (
-                <details key={`${task.when}-${task.title}`} className="cook-task">
-                  <summary className="cook-task-summary">
-                    <span className="cook-task-text">
-                      <strong>{task.when}</strong>
-                      <span>{task.title}</span>
-                    </span>
-                    <span className="time-badge">{task.time}</span>
-                  </summary>
-                  <div className="cook-task-body">
-                    {task.note && <p className="cook-note">{task.note}</p>}
-                    <div className="cook-recipes">
-                      {task.dishIds.map((id) => (
-                        <RecipeDetails key={id} dishId={id} />
-                      ))}
-                    </div>
-                  </div>
-                </details>
-              ))}
-            </div>
-          </div>
-        </details>
       </div>
 
       <div className="print-sheet print-only" aria-hidden="true">
         <h1>Меню · Неделя {weekNumber}</h1>
-        <table className="print-table">
-          <thead>
-            <tr>
-              <th>День</th>
-              <th>Обед</th>
-              <th>Ужин</th>
-            </tr>
-          </thead>
-          <tbody>
-            {week.days.map((d) => (
-              <tr key={d.day}>
-                <th scope="row">{d.day}</th>
-                {d.note ? (
-                  <td colSpan={2}>{d.note}</td>
-                ) : (
-                  <>
-                    <td>{formatMealLine(d.lunch ?? [])}</td>
-                    <td>{formatMealLine(d.dinner ?? [])}</td>
-                  </>
-                )}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        {plan.batches.map((b) => (
+          <div key={b.when} className="print-batch">
+            <h2>
+              {b.when} → {b.covers}
+            </h2>
+            <p>{b.title}</p>
+            <p>
+              Основное:{' '}
+              {b.mains
+                .map((m) => `${getDish(m.dishId)?.name ?? m.dishId} (${m.portions})`)
+                .join('; ')}
+            </p>
+            {b.sides.length > 0 && (
+              <p>
+                Гарниры:{' '}
+                {b.sides
+                  .map((m) => `${getDish(m.dishId)?.name ?? m.dishId} (${m.portions})`)
+                  .join('; ')}
+              </p>
+            )}
+            {b.note && <p className="print-batch-note">{b.note}</p>}
+          </div>
+        ))}
+        <p className="print-salads">{plan.freeDayNote}</p>
         <p className="print-salads">
-          Овощной салат: {vegetableSalads.map((s) => s.name).join('; ')}.
+          К тарелке: {vegetableSalads.map((s) => s.name).join('; ')}.
         </p>
       </div>
     </section>

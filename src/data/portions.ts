@@ -87,7 +87,12 @@ export const dryPerFamilyMeal = {
   buckwheat: 165,
   bulgur: 165,
   pasta: 185,
+  /** Киноа сухая на ~410 г готовой */
+  quinoa: 140,
 }
+
+/** Большой салат вместо гарнира — на 1 семейный приём */
+export const bigSaladPerMealG = 550
 
 /** Картофель сырой на 1 семейный приём готового пюре/отварного */
 export const potatoRawPerMealG = 450
@@ -109,28 +114,36 @@ export function potatoForMeals(meals: number): number {
 /** Краткая шпаргалка на тарелку */
 export const plateGuide = [
   {
-    title: 'Обычный приём (белок + крупа/картошка + салат)',
+    title: 'Сборка тарелки (компонент + гарнир)',
     lines: [
-      `Ты: белок ${people[0].proteinG} г · гарнир ${people[0].sideG} г · салат ${people[0].saladG} г`,
-      `Муж: белок ${people[1].proteinG} г · гарнир ${people[1].sideG} г · салат ${people[1].saladG} г`,
-      `Ребёнок: белок ${people[2].proteinG} г · гарнир ${people[2].sideG} г · салат ${people[2].saladG} г`,
-      `Кастрюля на 1 приём семьи: белок ~${familyMeal.proteinG} г · гарнир готовый ~${familyMeal.sideCookedG} г`,
+      `Ты: белок ${people[0].proteinG} г · гарнир ${people[0].sideG} г · к тарелке ~${people[0].saladG} г`,
+      `Муж: белок ${people[1].proteinG} г · гарнир ${people[1].sideG} г · к тарелке ~${people[1].saladG} г`,
+      `Ребёнок: белок ${people[2].proteinG} г · гарнир ${people[2].sideG} г · к тарелке ~${people[2].saladG} г`,
+      `Заготовка: 6 порций белка ≈ 2 семейных приёма (~${familyMeal.proteinG * 2} г готового белка на кастрюлю)`,
+      `Заготовка: 6 порций гарнира ≈ 2 семейных приёма (~${familyMeal.sideCookedG * 2} г готового)`,
     ],
   },
   {
-    title: 'Если есть тушёные овощи (капуста / рагу / кабачок)',
+    title: 'Белок + большой салат (без крупы/картошки)',
     lines: [
-      `Крупы меньше: ты ${people[0].sideWithStewedG} г · муж ${people[1].sideWithStewedG} г · ребёнок ${people[2].sideWithStewedG} г`,
-      `Тушёные: ты ${people[0].stewedVegG} г · муж ${people[1].stewedVegG} г · ребёнок ${people[2].stewedVegG} г`,
-      `Кастрюля: крупа ~${familyMeal.sideWithStewedCookedG} г + овощи ~${familyMeal.stewedVegG} г`,
+      `Салат вместо гарнира: ты ~180 г · муж ~220 г · ребёнок ~150 г (семья ~${bigSaladPerMealG} г за приём)`,
+      'Резать в момент еды — не готовить заранее пакетом.',
     ],
   },
   {
-    title: 'Сухое на 1 семейный приём (без тушёных)',
+    title: 'Цельное блюдо (плов, паста с креветками…)',
     lines: [
-      `Рис ${dryPerFamilyMeal.rice} г · гречка ${dryPerFamilyMeal.buckwheat} г · булгур ${dryPerFamilyMeal.bulgur} г · паста ${dryPerFamilyMeal.pasta} г`,
+      'Гарнир уже внутри — второй крупой/картошкой не дополнять.',
+      'На неделю — не больше одного такого блюда.',
+      `Порция на тарелку ориентир по ккал приёма: ты ~${people[0].mealKcal} · муж ~${people[1].mealKcal} · ребёнок ~${people[2].mealKcal}`,
+    ],
+  },
+  {
+    title: 'Сухое на 1 семейный приём гарнира',
+    lines: [
+      `Рис ${dryPerFamilyMeal.rice} г · гречка ${dryPerFamilyMeal.buckwheat} г · булгур ${dryPerFamilyMeal.bulgur} г · паста ${dryPerFamilyMeal.pasta} г · киноа ${dryPerFamilyMeal.quinoa} г`,
       `Картофель сырой на пюре/отварной ~${potatoRawPerMealG} г`,
-      `Горошек замороженный ~${familyMeal.peasG} г`,
+      `×2 = закладка на 6 порций гарнира`,
     ],
   },
 ]

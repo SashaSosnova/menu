@@ -117,6 +117,13 @@
   margin: 0.7rem 0 0;
 }
 
+.shop-subhead {
+  margin: 1rem 0 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #4a463f;
+}
+
 .portion-block {
   margin: 0.85rem 0 0;
 }
@@ -450,19 +457,46 @@
 
 .prep-list {
   display: grid;
+  gap: 0.65rem;
+  margin-top: 0.7rem;
+  padding: 0;
+  list-style: none;
+}
+
+.prep-item {
+  padding: 0.75rem 0.85rem;
+  border-radius: 0.65rem;
+  background: #f7f3eb;
+}
+
+.prep-head {
+  display: flex;
+  justify-content: space-between;
   gap: 0.75rem;
-  list-style: decimal;
-  padding-left: 1.2rem;
+  font-weight: 600;
 }
 
-.prep-list li {
-  display: grid;
-  gap: 0.2rem;
-  line-height: 1.4;
+.prep-amount {
+  color: #2f4a3a;
+  white-space: nowrap;
 }
 
-.prep-list span {
-  color: #4a463f;
+.prep-meta {
+  margin-top: 0.2rem;
+  font-size: 0.9rem;
+}
+
+.prep-how {
+  margin: 0.35rem 0 0;
+  line-height: 1.45;
+}
+
+.prep-marinade {
+  margin: 0.7rem 0 0;
+  padding: 0.65rem 0.75rem;
+  border-radius: 0.55rem;
+  background: #efe8db;
+  line-height: 1.45;
 }
 
 .cook-plan {
@@ -517,6 +551,113 @@
   color: #6b655b;
   font-size: 0.92rem;
   line-height: 1.4;
+}
+
+.rules-list {
+  margin: 0.5rem 0 1rem;
+  padding-left: 1.15rem;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.batch-covers {
+  font-weight: 500;
+  color: #6b655b;
+}
+
+.batch-lists {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.65rem;
+}
+
+@media (min-width: 640px) {
+  .batch-lists {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.batch-lists h4 {
+  margin: 0 0 0.3rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #2f4a3a;
+}
+
+.batch-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.batch-list li {
+  display: grid;
+  gap: 0.1rem;
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+
+.batch-item-name {
+  font-weight: 600;
+  color: #3d3a34;
+}
+
+.batch-item-meta {
+  font-size: 0.85rem;
+  color: #6b655b;
+}
+
+.kind-tag {
+  display: inline-block;
+  margin-left: 0.4rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 0.3rem;
+  background: #e8efe9;
+  color: #2f4a3a;
+  font-size: 0.7rem;
+  font-weight: 700;
+  vertical-align: middle;
+}
+
+.pairings {
+  margin: 0.5rem 0 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: #3d3a34;
+}
+
+.free-day-note {
+  margin: 1rem 0 0;
+  padding: 0.7rem 0.8rem;
+  border-radius: 0.65rem;
+  background: #eef3ef;
+  color: #2f4a3a;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.print-batch {
+  margin: 0.85rem 0 0;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid #ddd;
+}
+
+.print-batch h2 {
+  margin: 0 0 0.25rem;
+  font-size: 1rem;
+}
+
+.print-batch p {
+  margin: 0.2rem 0 0;
+  font-size: 0.9rem;
+}
+
+.print-batch-note {
+  color: #555;
 }
 
 .cook-recipes {

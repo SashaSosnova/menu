@@ -28,8 +28,8 @@ export function Checklist({ storageKey, items }: Props) {
 
   return (
     <ul className="checklist">
-      {items.map((item) => {
-        const key = `${item.product}|${item.amount}`
+      {items.map((item, index) => {
+        const key = `${index}|${item.product}|${item.amount}|${item.note ?? ''}`
         const isOn = Boolean(checked[key])
         return (
           <li key={key}>
