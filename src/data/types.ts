@@ -21,6 +21,7 @@ export type ProteinType = 'beef' | 'chicken' | 'fish' | 'shrimp' | 'veg'
 export type Dish = {
   id: string
   name: string
+  /** Подставляется из dishes-macros.json (planer), не хранится в dishes.ts */
   macros?: Macros
   recipe?: Recipe
   kind?: DishKind

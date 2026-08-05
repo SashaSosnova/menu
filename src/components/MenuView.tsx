@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { weekNumbers } from '../data/weeks'
-import { getDish, formatMacros } from '../data/dishes'
+import { getDish } from '../data/dishes'
+import { formatMacros } from '../lib/macros'
 import { monthlyFreezer } from '../data/shopping'
 import { getWeekPlan } from '../data/weekPlans'
 import { monthAlgorithm } from '../data/cooking'

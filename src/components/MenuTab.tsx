@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { weekNumbers } from '../data/weeks'
 import { getWeekMenu, type MenuDishRef, type MenuSlot } from '../data/menu'
-import { getDish, formatMacros } from '../data/dishes'
+import { getDish } from '../data/dishes'
+import { formatMacros } from '../lib/macros'
 import { getCookbookDish, getEffectiveRecipe, type CookbookStore } from '../data/cookbook'
 import {
   PORTION_OUTCOME_OPTIONS,

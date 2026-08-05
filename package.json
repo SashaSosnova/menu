@@ -5,9 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "export:dishes": "tsx scripts/export-dishes.ts",
+    "build": "tsx scripts/export-dishes.ts && tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "snapshot:macros": "tsx scripts/snapshot-macros.ts",
+    "strip:macros": "tsx scripts/strip-macros.ts"
   },
   "dependencies": {
     "firebase": "^12.17.1",
@@ -20,6 +23,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
     "oxlint": "^1.71.0",
+    "tsx": "^4.21.0",
     "typescript": "~6.0.2",
     "vite": "^8.1.1"
   }

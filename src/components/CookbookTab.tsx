@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { formatMacros, getDish } from '../data/dishes'
+import { getDish } from '../data/dishes'
+import { formatMacros } from '../lib/macros'
 import {
   createCustomDishId,
   getCookbookDishes,

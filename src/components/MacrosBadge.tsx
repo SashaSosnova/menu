@@ -1,5 +1,5 @@
 import type { Macros } from '../data/types'
-import { formatMacros } from '../data/dishes'
+import { formatMacros } from '../lib/macros'
 
 export function MacrosBadge({ macros }: { macros: Macros }) {
   return (

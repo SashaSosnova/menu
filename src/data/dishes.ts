@@ -1,15 +1,14 @@
 import type { Dish } from './types'
+import { getDishMacros } from './dishMacros'
 import { dishMeta } from './dishMeta'
 import { extraDishes } from './extraDishes'
 
-/** КБЖУ на 100 г: ккал / белки / жиры / углеводы */
+/** Рецепты и ингредиенты. КБЖУ — в public/dishes-macros.json (из planer). */
 export const dishes: Record<string, Dish> = {
   ...extraDishes,
   bolognese: {
     id: 'bolognese',
-    name: 'Болоньезе',
-    macros: { kcal: 120, protein: 12, fat: 6, carbs: 5 },
-    recipe: {
+    name: 'Болоньезе',    recipe: {
       servings: '4–6 порций · вс · ~1 ч',
       weeks: [1],
       ingredients: [
@@ -28,9 +27,7 @@ export const dishes: Record<string, Dish> = {
   },
   pineapple_chicken: {
     id: 'pineapple_chicken',
-    name: 'Курица с ананасом',
-    macros: { kcal: 125, protein: 14, fat: 4, carbs: 8 },
-    recipe: {
+    name: 'Курица с ананасом',    recipe: {
       servings: '4–6 порций · вс · ~35 мин · подавать с рисом',
       weeks: [2],
       ingredients: [
@@ -50,9 +47,7 @@ export const dishes: Record<string, Dish> = {
   },
   stewed_cabbage: {
     id: 'stewed_cabbage',
-    name: 'Тушёная капуста',
-    macros: { kcal: 55, protein: 2, fat: 3, carbs: 5 },
-    recipe: {
+    name: 'Тушёная капуста',    recipe: {
       servings: '2 обеда семьи · ~900 г готовой · ср · ~40 мин',
       weeks: [1],
       ingredients: [
@@ -70,9 +65,7 @@ export const dishes: Record<string, Dish> = {
   },
   chicken_legs: {
     id: 'chicken_legs',
-    name: 'Ножки в медово-чесночном маринаде',
-    macros: { kcal: 210, protein: 17, fat: 15, carbs: 0 },
-    recipe: {
+    name: 'Ножки в медово-чесночном маринаде',    recipe: {
       servings: '1 кг · нед. 1 пт · ~40 мин',
       weeks: [1],
       ingredients: [
@@ -86,9 +79,7 @@ export const dishes: Record<string, Dish> = {
   },
   chicken_meatballs: {
     id: 'chicken_meatballs',
-    name: 'Куриные тефтели в томатно-сметанном соусе',
-    macros: { kcal: 130, protein: 14, fat: 6, carbs: 5 },
-    recipe: {
+    name: 'Куриные тефтели в томатно-сметанном соусе',    recipe: {
       servings: '6 порций · пт нед. 4 · ~35 мин',
       weeks: [4],
       ingredients: [
@@ -106,9 +97,7 @@ export const dishes: Record<string, Dish> = {
   },
   trout: {
     id: 'trout',
-    name: 'Форель',
-    macros: { kcal: 180, protein: 18, fat: 10, carbs: 0 },
-    recipe: {
+    name: 'Форель',    recipe: {
       servings: '700 г · чт ужин + пт обед · ~15 мин',
       weeks: [1, 3],
       ingredients: [
@@ -123,9 +112,7 @@ export const dishes: Record<string, Dish> = {
   },
   cream_sauce: {
     id: 'cream_sauce',
-    name: 'Сливочно-укропный соус',
-    macros: { kcal: 80, protein: 2, fat: 7, carbs: 2 },
-    recipe: {
+    name: 'Сливочно-укропный соус',    recipe: {
       servings: 'к рыбе · день в день · ~5 мин',
       weeks: [1, 3],
       ingredients: ['Сливки 10% ~100 мл на порцию', 'Укроп', 'Чеснок 5 г', 'Соль'],
@@ -135,9 +122,7 @@ export const dishes: Record<string, Dish> = {
   },
   wings: {
     id: 'wings',
-    name: 'Крылья в соево-медовом маринаде',
-    macros: { kcal: 210, protein: 17, fat: 15, carbs: 0 },
-    recipe: {
+    name: 'Крылья в соево-медовом маринаде',    recipe: {
       servings: '1,5 кг · нед. 2 ср · ~40 мин',
       weeks: [2],
       ingredients: [
@@ -151,9 +136,7 @@ export const dishes: Record<string, Dish> = {
   },
   mash: {
     id: 'mash',
-    name: 'Картофельное пюре',
-    macros: { kcal: 90, protein: 2, fat: 3, carbs: 14 },
-    recipe: {
+    name: 'Картофельное пюре',    recipe: {
       servings: '6 порций · ~820 г готового · ~25 мин',
       weeks: [3],
       ingredients: [
@@ -169,9 +152,7 @@ export const dishes: Record<string, Dish> = {
   },
   baked_potato: {
     id: 'baked_potato',
-    name: 'Картофель запечённый',
-    macros: { kcal: 95, protein: 2, fat: 3, carbs: 16 },
-    recipe: {
+    name: 'Картофель запечённый',    recipe: {
       servings: 'на 2 ужина семьи · ~900 г сырого · сб · ~40 мин',
       weeks: [2],
       ingredients: [
@@ -187,9 +168,7 @@ export const dishes: Record<string, Dish> = {
   },
   boiled_potato: {
     id: 'boiled_potato',
-    name: 'Картофель отварной',
-    macros: { kcal: 80, protein: 2, fat: 2, carbs: 15 },
-    recipe: {
+    name: 'Картофель отварной',    recipe: {
       servings: '1 семейный приём · 450 г сырого · ~25 мин',
       weeks: [1, 2, 3, 4],
       ingredients: ['Картофель 450 г на один приём', 'Укроп', 'Сливочное масло 15 г', 'Соль'],
@@ -200,9 +179,7 @@ export const dishes: Record<string, Dish> = {
   },
   shrimp_cream: {
     id: 'shrimp_cream',
-    name: 'Креветки в сливочном соусе',
-    macros: { kcal: 120, protein: 14, fat: 6, carbs: 3 },
-    recipe: {
+    name: 'Креветки в сливочном соусе',    recipe: {
       servings: '6 порций · запасной вариант · всегда с крупой или пастой · ~20 мин',
       weeks: [],
       ingredients: [
@@ -220,9 +197,7 @@ export const dishes: Record<string, Dish> = {
   },
   shrimp_pasta: {
     id: 'shrimp_pasta',
-    name: 'Паста с креветками',
-    macros: { kcal: 145, protein: 12, fat: 5, carbs: 14 },
-    recipe: {
+    name: 'Паста с креветками',    recipe: {
       servings: '6 порций · цельное · ~25 мин',
       weeks: [1],
       ingredients: [
@@ -241,9 +216,7 @@ export const dishes: Record<string, Dish> = {
   },
   pineapple_shrimp: {
     id: 'pineapple_shrimp',
-    name: 'Креветки с ананасом',
-    macros: { kcal: 110, protein: 14, fat: 3, carbs: 7 },
-    recipe: {
+    name: 'Креветки с ананасом',    recipe: {
       servings: '6 порций · всегда с рисом/киноа · ~20 мин',
       weeks: [4],
       ingredients: [
@@ -262,9 +235,7 @@ export const dishes: Record<string, Dish> = {
   },
   goulash: {
     id: 'goulash',
-    name: 'Гуляш с паприкой',
-    macros: { kcal: 140, protein: 15, fat: 7, carbs: 5 },
-    recipe: {
+    name: 'Гуляш с паприкой',    recipe: {
       servings: '4–6 порций · вс · ~1,5 ч',
       weeks: [2],
       ingredients: [
@@ -283,9 +254,7 @@ export const dishes: Record<string, Dish> = {
   },
   chicken_tomato_cream: {
     id: 'chicken_tomato_cream',
-    name: 'Курица в томатно-сметанном соусе',
-    macros: { kcal: 110, protein: 15, fat: 5, carbs: 5 },
-    recipe: {
+    name: 'Курица в томатно-сметанном соусе',    recipe: {
       servings: '4–6 порций · пн · ~40 мин',
       weeks: [1],
       ingredients: [
@@ -304,9 +273,7 @@ export const dishes: Record<string, Dish> = {
   },
   veggie_stew: {
     id: 'veggie_stew',
-    name: 'Овощное рагу',
-    macros: { kcal: 45, protein: 1, fat: 2, carbs: 5 },
-    recipe: {
+    name: 'Овощное рагу',    recipe: {
       servings: '4–6 порций · ср · ~35 мин',
       weeks: [2],
       ingredients: [
@@ -325,9 +292,7 @@ export const dishes: Record<string, Dish> = {
   },
   pollock: {
     id: 'pollock',
-    name: 'Минтай',
-    macros: { kcal: 90, protein: 16, fat: 2, carbs: 0 },
-    recipe: {
+    name: 'Минтай',    recipe: {
       servings: '700 г · чт ужин + пт обед · ~15 мин',
       weeks: [2, 4],
       ingredients: [
@@ -342,9 +307,7 @@ export const dishes: Record<string, Dish> = {
   },
   tomato_cream_sauce: {
     id: 'tomato_cream_sauce',
-    name: 'Томатно-сливочный соус',
-    macros: { kcal: 70, protein: 2, fat: 5, carbs: 4 },
-    recipe: {
+    name: 'Томатно-сливочный соус',    recipe: {
       servings: 'к рыбе · день в день · ~10 мин',
       weeks: [2],
       ingredients: ['Томаты ~100 г на порцию', 'Сливки 10% 50 мл', 'Чеснок', 'Щепотка сахара', 'Соль'],
@@ -354,9 +317,7 @@ export const dishes: Record<string, Dish> = {
   },
   thighs_soy: {
     id: 'thighs_soy',
-    name: 'Бёдра в соевом маринаде',
-    macros: { kcal: 190, protein: 16, fat: 12, carbs: 3 },
-    recipe: {
+    name: 'Бёдра в соевом маринаде',    recipe: {
       servings: '10 шт · пт нед. 3 · ~40 мин',
       weeks: [3],
       ingredients: [
@@ -370,9 +331,7 @@ export const dishes: Record<string, Dish> = {
   },
   chicken_cutlets: {
     id: 'chicken_cutlets',
-    name: 'Куриные котлеты',
-    macros: { kcal: 140, protein: 15, fat: 7, carbs: 4 },
-    recipe: {
+    name: 'Куриные котлеты',    recipe: {
       servings: 'на ср ужин · нед. 2–3 · ~35 мин · вс',
       weeks: [2, 3],
       ingredients: [
@@ -389,9 +348,7 @@ export const dishes: Record<string, Dish> = {
   },
   chicken_veg_stew: {
     id: 'chicken_veg_stew',
-    name: 'Курица тушёная с овощами',
-    macros: { kcal: 95, protein: 12, fat: 4, carbs: 5 },
-    recipe: {
+    name: 'Курица тушёная с овощами',    recipe: {
       servings: '6 порций · цельное (овощи внутри) · ~40 мин',
       weeks: [3],
       ingredients: [
@@ -411,9 +368,7 @@ export const dishes: Record<string, Dish> = {
   },
   chicken_baked_herbs: {
     id: 'chicken_baked_herbs',
-    name: 'Филе запечённое с травами',
-    macros: { kcal: 130, protein: 22, fat: 4, carbs: 1 },
-    recipe: {
+    name: 'Филе запечённое с травами',    recipe: {
       servings: '700 г · сб–вс нед. 3 · ~35 мин',
       weeks: [3],
       ingredients: [
@@ -427,9 +382,7 @@ export const dishes: Record<string, Dish> = {
   },
   chicken_potato_roast: {
     id: 'chicken_potato_roast',
-    name: 'Жаркое: курица с картошкой',
-    macros: { kcal: 140, protein: 12, fat: 5, carbs: 12 },
-    recipe: {
+    name: 'Жаркое: курица с картошкой',    recipe: {
       servings: '6 порций · цельное (картошка внутри) · нед. 2 пт · ~50 мин',
       weeks: [2],
       ingredients: [
@@ -448,9 +401,7 @@ export const dishes: Record<string, Dish> = {
   },
   chicken_stroganoff: {
     id: 'chicken_stroganoff',
-    name: 'Куриный строганов',
-    macros: { kcal: 125, protein: 15, fat: 6, carbs: 4 },
-    recipe: {
+    name: 'Куриный строганов',    recipe: {
       servings: '4–6 порций · вс нед. 4 · ~35 мин',
       weeks: [4],
       ingredients: [
@@ -467,9 +418,7 @@ export const dishes: Record<string, Dish> = {
   },
   beef_stroganoff: {
     id: 'beef_stroganoff',
-    name: 'Бефстроганов',
-    macros: { kcal: 145, protein: 15, fat: 8, carbs: 4 },
-    recipe: {
+    name: 'Бефстроганов',    recipe: {
       servings: '4–6 порций · вс нед. 3 · ~50 мин',
       weeks: [3],
       ingredients: [
@@ -487,9 +436,7 @@ export const dishes: Record<string, Dish> = {
   },
   beef_tomato: {
     id: 'beef_tomato',
-    name: 'Говядина в томатном соусе',
-    macros: { kcal: 130, protein: 14, fat: 6, carbs: 5 },
-    recipe: {
+    name: 'Говядина в томатном соусе',    recipe: {
       servings: '6 порций · пт нед. 1 · ~1 ч',
       weeks: [1],
       ingredients: [
@@ -508,9 +455,7 @@ export const dishes: Record<string, Dish> = {
   },
   beef_stew: {
     id: 'beef_stew',
-    name: 'Тушёная говядина со сметаной',
-    macros: { kcal: 140, protein: 15, fat: 7, carbs: 4 },
-    recipe: {
+    name: 'Тушёная говядина со сметаной',    recipe: {
       servings: '6 порций · пт нед. 2 · ~1 ч',
       weeks: [2],
       ingredients: [
@@ -527,9 +472,7 @@ export const dishes: Record<string, Dish> = {
   },
   beef_paprikash: {
     id: 'beef_paprikash',
-    name: 'Говядина с паприкой и перцем',
-    macros: { kcal: 135, protein: 15, fat: 6, carbs: 5 },
-    recipe: {
+    name: 'Говядина с паприкой и перцем',    recipe: {
       servings: '6 порций · пт нед. 3 · ~1 ч',
       weeks: [3],
       ingredients: [
@@ -548,9 +491,7 @@ export const dishes: Record<string, Dish> = {
   },
   beef_pepper: {
     id: 'beef_pepper',
-    name: 'Говядина с перцем в соевом',
-    macros: { kcal: 130, protein: 15, fat: 5, carbs: 6 },
-    recipe: {
+    name: 'Говядина с перцем в соевом',    recipe: {
       servings: '6 порций · ср нед. 1 · ~50 мин',
       weeks: [1],
       ingredients: [
@@ -568,9 +509,7 @@ export const dishes: Record<string, Dish> = {
   },
   cauliflower: {
     id: 'cauliflower',
-    name: 'Цветная капуста тушёная',
-    macros: { kcal: 50, protein: 3, fat: 2, carbs: 6 },
-    recipe: {
+    name: 'Цветная капуста тушёная',    recipe: {
       servings: '1 кочан · ср · ~30 мин',
       weeks: [3],
       ingredients: [
@@ -587,9 +526,7 @@ export const dishes: Record<string, Dish> = {
   },
   rice_meat: {
     id: 'rice_meat',
-    name: 'Рис с мясом',
-    macros: { kcal: 160, protein: 12, fat: 6, carbs: 15 },
-    recipe: {
+    name: 'Рис с мясом',    recipe: {
       servings: 'готовое блюдо · вс · ~50 мин',
       weeks: [4],
       ingredients: [
@@ -608,9 +545,7 @@ export const dishes: Record<string, Dish> = {
   },
   chicken_mushrooms: {
     id: 'chicken_mushrooms',
-    name: 'Курица с грибами в сметане',
-    macros: { kcal: 120, protein: 15, fat: 6, carbs: 3 },
-    recipe: {
+    name: 'Курица с грибами в сметане',    recipe: {
       servings: '4–6 порций · вс нед. 3 · ~35 мин',
       weeks: [3],
       ingredients: [
@@ -627,9 +562,7 @@ export const dishes: Record<string, Dish> = {
   },
   chicken_zucchini: {
     id: 'chicken_zucchini',
-    name: 'Курица с кабачками в сметане',
-    macros: { kcal: 90, protein: 11, fat: 4, carbs: 5 },
-    recipe: {
+    name: 'Курица с кабачками в сметане',    recipe: {
       servings: '2 обеда · ср нед. 4 · ~35 мин',
       weeks: [4],
       ingredients: [
@@ -647,9 +580,7 @@ export const dishes: Record<string, Dish> = {
   },
   stewed_zucchini: {
     id: 'stewed_zucchini',
-    name: 'Тушёный кабачок',
-    macros: { kcal: 40, protein: 1, fat: 1, carbs: 6 },
-    recipe: {
+    name: 'Тушёный кабачок',    recipe: {
       servings: 'если без курицы · ~30 мин',
       ingredients: [
         'Кабачок 900 г',
@@ -695,9 +626,7 @@ export const dishes: Record<string, Dish> = {
   },
   cream_dill_sauce: {
     id: 'cream_dill_sauce',
-    name: 'Сливочно-укропный соус',
-    macros: { kcal: 80, protein: 2, fat: 7, carbs: 2 },
-    recipe: {
+    name: 'Сливочно-укропный соус',    recipe: {
       servings: 'к рыбе · день в день · ~5 мин',
       weeks: [4],
       ingredients: ['Сливки 10% ~100 мл на порцию', 'Укроп', 'Чеснок', 'Соль'],
@@ -707,9 +636,7 @@ export const dishes: Record<string, Dish> = {
   },
   salad_tomato_cucumber: {
     id: 'salad_tomato_cucumber',
-    name: 'Огурцы и помидоры со сметаной',
-    macros: { kcal: 45, protein: 2, fat: 3, carbs: 4 },
-    recipe: {
+    name: 'Огурцы и помидоры со сметаной',    recipe: {
       servings: '5 мин',
       ingredients: ['Огурец 150–250 г', 'Помидор 150–300 г', 'Сметана 1–2 ст.л.', 'Соль', 'Укроп по желанию'],
       steps: 'Нарезать, заправить сметаной, посолить. Классика к крупе и мясу.',
@@ -718,9 +645,7 @@ export const dishes: Record<string, Dish> = {
   },
   salad_tomato_herbs: {
     id: 'salad_tomato_herbs',
-    name: 'Помидоры с зеленью и сметаной',
-    macros: { kcal: 40, protein: 2, fat: 3, carbs: 4 },
-    recipe: {
+    name: 'Помидоры с зеленью и сметаной',    recipe: {
       servings: '5 мин · без чеснока — ок ребёнку',
       ingredients: ['Помидоры 300–450 г', 'Укроп или петрушка', 'Сметана 1–2 ст.л.', 'Соль минимум'],
       steps: 'Дольками, сметана, зелень. К рыбе и пасте. Чеснок не кладём в салат (можно каплю во взрослый соус на сковороде).',
@@ -729,9 +654,7 @@ export const dishes: Record<string, Dish> = {
   },
   salad_pickles: {
     id: 'salad_pickles',
-    name: 'Малосольные огурцы',
-    macros: { kcal: 15, protein: 1, fat: 0, carbs: 3 },
-    recipe: {
+    name: 'Малосольные огурцы',    recipe: {
       servings: 'редко · не вместо овощей',
       ingredients: ['Малосольные огурцы'],
       steps:
@@ -741,9 +664,7 @@ export const dishes: Record<string, Dish> = {
   },
   salad_cabbage: {
     id: 'salad_cabbage',
-    name: 'Капустный салат со сметаной',
-    macros: { kcal: 40, protein: 1, fat: 2, carbs: 5 },
-    recipe: {
+    name: 'Капустный салат со сметаной',    recipe: {
       servings: '5–10 мин · ~300 г на семью',
       ingredients: [
         'Капуста 250–300 г',
@@ -758,9 +679,7 @@ export const dishes: Record<string, Dish> = {
   },
   salad_cabbage_cucumber: {
     id: 'salad_cabbage_cucumber',
-    name: 'Капуста с огурцом и сметаной',
-    macros: { kcal: 35, protein: 1, fat: 2, carbs: 4 },
-    recipe: {
+    name: 'Капуста с огурцом и сметаной',    recipe: {
       servings: '5 мин · ~300 г на семью',
       ingredients: ['Капуста', 'Свежий огурец', 'Зелень по желанию', 'Сметана', 'Соль минимум'],
       steps: 'Нашинковать, огурец кружочками, сметана, зелень.',
@@ -769,9 +688,7 @@ export const dishes: Record<string, Dish> = {
   },
   salad_pepper_tomato: {
     id: 'salad_pepper_tomato',
-    name: 'Перец с помидорами',
-    macros: { kcal: 30, protein: 1, fat: 1, carbs: 5 },
-    recipe: {
+    name: 'Перец с помидорами',    recipe: {
       servings: '5 мин',
       ingredients: ['Перец сладкий 180 г', 'Помидор 150–300 г', 'Зелень', 'Масло или сметана', 'Соль'],
       steps: 'Соломкой/дольками, зелень, заправить. Без чеснока.',
@@ -780,9 +697,7 @@ export const dishes: Record<string, Dish> = {
   },
   salad_carrot_korean: {
     id: 'salad_carrot_korean',
-    name: 'Морковь по-корейски',
-    macros: { kcal: 70, protein: 1, fat: 5, carbs: 6 },
-    recipe: {
+    name: 'Морковь по-корейски',    recipe: {
       servings: 'покупная · иногда вместо салата',
       ingredients: ['Готовая морковь по-корейски (магазин)'],
       steps:
@@ -792,9 +707,7 @@ export const dishes: Record<string, Dish> = {
   },
   salad_tomato_yogurt: {
     id: 'salad_tomato_yogurt',
-    name: 'Помидоры и огурцы с йогуртом',
-    macros: { kcal: 35, protein: 2, fat: 1, carbs: 4 },
-    recipe: {
+    name: 'Помидоры и огурцы с йогуртом',    recipe: {
       servings: '5 мин',
       ingredients: ['Помидор', 'Огурец', 'Йогурт натуральный 2 ст.л.', 'Зелень', 'Соль минимум'],
       steps: 'Нарезать, заправить йогуртом. Легче сметаны, без чеснока.',
@@ -803,9 +716,7 @@ export const dishes: Record<string, Dish> = {
   },
   corn_peas: {
     id: 'corn_peas',
-    name: 'Горошек с кукурузой',
-    macros: { kcal: 75, protein: 4, fat: 1, carbs: 13 },
-    recipe: {
+    name: 'Горошек с кукурузой',    recipe: {
       servings: '1 ужин · 250 г смеси',
       ingredients: ['Горошек 150 г', 'Кукуруза 100 г', 'Соль', 'Масло по желанию'],
       steps: 'Прогреть 3–5 мин. На тарелку: 60 / 120 / 70 г.',
@@ -844,9 +755,7 @@ export const dishes: Record<string, Dish> = {
   },
   pasta: {
     id: 'pasta',
-    name: 'Макароны',
-    macros: { kcal: 140, protein: 5, fat: 1, carbs: 28 },
-    recipe: {
+    name: 'Макароны',    recipe: {
       servings: '1 семейный обед · 185 г сухих · ~12 мин',
       ingredients: ['Макароны 185 г сухих (~410 г готовых)', 'Соль'],
       steps:
@@ -856,9 +765,7 @@ export const dishes: Record<string, Dish> = {
   },
   buckwheat: {
     id: 'buckwheat',
-    name: 'Гречка',
-    macros: { kcal: 110, protein: 4, fat: 1, carbs: 21 },
-    recipe: {
+    name: 'Гречка',    recipe: {
       servings: 'считать приёмы × 165 г сухой',
       ingredients: ['Гречка 165 г сухой = 1 семейный приём (~410 г готовой)', 'Соль', 'Масло по желанию'],
       steps:
@@ -868,9 +775,7 @@ export const dishes: Record<string, Dish> = {
   },
   bulgur: {
     id: 'bulgur',
-    name: 'Булгур',
-    macros: { kcal: 120, protein: 4, fat: 1, carbs: 25 },
-    recipe: {
+    name: 'Булгур',    recipe: {
       servings: 'обычно 1 приём · 165 г сухой (с овощами 125 г)',
       ingredients: ['Булгур 165 г сухой на семейный приём', 'Соль'],
       steps: 'Варить по пачке. Порции готового: 80 / 200 / 130 г. К ножкам с овощами — 125 г сухой.',
@@ -879,9 +784,7 @@ export const dishes: Record<string, Dish> = {
   },
   rice: {
     id: 'rice',
-    name: 'Рис',
-    macros: { kcal: 130, protein: 3, fat: 0, carbs: 28 },
-    recipe: {
+    name: 'Рис',    recipe: {
       servings: 'считать приёмы × 145 г сухой',
       ingredients: ['Рис 145 г сухой = 1 семейный приём (~410 г готового)', 'Соль'],
       steps:
@@ -891,9 +794,7 @@ export const dishes: Record<string, Dish> = {
   },
   quinoa: {
     id: 'quinoa',
-    name: 'Киноа',
-    macros: { kcal: 120, protein: 4, fat: 2, carbs: 21 },
-    recipe: {
+    name: 'Киноа',    recipe: {
       servings: 'считать приёмы × 140 г сухой',
       ingredients: ['Киноа 140 г сухой = 1 семейный приём (~410 г готовой)', 'Соль'],
       steps:
@@ -903,9 +804,7 @@ export const dishes: Record<string, Dish> = {
   },
   buckwheat_veg: {
     id: 'buckwheat_veg',
-    name: 'Гречка с луком и морковью',
-    macros: { kcal: 115, protein: 4, fat: 3, carbs: 18 },
-    recipe: {
+    name: 'Гречка с луком и морковью',    recipe: {
       servings: '6 порций · лук+морковь+крупа в одной кастрюле',
       ingredients: [
         'Гречка 330 г сухой (2 семейных приёма)',
@@ -921,9 +820,7 @@ export const dishes: Record<string, Dish> = {
   },
   rice_veg: {
     id: 'rice_veg',
-    name: 'Рис с луком и морковью',
-    macros: { kcal: 125, protein: 3, fat: 3, carbs: 22 },
-    recipe: {
+    name: 'Рис с луком и морковью',    recipe: {
       servings: '6 порций · лук+морковь+крупа в одной кастрюле',
       ingredients: [
         'Рис 290 г сухой (2 семейных приёма)',
@@ -939,9 +836,7 @@ export const dishes: Record<string, Dish> = {
   },
   bulgur_veg: {
     id: 'bulgur_veg',
-    name: 'Булгур с луком и морковью',
-    macros: { kcal: 120, protein: 4, fat: 3, carbs: 20 },
-    recipe: {
+    name: 'Булгур с луком и морковью',    recipe: {
       servings: '6 порций · лук+морковь+крупа в одной кастрюле',
       ingredients: [
         'Булгур 330 г сухой (2 семейных приёма)',
@@ -957,9 +852,7 @@ export const dishes: Record<string, Dish> = {
   },
   quinoa_veg: {
     id: 'quinoa_veg',
-    name: 'Киноа с луком и морковью',
-    macros: { kcal: 115, protein: 4, fat: 3, carbs: 18 },
-    recipe: {
+    name: 'Киноа с луком и морковью',    recipe: {
       servings: '6 порций · лук+морковь+крупа в одной кастрюле',
       ingredients: [
         'Киноа 280 г сухой (2 семейных приёма)',
@@ -975,9 +868,7 @@ export const dishes: Record<string, Dish> = {
   },
   pasta_tomato: {
     id: 'pasta_tomato',
-    name: 'Макароны с томатной зажаркой',
-    macros: { kcal: 145, protein: 5, fat: 3, carbs: 26 },
-    recipe: {
+    name: 'Макароны с томатной зажаркой',    recipe: {
       servings: '6 порций · вкусный гарнир, не «голая» паста',
       ingredients: [
         'Макароны 370 г сухих (2 семейных приёма)',
@@ -994,9 +885,7 @@ export const dishes: Record<string, Dish> = {
   },
   pasta_cream: {
     id: 'pasta_cream',
-    name: 'Макароны в сливочно-чесночном соусе',
-    macros: { kcal: 165, protein: 6, fat: 6, carbs: 24 },
-    recipe: {
+    name: 'Макароны в сливочно-чесночном соусе',    recipe: {
       servings: '6 порций · вкусный гарнир',
       ingredients: [
         'Макароны 370 г сухих (2 семейных приёма)',
@@ -1012,9 +901,7 @@ export const dishes: Record<string, Dish> = {
   },
   pasta_cheese: {
     id: 'pasta_cheese',
-    name: 'Макароны с сыром и зеленью',
-    macros: { kcal: 170, protein: 8, fat: 6, carbs: 23 },
-    recipe: {
+    name: 'Макароны с сыром и зеленью',    recipe: {
       servings: '6 порций · вкусный гарнир',
       ingredients: [
         'Макароны 370 г сухих (2 семейных приёма)',
@@ -1031,9 +918,7 @@ export const dishes: Record<string, Dish> = {
   },
   pasta_mushroom: {
     id: 'pasta_mushroom',
-    name: 'Макароны с грибной поджаркой',
-    macros: { kcal: 150, protein: 6, fat: 4, carbs: 25 },
-    recipe: {
+    name: 'Макароны с грибной поджаркой',    recipe: {
       servings: '6 порций · вкусный гарнир',
       ingredients: [
         'Макароны 370 г сухих (2 семейных приёма)',
@@ -1050,9 +935,7 @@ export const dishes: Record<string, Dish> = {
   },
   broccoli_roast: {
     id: 'broccoli_roast',
-    name: 'Брокколи / цветная запечённая',
-    macros: { kcal: 55, protein: 4, fat: 3, carbs: 4 },
-    recipe: {
+    name: 'Брокколи / цветная запечённая',    recipe: {
       servings: '6 порций · особенно к рыбе',
       ingredients: [
         'Брокколи или цветная капуста 800–900 г',
@@ -1067,9 +950,7 @@ export const dishes: Record<string, Dish> = {
   },
   big_salad: {
     id: 'big_salad',
-    name: 'Большой овощной салат',
-    macros: { kcal: 45, protein: 2, fat: 2, carbs: 4 },
-    recipe: {
+    name: 'Большой овощной салат',    recipe: {
       servings: 'вместо гарнира · ~550 г на семью за приём · не варить заранее',
       ingredients: [
         'Огурцы, помидоры, перец, капуста — что есть',
@@ -1083,9 +964,7 @@ export const dishes: Record<string, Dish> = {
   },
   peas: {
     id: 'peas',
-    name: 'Горошек',
-    macros: { kcal: 70, protein: 5, fat: 0, carbs: 12 },
-    recipe: {
+    name: 'Горошек',    recipe: {
       servings: '1 ужин · 250 г замороженного',
       ingredients: ['Горошек замороженный 250 г', 'Соль', 'Кусочек масла по желанию'],
       steps:
@@ -1101,8 +980,12 @@ export function getDish(id: string): Dish | undefined {
   const dish = dishes[id]
   if (!dish) return undefined
   const meta = dishMeta[id]
-  if (!meta) return dish
-  return { ...dish, kind: meta.kind, protein: meta.protein, sides: meta.sides }
+  const macros = getDishMacros(id)
+  return {
+    ...dish,
+    ...(macros ? { macros } : {}),
+    ...(meta ? { kind: meta.kind, protein: meta.protein, sides: meta.sides } : {}),
+  }
 }
 
 export function sideNames(dishId: string): string {
@@ -1111,13 +994,4 @@ export function sideNames(dishId: string): string {
   return dish.sides
     .map((id) => getDish(id)?.name ?? id)
     .join(', ')
-}
-
-export function formatMacros(macros: {
-  kcal: number
-  protein: number
-  fat: number
-  carbs: number
-}): string {
-  return `${macros.kcal}/${macros.protein}/${macros.fat}/${macros.carbs}`
 }

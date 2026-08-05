@@ -4,9 +4,7 @@ import type { Dish } from './types'
 export const extraDishes: Record<string, Dish> = {
   broccoli_steam: {
     id: 'broccoli_steam',
-    name: 'Брокколи на пару',
-    macros: { kcal: 45, protein: 4, fat: 1, carbs: 5 },
-    recipe: {
+    name: 'Брокколи на пару',    recipe: {
       servings: '6 порций · ~800 г · ~15 мин',
       ingredients: ['Брокколи 800–900 г', 'Соль', 'Чуть масла или лимон при подаче'],
       steps:
@@ -16,9 +14,7 @@ export const extraDishes: Record<string, Dish> = {
   },
   stewed_potato: {
     id: 'stewed_potato',
-    name: 'Картофель тушёный с луком и морковью',
-    macros: { kcal: 95, protein: 2, fat: 3, carbs: 16 },
-    recipe: {
+    name: 'Картофель тушёный с луком и морковью',    recipe: {
       servings: '6 порций · ~25–30 мин',
       ingredients: [
         'Картофель 900 г',
@@ -35,9 +31,7 @@ export const extraDishes: Record<string, Dish> = {
   },
   cauliflower_fried: {
     id: 'cauliflower_fried',
-    name: 'Цветная капуста жареная',
-    macros: { kcal: 60, protein: 3, fat: 3, carbs: 5 },
-    recipe: {
+    name: 'Цветная капуста жареная',    recipe: {
       servings: '6 порций · ~25 мин',
       ingredients: [
         'Цветная капуста 1 кочан (~900 г)',
@@ -52,9 +46,7 @@ export const extraDishes: Record<string, Dish> = {
   },
   cauliflower_roast: {
     id: 'cauliflower_roast',
-    name: 'Цветная капуста запечённая',
-    macros: { kcal: 55, protein: 3, fat: 3, carbs: 5 },
-    recipe: {
+    name: 'Цветная капуста запечённая',    recipe: {
       servings: '6 порций · ~25 мин',
       ingredients: [
         'Цветная капуста 1 кочан',
@@ -67,9 +59,7 @@ export const extraDishes: Record<string, Dish> = {
   },
   pollock_tomato_cream: {
     id: 'pollock_tomato_cream',
-    name: 'Минтай в томатно-сливочном соусе',
-    macros: { kcal: 110, protein: 15, fat: 4, carbs: 3 },
-    recipe: {
+    name: 'Минтай в томатно-сливочном соусе',    recipe: {
       servings: '6 порций · ~25 мин',
       ingredients: [
         'Филе минтая 700 г порциями',
@@ -86,9 +76,7 @@ export const extraDishes: Record<string, Dish> = {
   },
   chicken_cubes_veg: {
     id: 'chicken_cubes_veg',
-    name: 'Филе кубиками с овощами',
-    macros: { kcal: 95, protein: 12, fat: 4, carbs: 6 },
-    recipe: {
+    name: 'Филе кубиками с овощами',    recipe: {
       servings: '6 порций · ~35 мин',
       ingredients: [
         'Филе курицы 600–700 г кубиками',
@@ -107,9 +95,7 @@ export const extraDishes: Record<string, Dish> = {
   },
   thighs_sour_cream: {
     id: 'thighs_sour_cream',
-    name: 'Бёдра запечённые со сметаной и чесноком',
-    macros: { kcal: 180, protein: 18, fat: 11, carbs: 2 },
-    recipe: {
+    name: 'Бёдра запечённые со сметаной и чесноком',    recipe: {
       servings: '1,3 кг · ~40 мин',
       ingredients: [
         'Бёдра без кожи и костей 1,3 кг (из морозилки, уже в маринаде)',
@@ -122,9 +108,7 @@ export const extraDishes: Record<string, Dish> = {
   },
   chicken_legs_paprika: {
     id: 'chicken_legs_paprika',
-    name: 'Ножки в паприке с чесноком',
-    macros: { kcal: 210, protein: 17, fat: 15, carbs: 0 },
-    recipe: {
+    name: 'Ножки в паприке с чесноком',    recipe: {
       servings: '1 кг · ~40 мин',
       ingredients: [
         'Ножки 1 кг (из морозилки, уже в маринаде)',
@@ -136,9 +120,7 @@ export const extraDishes: Record<string, Dish> = {
   },
   wings_paprika: {
     id: 'wings_paprika',
-    name: 'Крылья в паприке с чесноком',
-    macros: { kcal: 210, protein: 17, fat: 15, carbs: 0 },
-    recipe: {
+    name: 'Крылья в паприке с чесноком',    recipe: {
       servings: '1,5 кг · ~40 мин',
       ingredients: [
         'Крылья 1,5 кг (из морозилки, уже в маринаде)',
@@ -150,9 +132,7 @@ export const extraDishes: Record<string, Dish> = {
   },
   beef_veg_stew: {
     id: 'beef_veg_stew',
-    name: 'Тушёное мясо с овощами',
-    macros: { kcal: 130, protein: 13, fat: 6, carbs: 7 },
-    recipe: {
+    name: 'Тушёное мясо с овощами',    recipe: {
       servings: '6 порций · ~1 ч',
       ingredients: [
         'Говядина 600 г кубиками',
@@ -170,9 +150,7 @@ export const extraDishes: Record<string, Dish> = {
   },
   beef_potato_stew: {
     id: 'beef_potato_stew',
-    name: 'Картофель тушёный с мясом',
-    macros: { kcal: 145, protein: 12, fat: 6, carbs: 12 },
-    recipe: {
+    name: 'Картофель тушёный с мясом',    recipe: {
       servings: '6 порций · цельное · ~1 ч',
       ingredients: [
         'Говядина 500–600 г кубиками',
@@ -189,9 +167,7 @@ export const extraDishes: Record<string, Dish> = {
   },
   chicken_pasta_zucchini: {
     id: 'chicken_pasta_zucchini',
-    name: 'Паста с курицей и кабачком',
-    macros: { kcal: 140, protein: 12, fat: 5, carbs: 14 },
-    recipe: {
+    name: 'Паста с курицей и кабачком',    recipe: {
       servings: '6 порций · цельное · ~35 мин',
       ingredients: [
         'Филе 500–600 г кубиками',
