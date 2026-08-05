@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { weekRangeLabel } from '../data/calendar'
 import { weekNumbers } from '../data/weeks'
 import {
   monthlyFrozenVeg,
@@ -58,7 +59,7 @@ export function ShoppingTab() {
                   className={w === weekNumber ? 'week-tab is-active' : 'week-tab'}
                   onClick={() => setWeekNumber(w)}
                 >
-                  Нед. {w}
+                  {weekRangeLabel(w)}
                 </button>
               ))}
             </div>

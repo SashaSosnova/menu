@@ -49,6 +49,58 @@
   color: #fffdf8;
 }
 
+.sync-btn {
+  margin-left: auto;
+  border: 1px solid #cfc6b6;
+  background: #fffdf8;
+  color: #4a463f;
+  border-radius: 999px;
+  padding: 0.35rem 0.65rem;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+.cloud-error {
+  margin: 0;
+  padding: 0.55rem 1rem;
+  background: #f5e8e8;
+  color: #8b3a3a;
+  font-size: 0.88rem;
+  text-align: center;
+}
+
+.app-loading {
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.account-modal .modal-body {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.account-mode {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem;
+}
+
+.form-error {
+  margin: 0;
+  color: #8b3a3a;
+  font-size: 0.88rem;
+}
+
+.form-ok {
+  margin: 0;
+  color: #2f4a3a;
+  font-size: 0.88rem;
+}
+
 .main {
   flex: 1;
   padding: 1.25rem 1rem 2.5rem;
@@ -309,13 +361,21 @@
   margin-bottom: 0;
 }
 
+.menu-week-tabs {
+  margin-top: 0;
+}
+
 .week-tab {
   border: 1px solid #d8d0c3;
   background: #fff;
   color: #3d3a34;
-  padding: 0.45rem 0.8rem;
+  padding: 0.45rem 0.65rem;
   border-radius: 999px;
   cursor: pointer;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.25;
 }
 
 .week-tab.is-active {
@@ -613,7 +673,9 @@
 
 .cook-task-text strong {
   color: #2f4a3a;
-  font-size: 0.88rem;
+  font-size: 0.92rem;
+  font-weight: 700;
+  line-height: 1.35;
 }
 
 .cook-task-text span {
@@ -688,6 +750,145 @@
 }
 
 .leftover-btn.is-active {
+  border-color: #2f4a3a;
+  background: #2f4a3a;
+  color: #fffdf8;
+}
+
+.menu-batch-lists {
+  margin-top: 0.65rem;
+}
+
+.menu-dish-group h4 {
+  margin: 0 0 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.menu-dish-group--main h4 {
+  color: #2f4a3a;
+}
+
+.menu-dish-group--side h4 {
+  color: #7a5c32;
+}
+
+.menu-slot-dishes {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.menu-dish-row {
+  list-style: none;
+}
+
+.menu-dish-card {
+  border-radius: 0.65rem;
+  overflow: hidden;
+  border: 1px solid #ddd6cb;
+}
+
+.menu-dish-row--main .menu-dish-card {
+  border-color: #b7cfc0;
+  box-shadow: inset 3px 0 0 #2f4a3a;
+}
+
+.menu-dish-row--side .menu-dish-card {
+  border-color: #d9cdb8;
+  box-shadow: inset 3px 0 0 #9a7b4f;
+}
+
+.menu-recipe-link {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0.45rem 0.55rem;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+
+.menu-recipe-link--main {
+  background: #edf5ef;
+}
+
+.menu-recipe-link--side {
+  background: #faf4ea;
+}
+
+.menu-recipe-link-name {
+  font-weight: 700;
+  font-size: 0.92rem;
+  line-height: 1.25;
+  color: #2c2924;
+  min-width: 0;
+}
+
+.menu-recipe-link-tail {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  flex-shrink: 0;
+}
+
+.menu-recipe-link-portions {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #6b655b;
+  white-space: nowrap;
+}
+
+.menu-recipe-link-arrow {
+  font-size: 1rem;
+  line-height: 1;
+  color: #6b655b;
+}
+
+.menu-recipe-link:active {
+  filter: brightness(0.98);
+}
+
+.outcome-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem;
+  padding: 0.3rem 0.55rem 0.4rem;
+  background: #fffdf8;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.menu-dish-row--main .outcome-chips {
+  background: #f5faf6;
+}
+
+.menu-dish-row--side .outcome-chips {
+  background: #fdf9f3;
+}
+
+.outcome-chip {
+  border: 1px solid #ddd6cb;
+  background: #fffdf8;
+  color: #6b655b;
+  border-radius: 999px;
+  padding: 0.12rem 0.42rem;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.35;
+  cursor: pointer;
+}
+
+.outcome-chip.is-active {
   border-color: #2f4a3a;
   background: #2f4a3a;
   color: #fffdf8;
@@ -1061,7 +1262,302 @@
   line-height: 1.55;
 }
 
+.cookbook-toolbar {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.85rem;
+}
+
+.sub-nav {
+  display: flex;
+  gap: 0.35rem;
+  margin-top: 0.85rem;
+}
+
+.sub-nav-item {
+  flex: 1;
+  border: 1px solid #ddd6cb;
+  background: #fffdf8;
+  color: #4a463f;
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.55rem;
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.92rem;
+  cursor: pointer;
+}
+
+.sub-nav-item.is-active {
+  border-color: #2f4a3a;
+  background: #2f4a3a;
+  color: #fffdf8;
+}
+
+.cookbook-list {
+  margin-top: 0.85rem;
+}
+
+.cookbook-list .recipe-list {
+  margin-top: 0;
+}
+
+.cookbook-list .recipe-row {
+  min-height: 3.25rem;
+}
+
+.cookbook-view {
+  padding-bottom: 4.5rem;
+}
+
+.fab {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  z-index: 15;
+  width: 3.35rem;
+  height: 3.35rem;
+  border: 0;
+  border-radius: 999px;
+  background: #2f4a3a;
+  color: #fffdf8;
+  font-size: 1.85rem;
+  font-weight: 400;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(47, 74, 58, 0.35);
+}
+
+.fab:active {
+  transform: scale(0.96);
+}
+
+.kind-picker {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem;
+}
+
+.kind-picker-btn {
+  border: 1px solid #ddd6cb;
+  background: #fffdf8;
+  color: #4a463f;
+  border-radius: 0.55rem;
+  padding: 0.5rem 0.65rem;
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.92rem;
+  cursor: pointer;
+}
+
+.kind-picker-btn.is-active {
+  border-color: #2f4a3a;
+  background: #2f4a3a;
+  color: #fffdf8;
+}
+
+.custom-tag {
+  margin-left: 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6b655b;
+  vertical-align: middle;
+}
+
+.primary-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.field {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.field-inline {
+  margin: 0;
+}
+
+.field-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #6b655b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.field-input,
+.field-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #ddd6cb;
+  border-radius: 0.45rem;
+  background: #fffdf8;
+  padding: 0.45rem 0.6rem;
+  font: inherit;
+  font-size: 0.92rem;
+  color: #2c2924;
+}
+
+.field-textarea {
+  resize: vertical;
+  min-height: 4rem;
+  line-height: 1.45;
+}
+
+.rating-block {
+  margin-bottom: 1rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid #ece6db;
+}
+
+.rating-label {
+  margin: 0 0 0.5rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #6b655b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.rating-picker {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.rating-btn {
+  display: grid;
+  grid-template-columns: 1.6rem 1fr;
+  gap: 0.55rem;
+  align-items: center;
+  border: 1px solid #ddd6cb;
+  background: #fffdf8;
+  border-radius: 0.55rem;
+  padding: 0.45rem 0.65rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.rating-btn.is-active {
+  border-color: #2f4a3a;
+  background: #e4efe8;
+}
+
+.rating-btn-num {
+  font-weight: 700;
+  text-align: center;
+}
+
+.rating-btn-text {
+  font-size: 0.9rem;
+  line-height: 1.3;
+}
+
+.rating-pill {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 999px;
+  max-width: 9rem;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.rating-pill-1 {
+  background: #f5e8e8;
+  color: #8b3a3a;
+}
+
+.rating-pill-2 {
+  background: #f5efe6;
+  color: #8b6b3a;
+}
+
+.rating-pill-3 {
+  background: #efe8db;
+  color: #6b655b;
+}
+
+.rating-pill-4 {
+  background: #e4efe8;
+  color: #2f4a3a;
+}
+
+.rating-pill-5 {
+  background: #dce8f0;
+  color: #2a4a6b;
+}
+
+.modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.primary-btn,
+.ghost-btn {
+  border: 0;
+  border-radius: 0.55rem;
+  padding: 0.55rem 0.85rem;
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.92rem;
+  cursor: pointer;
+}
+
+.primary-btn {
+  background: #2f4a3a;
+  color: #fffdf8;
+}
+
+.ghost-btn {
+  background: #efe8db;
+  color: #4a463f;
+}
+
+.ghost-btn.danger {
+  background: #f5e8e8;
+  color: #8b3a3a;
+}
+
+.link-btn {
+  margin-top: 0.45rem;
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 0.85rem;
+  color: #6b655b;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.edited-tag {
+  display: inline-block;
+  margin: 0.35rem 0 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #6b655b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.cookbook-modal .modal-body h3:first-child {
+  margin-top: 0;
+}
+
 @media (min-width: 720px) {
+  .cookbook-toolbar {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .rating-picker {
+    grid-template-columns: 1fr 1fr;
+  }
+
   .app-header,
   .main {
     padding-left: 1.5rem;

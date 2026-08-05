@@ -10,8 +10,24 @@
 
 ```bash
 npm install
+cp .env.example .env   # те же ключи Firebase, что в planer
 npm run dev
 ```
+
+## Облако
+
+Данные (книга рецептов, оценки, галочки закупок и заготовок, журнал остатков) синхронизируются через **Firebase Firestore** — тот же проект, что и planer (`menu` collection).
+
+1. Скопируйте `VITE_FIREBASE_*` из `.env` planer в `.env` menu (или из Firebase Console).
+2. Для GitHub Pages добавьте те же переменные в **Settings → Secrets → Actions** репозитория.
+3. В приложении нажмите **«облако»** / **«гость»** в шапке → создайте аккаунт или войдите тем же email, что в planer.
+4. В Firebase Console добавьте правила для коллекции `menu` (фрагмент в `firestore.rules` в этом репо — вставьте рядом с правилами `planer`).
+
+Без `.env` всё работает локально на устройстве (как раньше).
+
+## Стек
+
+Vite + React + TypeScript + Firebase (Auth + Firestore)
 
 ## Что на странице недели
 
@@ -22,7 +38,3 @@ npm run dev
 5. **Что готовим** — когда и рецепты раскрываются на месте  
 
 Овощи покупаются свежими каждую неделю; замораживать можно только брокколи.
-
-## Стек
-
-Vite + React + TypeScript

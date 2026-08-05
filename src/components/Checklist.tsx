@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
 import type { ShoppingItem } from '../data/types'
+import { useMenuSync } from '../hooks/useMenuSync'
 
 type Props = {
   storageKey: string
@@ -7,23 +7,12 @@ type Props = {
 }
 
 export function Checklist({ storageKey, items }: Props) {
-  const [checked, setChecked] = useState<Record<string, boolean>>({})
-
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(storageKey)
-      setChecked(raw ? (JSON.parse(raw) as Record<string, boolean>) : {})
-    } catch {
-      setChecked({})
-    }
-  }, [storageKey])
+  const { state, setChecklist } = useMenuSync()
+  const checked = state.checklists[storageKey] ?? {}
 
   function toggle(key: string) {
-    setChecked((prev) => {
-      const next = { ...prev, [key]: !prev[key] }
-      localStorage.setItem(storageKey, JSON.stringify(next))
-      return next
-    })
+    const next = { ...checked, [key]: !checked[key] }
+    setChecklist(storageKey, next)
   }
 
   return (

@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react'
 import { weekRangeLabel } from '../data/calendar'
+import { weekNumbers } from '../data/weeks'
 import {
   countPrepChecks,
   prepCheckIds,
   prepGroups,
   prepUse,
 } from '../data/prep'
+import { useMenuSync } from '../hooks/useMenuSync'
 
 const STORAGE_KEY = 'checklist-prep-freezer-v2'
 
@@ -40,24 +41,13 @@ function PackLine({
 }
 
 export function PrepTab() {
-  const [checked, setChecked] = useState<Record<string, boolean>>({})
+  const { state, setChecklist } = useMenuSync()
+  const checked = state.checklists[STORAGE_KEY] ?? {}
   const { total } = countPrepChecks()
 
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY)
-      setChecked(raw ? (JSON.parse(raw) as Record<string, boolean>) : {})
-    } catch {
-      setChecked({})
-    }
-  }, [])
-
   function toggle(id: string) {
-    setChecked((prev) => {
-      const next = { ...prev, [id]: !prev[id] }
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
-      return next
-    })
+    const next = { ...checked, [id]: !checked[id] }
+    setChecklist(STORAGE_KEY, next)
   }
 
   const done = prepGroups.reduce(
@@ -80,8 +70,7 @@ export function PrepTab() {
           даты), в морозилку. Галочка на каждый пакет.
         </p>
         <p className="muted">
-          Нед.1 · {weekRangeLabel(1)} · нед.2 · {weekRangeLabel(2)} · нед.3 ·{' '}
-          {weekRangeLabel(3)} · нед.4 · {weekRangeLabel(4)}
+          {weekNumbers.map((w) => weekRangeLabel(w)).join(' · ')}
         </p>
         <p className="prep-progress">
           В заморозку: {done} из {total}

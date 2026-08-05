@@ -1,27 +1,23 @@
 /**
- * Журнал остатков по слотам меню.
- * Копим факты → потом корректируем закладки.
+ * Итог по порциям после двух дней готовки.
  */
 
-export type LeftoverLevel = 'none' | '1' | '2' | '3plus'
+export type PortionOutcome = 'fast' | 'exact' | 'leftover'
 
 export type DishStat = {
-  leftover?: LeftoverLevel
-  note?: string
+  outcome?: PortionOutcome
 }
 
 export type SlotStat = {
-  note?: string
   dishes: Record<string, DishStat>
 }
 
 export type MealStatsStore = Record<string, SlotStat>
 
-export const LEFTOVER_OPTIONS: { id: LeftoverLevel; label: string }[] = [
-  { id: 'none', label: 'съели' },
-  { id: '1', label: '~1' },
-  { id: '2', label: '~2' },
-  { id: '3plus', label: '~3+' },
+export const PORTION_OUTCOME_OPTIONS: { id: PortionOutcome; label: string }[] = [
+  { id: 'fast', label: 'Не хватило' },
+  { id: 'exact', label: 'Ровно' },
+  { id: 'leftover', label: 'Осталось' },
 ]
 
 export const MEAL_STATS_KEY = 'meal-stats-v1'
@@ -30,41 +26,57 @@ export function slotStatKey(week: number, slotId: string): string {
   return `${week}|${slotId}`
 }
 
-/** Стартовые факты пн–вт нед.1 — только если ключа ещё нет в storage */
 export const seedStats: MealStatsStore = {
   [slotStatKey(1, 'mon-tue')]: {
-    note: 'Гречка сухое 180 г · паста разово 200 г (норма пока 185)',
     dishes: {
-      chicken_tomato_cream: { leftover: 'none' },
-      buckwheat_veg: { leftover: 'none', note: 'сухое 180 г' },
-      pasta: { leftover: 'none', note: 'сухое 200 г разово' },
-      bolognese: {
-        leftover: '2',
-        note: 'ты/муж ~150 г, ребёнок не ел',
-      },
+      chicken_tomato_cream: { outcome: 'exact' },
+      buckwheat_veg: { outcome: 'exact' },
+      pasta: { outcome: 'exact' },
+      bolognese: { outcome: 'leftover' },
     },
   },
 }
 
+type LegacyDishStat = {
+  outcome?: PortionOutcome
+  leftover?: 'none' | '1' | '2' | '3plus'
+  note?: string
+}
+
+type LegacySlotStat = {
+  note?: string
+  dishes: Record<string, LegacyDishStat>
+}
+
+export function migrateDishStat(stat: LegacyDishStat | undefined): DishStat {
+  if (!stat) return {}
+  if (stat.outcome) return { outcome: stat.outcome }
+  if (stat.leftover === 'none') return { outcome: 'exact' }
+  if (stat.leftover) return { outcome: 'leftover' }
+  return {}
+}
+
+export function migrateMealStats(raw: MealStatsStore | LegacySlotStat): MealStatsStore {
+  const out: MealStatsStore = {}
+  for (const [key, slot] of Object.entries(raw)) {
+    const dishes: Record<string, DishStat> = {}
+    for (const [dishId, stat] of Object.entries(slot?.dishes ?? {})) {
+      dishes[dishId] = migrateDishStat(stat as LegacyDishStat)
+    }
+    out[key] = { dishes }
+  }
+  return out
+}
+
+/** @deprecated Используйте useMenuSync */
 export function loadMealStats(): MealStatsStore {
   try {
     const raw = localStorage.getItem(MEAL_STATS_KEY)
-    if (!raw) {
-      localStorage.setItem(MEAL_STATS_KEY, JSON.stringify(seedStats))
-      return structuredClone(seedStats)
-    }
-    const parsed = JSON.parse(raw) as MealStatsStore
-    // Подмешать seed только для отсутствующих слотов
-    let changed = false
+    if (!raw) return structuredClone(seedStats)
+    const parsed = migrateMealStats(JSON.parse(raw) as MealStatsStore)
     const next = { ...parsed }
     for (const [key, value] of Object.entries(seedStats)) {
-      if (!next[key]) {
-        next[key] = structuredClone(value)
-        changed = true
-      }
-    }
-    if (changed) {
-      localStorage.setItem(MEAL_STATS_KEY, JSON.stringify(next))
+      if (!next[key]) next[key] = structuredClone(value)
     }
     return next
   } catch {
@@ -72,6 +84,7 @@ export function loadMealStats(): MealStatsStore {
   }
 }
 
-export function saveMealStats(store: MealStatsStore): void {
-  localStorage.setItem(MEAL_STATS_KEY, JSON.stringify(store))
+/** @deprecated Используйте useMenuSync */
+export function saveMealStats(_store: MealStatsStore): void {
+  // no-op
 }

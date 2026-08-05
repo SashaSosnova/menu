@@ -12,6 +12,7 @@ import {
   type BatchItem,
   type CookBatch,
 } from '../data/types'
+import { formatServingsDisplay } from '../lib/recipeServings'
 import { MacrosBadge } from './MacrosBadge'
 import { Checklist } from './Checklist'
 
@@ -31,7 +32,7 @@ function RecipeDetails({ dishId }: { dishId: string }) {
         {dish.macros && <MacrosBadge macros={dish.macros} />}
       </summary>
       <div className="recipe-details-body">
-        <p className="muted">{dish.recipe.servings}</p>
+        <p className="muted">{formatServingsDisplay(dishId, dish.recipe.servings)}</p>
         {dish.kind === 'complete' ? (
           <p className="pairings">Гарнир уже в блюде — второй крупой не дополнять.</p>
         ) : null}
