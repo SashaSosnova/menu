@@ -376,7 +376,7 @@ export const weekPlans: WeekPlan[] = [
         amount: `${dryForMeals('pasta', 2)} г`,
         note: 'Ср с грибной поджаркой',
       },
-      { product: 'Манка/овсянка', amount: '1 ст.л.', note: 'Тефтели' },
+      { product: 'Сухари панировочные', amount: '1 ст.л.', note: 'Тефтели и котлеты' },
     ],
   },
 ]

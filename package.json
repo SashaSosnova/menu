@@ -6,6 +6,10 @@
   "scripts": {
     "dev": "vite",
     "export:dishes": "tsx scripts/export-dishes.ts",
+    "align:ingredients": "tsx scripts/align-ingredients.ts",
+    "clean:steps": "tsx scripts/clean-steps.ts",
+    "clean:servings": "tsx scripts/clean-servings.ts",
+    "add:fry-oil": "tsx scripts/add-fry-oil.ts",
     "build": "tsx scripts/export-dishes.ts && tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",

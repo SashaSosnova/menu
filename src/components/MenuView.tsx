@@ -14,6 +14,7 @@ import {
   type CookBatch,
 } from '../data/types'
 import { formatServingsDisplay } from '../lib/recipeServings'
+import { withPrepPackStep } from '../lib/recipeSteps'
 import { MacrosBadge } from './MacrosBadge'
 import { Checklist } from './Checklist'
 
@@ -44,7 +45,7 @@ function RecipeDetails({ dishId }: { dishId: string }) {
           ))}
         </ul>
         <h4>Как готовить</h4>
-        <p className="steps">{dish.recipe.steps}</p>
+        <p className="steps">{withPrepPackStep(dishId, dish.recipe.steps)}</p>
         {dish.recipe.storage && (
           <>
             <h4>Хранение</h4>

@@ -12,6 +12,8 @@ export type PrepPack = {
   amount: string
   week: number
   slot: MenuSlotId
+  /** Блюда из меню, для которых достаём этот пакет */
+  dishIds?: string[]
 }
 
 export type PrepItem = {
@@ -21,6 +23,8 @@ export type PrepItem = {
   how?: string
   week?: number
   slot?: MenuSlotId
+  /** Блюда из меню (если нет отдельных packs) */
+  dishIds?: string[]
   /** Отдельные пакеты — галочка на каждый */
   packs?: PrepPack[]
 }
@@ -56,6 +60,7 @@ export const prepGroups: PrepGroup[] = [
             amount: '600 г',
             week: 1,
             slot: 'wed-thu',
+            dishIds: ['beef_pepper'],
           },
           {
             id: 'beef-strips-stroganoff',
@@ -63,6 +68,7 @@ export const prepGroups: PrepGroup[] = [
             amount: '600 г',
             week: 2,
             slot: 'fri-sat',
+            dishIds: ['beef_stroganoff'],
           },
           {
             id: 'beef-strips-paprikash',
@@ -70,6 +76,7 @@ export const prepGroups: PrepGroup[] = [
             amount: '600 г',
             week: 3,
             slot: 'wed-thu',
+            dishIds: ['beef_paprikash'],
           },
         ],
       },
@@ -84,6 +91,7 @@ export const prepGroups: PrepGroup[] = [
             amount: '600 г',
             week: 2,
             slot: 'wed-thu',
+            dishIds: ['goulash'],
           },
           {
             id: 'beef-cubes-veg',
@@ -91,6 +99,7 @@ export const prepGroups: PrepGroup[] = [
             amount: '600 г',
             week: 4,
             slot: 'mon-tue',
+            dishIds: ['beef_veg_stew'],
           },
           {
             id: 'beef-cubes-stew',
@@ -98,6 +107,7 @@ export const prepGroups: PrepGroup[] = [
             amount: '600 г',
             week: 4,
             slot: 'wed-thu',
+            dishIds: ['beef_stew'],
           },
           {
             id: 'beef-cubes-potato',
@@ -105,6 +115,7 @@ export const prepGroups: PrepGroup[] = [
             amount: '550 г',
             week: 3,
             slot: 'fri-sat',
+            dishIds: ['beef_potato_stew'],
           },
         ],
       },
@@ -115,6 +126,7 @@ export const prepGroups: PrepGroup[] = [
         week: 1,
         slot: 'mon-tue',
         how: 'Прокрутить или купить готовый.',
+        dishIds: ['bolognese'],
       },
     ],
   },
@@ -134,6 +146,7 @@ export const prepGroups: PrepGroup[] = [
             amount: '600 г',
             week: 1,
             slot: 'mon-tue',
+            dishIds: ['chicken_tomato_cream'],
           },
           {
             id: 'chick-cubes-mushrooms',
@@ -141,6 +154,7 @@ export const prepGroups: PrepGroup[] = [
             amount: '600 г',
             week: 2,
             slot: 'mon-tue',
+            dishIds: ['chicken_mushrooms'],
           },
           {
             id: 'chick-cubes-veg',
@@ -148,6 +162,7 @@ export const prepGroups: PrepGroup[] = [
             amount: '650 г',
             week: 3,
             slot: 'mon-tue',
+            dishIds: ['chicken_cubes_veg'],
           },
           {
             id: 'chick-cubes-pasta',
@@ -155,6 +170,7 @@ export const prepGroups: PrepGroup[] = [
             amount: '550 г',
             week: 4,
             slot: 'fri-sat',
+            dishIds: ['chicken_pasta_zucchini'],
           },
         ],
       },
@@ -164,6 +180,7 @@ export const prepGroups: PrepGroup[] = [
         amount: '600 г',
         week: 4,
         slot: 'mon-tue',
+        dishIds: ['chicken_stroganoff'],
       },
       {
         id: 'chick-mince',
@@ -172,6 +189,7 @@ export const prepGroups: PrepGroup[] = [
         week: 1,
         slot: 'wed-thu',
         how: 'Прокрутить из филе.',
+        dishIds: ['chicken_meatballs'],
       },
       {
         id: 'chick-large',
@@ -180,6 +198,7 @@ export const prepGroups: PrepGroup[] = [
         week: 2,
         slot: 'fri-sat',
         how: 'Куски ~3–4 см.',
+        dishIds: ['chicken_potato_roast'],
       },
     ],
   },
@@ -195,6 +214,7 @@ export const prepGroups: PrepGroup[] = [
         amount: '1 кг',
         week: 3,
         slot: 'fri-sat',
+        dishIds: ['chicken_legs_paprika'],
       },
       {
         id: 'wings-paprika',
@@ -202,6 +222,7 @@ export const prepGroups: PrepGroup[] = [
         amount: '1,5 кг',
         week: 4,
         slot: 'fri-sat',
+        dishIds: ['wings_paprika'],
       },
     ],
   },
@@ -217,6 +238,7 @@ export const prepGroups: PrepGroup[] = [
         amount: '1,5 кг',
         week: 2,
         slot: 'wed-thu',
+        dishIds: ['wings'],
       },
     ],
   },
@@ -232,6 +254,7 @@ export const prepGroups: PrepGroup[] = [
         amount: '1 кг',
         week: 1,
         slot: 'fri-sat',
+        dishIds: ['chicken_legs'],
       },
     ],
   },
@@ -247,6 +270,7 @@ export const prepGroups: PrepGroup[] = [
         amount: '1,3 кг',
         week: 3,
         slot: 'wed-thu',
+        dishIds: ['thighs_sour_cream'],
       },
     ],
   },
@@ -267,6 +291,7 @@ export const prepGroups: PrepGroup[] = [
             amount: '700 г',
             week: 2,
             slot: 'mon-tue',
+            dishIds: ['trout'],
           },
           {
             id: 'trout-2',
@@ -274,6 +299,7 @@ export const prepGroups: PrepGroup[] = [
             amount: '700 г',
             week: 4,
             slot: 'wed-thu',
+            dishIds: ['trout'],
           },
         ],
       },
@@ -284,6 +310,7 @@ export const prepGroups: PrepGroup[] = [
         week: 3,
         slot: 'mon-tue',
         how: 'Куски ~100–150 г.',
+        dishIds: ['pollock', 'pollock_tomato_cream'],
       },
       {
         id: 'shrimp',
@@ -291,6 +318,7 @@ export const prepGroups: PrepGroup[] = [
         amount: '400 г',
         week: 1,
         slot: 'fri-sat',
+        dishIds: ['shrimp_pasta', 'pineapple_shrimp', 'shrimp_cream'],
       },
     ],
   },
@@ -304,4 +332,32 @@ export function prepCheckIds(item: PrepItem): string[] {
 export function countPrepChecks(): { total: number; ids: string[] } {
   const ids = prepGroups.flatMap((g) => g.items.flatMap(prepCheckIds))
   return { total: ids.length, ids }
+}
+
+function buildDishPrepLabelMap(): Record<string, string> {
+  const map: Record<string, string> = {}
+  for (const group of prepGroups) {
+    for (const item of group.items) {
+      if (item.packs) {
+        for (const pack of item.packs) {
+          for (const dishId of pack.dishIds ?? []) {
+            map[dishId] = pack.label
+          }
+        }
+      } else {
+        for (const dishId of item.dishIds ?? []) {
+          map[dishId] = item.label
+        }
+      }
+    }
+  }
+  return map
+}
+
+let dishPrepLabels: Record<string, string> | null = null
+
+/** Подпись на пакет из заготовок для блюда меню */
+export function getPrepPackLabel(dishId: string): string | undefined {
+  if (!dishPrepLabels) dishPrepLabels = buildDishPrepLabelMap()
+  return dishPrepLabels[dishId]
 }

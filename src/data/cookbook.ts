@@ -1,6 +1,7 @@
 import { dishes, getDish } from './dishes'
 import { dishMeta } from './dishMeta'
 import type { Dish, Recipe } from './types'
+import { withPrepPackStep } from '../lib/recipeSteps'
 
 /** Соусы день в день — не показываем в книге */
 const SAUCE_IDS = new Set(['cream_sauce', 'tomato_cream_sauce', 'cream_dill_sauce'])
@@ -126,7 +127,10 @@ export function getEffectiveRecipe(
   return {
     servings: override?.servings ?? base?.servings ?? '',
     ingredients: override?.ingredients ?? base?.ingredients ?? [],
-    steps: override?.steps ?? base?.steps ?? '',
+    steps: withPrepPackStep(
+      dishId,
+      override?.steps ?? base?.steps ?? '',
+    ),
     storage: override?.storage ?? base?.storage,
     weeks: base?.weeks,
   }

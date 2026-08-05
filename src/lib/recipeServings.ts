@@ -10,16 +10,17 @@ function parseGrams(s: string): number {
   return Number(s.replace(',', '.'))
 }
 
-function isDateSegment(segment: string): boolean {
+function isScheduleSegment(segment: string): boolean {
   const s = segment.trim().toLowerCase()
   if (!s) return true
   if (DAY_ABBR.has(s)) return true
-  if (/^нед\.?\s*\d+/i.test(s)) return true
-  if (/^(?:пн|вт|ср|чт|пт|сб|вс)\s*[–-]\s*(?:пн|вт|ср|чт|пт|сб|вс)$/i.test(s)) return true
-  if (/^(?:пн|вт|ср|чт|пт|сб|вс)\s*ужин/i.test(s)) return true
-  if (/^на\s+(?:пн|вт|ср|чт|пт|сб|вс)/i.test(s)) return true
-  if (/^день в день$/i.test(s)) return true
-  if (/^к рыбе$/i.test(s)) return true
+  if (/^нед\.?\s*\d/.test(s)) return true
+  if (/\bнед\.?\s*\d/.test(s)) return true
+  if (/^(?:пн|вт|ср|чт|пт|сб|вс)\s*[–-]\s*(?:пн|вт|ср|чт|пт|сб|вс)/.test(s)) return true
+  if (/(?:пн|вт|ср|чт|пт|сб|вс)\s+нед\.?\s*\d/.test(s)) return true
+  if (/(?:пн|вт|ср|чт|пт|сб|вс)[^·]*(?:ужин|обед)/.test(s)) return true
+  if (/^на\s+(?:пн|вт|ср|чт|пт|сб|вс)\b/.test(s)) return true
+  if (/^день в день$/.test(s)) return true
   return false
 }
 
@@ -29,10 +30,15 @@ function isPortionSegment(segment: string): boolean {
 
 /** Убираем день недели, неделю меню и привязку к слоту готовки */
 export function stripCookSchedule(text: string): string {
+  return cleanRecipeServings(text)
+}
+
+/** Чистим поле servings в данных — без дней недели и недель меню */
+export function cleanRecipeServings(text: string): string {
   return text
     .split('·')
     .map((part) => part.trim())
-    .filter((part) => part && !isDateSegment(part))
+    .filter((part) => part && !isScheduleSegment(part))
     .join(' · ')
     .replace(/\s{2,}/g, ' ')
     .trim()
@@ -182,7 +188,7 @@ function meaningfulNotes(raw: string): string {
     .split('·')
     .map((part) => part.trim())
     .filter((part) => {
-      if (!part || isDateSegment(part)) return false
+      if (!part || isScheduleSegment(part)) return false
       if (isPortionSegment(part)) return false
       if (/~?\d+[,.]?\d*\s*(?:мин(?:ут)?|ч(?:ас(?:а)?)?)/i.test(part)) return false
       if (/~?\d+(?:[,.]\d+)?\s*г/i.test(part)) return false

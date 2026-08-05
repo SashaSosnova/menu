@@ -77,6 +77,12 @@ function RecipePeekModal({
                   <p className="steps">{recipe.steps}</p>
                 </>
               ) : null}
+              {recipe.storage ? (
+                <>
+                  <h3>Хранение</h3>
+                  <p>{recipe.storage}</p>
+                </>
+              ) : null}
             </>
           ) : (
             <p className="muted">Рецепт пока не добавлен — можно дописать во вкладке «Книга».</p>
