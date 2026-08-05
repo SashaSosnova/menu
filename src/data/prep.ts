@@ -1,13 +1,28 @@
 /**
  * Заготовки на месяц — группировка по удобству работы.
- * Подписать пакет → морозилка.
+ * label = подпись на пакет; week+slot = когда достаём.
  */
+
+import { packUseLabel, type MenuSlotId } from './calendar'
+
+export type PrepPack = {
+  id: string
+  /** Подпись на пакет, напр. «Говядина Перец» */
+  label: string
+  amount: string
+  week: number
+  slot: MenuSlotId
+}
 
 export type PrepItem = {
   id: string
   label: string
   amount: string
   how?: string
+  week?: number
+  slot?: MenuSlotId
+  /** Отдельные пакеты — галочка на каждый */
+  packs?: PrepPack[]
 }
 
 export type PrepGroup = {
@@ -19,6 +34,10 @@ export type PrepGroup = {
   items: PrepItem[]
 }
 
+export function prepUse(week: number, slot: MenuSlotId): string {
+  return packUseLabel(week, slot)
+}
+
 export const prepGroups: PrepGroup[] = [
   {
     id: 'beef',
@@ -27,20 +46,74 @@ export const prepGroups: PrepGroup[] = [
     items: [
       {
         id: 'beef-strips',
-        label: 'Соломка (3 пакета)',
+        label: 'Соломка',
         amount: '1,8 кг',
-        how: 'Тонкая соломка поперёк волокон. Пакеты: «перец» 600 г · «бефстроганов» 600 г · «паприкаш» 600 г.',
+        how: 'Тонкая соломка поперёк волокон.',
+        packs: [
+          {
+            id: 'beef-strips-pepper',
+            label: 'Говядина Перец',
+            amount: '600 г',
+            week: 1,
+            slot: 'wed-thu',
+          },
+          {
+            id: 'beef-strips-stroganoff',
+            label: 'Говядина Бефстроганов',
+            amount: '600 г',
+            week: 2,
+            slot: 'fri-sat',
+          },
+          {
+            id: 'beef-strips-paprikash',
+            label: 'Говядина Паприкаш',
+            amount: '600 г',
+            week: 3,
+            slot: 'wed-thu',
+          },
+        ],
       },
       {
         id: 'beef-cubes',
-        label: 'Кубики ~2 см (4 пакета)',
+        label: 'Кубики ~2 см',
         amount: '2,35 кг',
-        how: 'Пакеты: «гуляш» 600 г · «тушёное с овощами» 600 г · «тушёная со сметаной» 600 г · «картофель тушёный» 550 г.',
+        packs: [
+          {
+            id: 'beef-cubes-goulash',
+            label: 'Говядина Гуляш',
+            amount: '600 г',
+            week: 2,
+            slot: 'wed-thu',
+          },
+          {
+            id: 'beef-cubes-veg',
+            label: 'Говядина Тушёное с овощами',
+            amount: '600 г',
+            week: 4,
+            slot: 'mon-tue',
+          },
+          {
+            id: 'beef-cubes-stew',
+            label: 'Говядина Тушёная со сметаной',
+            amount: '600 г',
+            week: 4,
+            slot: 'wed-thu',
+          },
+          {
+            id: 'beef-cubes-potato',
+            label: 'Говядина Картофель тушёный',
+            amount: '550 г',
+            week: 3,
+            slot: 'fri-sat',
+          },
+        ],
       },
       {
         id: 'beef-mince',
-        label: 'Фарш · болоньезе',
+        label: 'Говядина Фарш болоньезе',
         amount: '500 г',
+        week: 1,
+        slot: 'mon-tue',
         how: 'Прокрутить или купить готовый.',
       },
     ],
@@ -52,25 +125,60 @@ export const prepGroups: PrepGroup[] = [
     items: [
       {
         id: 'chick-cubes',
-        label: 'Кубики ~2 см (4 пакета)',
+        label: 'Кубики ~2 см',
         amount: '2,4 кг',
-        how: 'Пакеты: «томат-сметана» 600 г · «грибы» 600 г · «с овощами» 650 г · «паста с кабачком» 550 г.',
+        packs: [
+          {
+            id: 'chick-cubes-tomato',
+            label: 'Курица Томат-сметана',
+            amount: '600 г',
+            week: 1,
+            slot: 'mon-tue',
+          },
+          {
+            id: 'chick-cubes-mushrooms',
+            label: 'Курица Грибы',
+            amount: '600 г',
+            week: 2,
+            slot: 'mon-tue',
+          },
+          {
+            id: 'chick-cubes-veg',
+            label: 'Курица С овощами',
+            amount: '650 г',
+            week: 3,
+            slot: 'mon-tue',
+          },
+          {
+            id: 'chick-cubes-pasta',
+            label: 'Курица Паста с кабачком',
+            amount: '550 г',
+            week: 4,
+            slot: 'fri-sat',
+          },
+        ],
       },
       {
         id: 'chick-strips',
-        label: 'Соломка · строганов',
+        label: 'Курица Соломка строганов',
         amount: '600 г',
+        week: 4,
+        slot: 'mon-tue',
       },
       {
         id: 'chick-mince',
-        label: 'Фарш · тефтели',
+        label: 'Курица Фарш тефтели',
         amount: '450 г',
+        week: 1,
+        slot: 'wed-thu',
         how: 'Прокрутить из филе.',
       },
       {
         id: 'chick-large',
-        label: 'Крупно · жаркое с картошкой',
+        label: 'Курица Жаркое с картошкой',
         amount: '700 г',
+        week: 2,
+        slot: 'fri-sat',
         how: 'Куски ~3–4 см.',
       },
     ],
@@ -81,8 +189,20 @@ export const prepGroups: PrepGroup[] = [
     marinade:
       'Сладкая паприка 1–2 ч.л., чеснок 2 зуб., соль, масло 1–2 ст.л. на каждый кг. В пакет с мясом → морозилка.',
     items: [
-      { id: 'legs-paprika', label: 'Ножки', amount: '1 кг' },
-      { id: 'wings-paprika', label: 'Крылья', amount: '1,5 кг' },
+      {
+        id: 'legs-paprika',
+        label: 'Курица Ножки паприка',
+        amount: '1 кг',
+        week: 3,
+        slot: 'fri-sat',
+      },
+      {
+        id: 'wings-paprika',
+        label: 'Курица Крылья паприка',
+        amount: '1,5 кг',
+        week: 4,
+        slot: 'fri-sat',
+      },
     ],
   },
   {
@@ -90,21 +210,45 @@ export const prepGroups: PrepGroup[] = [
     title: 'Соевый + мёд',
     marinade:
       'Соевый 3 ст.л., мёд 1 ч.л., паприка, чеснок 1 зуб., чуть масла. В пакет → морозилка.',
-    items: [{ id: 'wings-soy', label: 'Крылья', amount: '1,5 кг' }],
+    items: [
+      {
+        id: 'wings-soy',
+        label: 'Курица Крылья соевый-мёд',
+        amount: '1,5 кг',
+        week: 2,
+        slot: 'wed-thu',
+      },
+    ],
   },
   {
     id: 'marinate-honey-garlic',
     title: 'Мёд + чеснок',
     marinade:
       'Мёд 1 ч.л., чеснок 2 зуб., соль, масло 1–2 ст.л., чуть паприки. В пакет → морозилка.',
-    items: [{ id: 'legs-honey', label: 'Ножки', amount: '1 кг' }],
+    items: [
+      {
+        id: 'legs-honey',
+        label: 'Курица Ножки мёд-чеснок',
+        amount: '1 кг',
+        week: 1,
+        slot: 'fri-sat',
+      },
+    ],
   },
   {
     id: 'marinate-cream',
     title: 'Сметана + чеснок',
     marinade:
       'Сметана 3–4 ст.л., чеснок 2–3 зуб., соль, паприка, чуть масла. Бёдра без кожи и костей. В пакет → морозилка.',
-    items: [{ id: 'thighs-cream', label: 'Бёдра', amount: '1,3 кг' }],
+    items: [
+      {
+        id: 'thighs-cream',
+        label: 'Курица Бёдра сметана',
+        amount: '1,3 кг',
+        week: 3,
+        slot: 'wed-thu',
+      },
+    ],
   },
   {
     id: 'fish',
@@ -115,15 +259,49 @@ export const prepGroups: PrepGroup[] = [
         id: 'trout',
         label: 'Форель',
         amount: '1,4 кг',
-        how: '2 пакета по 700 г, куски ~100–150 г.',
+        how: 'Куски ~100–150 г.',
+        packs: [
+          {
+            id: 'trout-1',
+            label: 'Форель',
+            amount: '700 г',
+            week: 2,
+            slot: 'mon-tue',
+          },
+          {
+            id: 'trout-2',
+            label: 'Форель',
+            amount: '700 г',
+            week: 4,
+            slot: 'wed-thu',
+          },
+        ],
       },
       {
         id: 'pollock',
         label: 'Минтай',
         amount: '700 г',
+        week: 3,
+        slot: 'mon-tue',
         how: 'Куски ~100–150 г.',
       },
-      { id: 'shrimp', label: 'Креветки', amount: '400 г' },
+      {
+        id: 'shrimp',
+        label: 'Креветки',
+        amount: '400 г',
+        week: 1,
+        slot: 'fri-sat',
+      },
     ],
   },
 ]
+
+/** Все id, которые можно отметить галочкой */
+export function prepCheckIds(item: PrepItem): string[] {
+  return item.packs?.map((p) => p.id) ?? [item.id]
+}
+
+export function countPrepChecks(): { total: number; ids: string[] } {
+  const ids = prepGroups.flatMap((g) => g.items.flatMap(prepCheckIds))
+  return { total: ids.length, ids }
+}

@@ -1,7 +1,17 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { weekNumbers } from '../data/weeks'
 import { getWeekMenu, type MenuDishRef, type MenuSlot } from '../data/menu'
 import { getDish, formatMacros } from '../data/dishes'
+import {
+  LEFTOVER_OPTIONS,
+  loadMealStats,
+  saveMealStats,
+  slotStatKey,
+  type DishStat,
+  type LeftoverLevel,
+  type MealStatsStore,
+  type SlotStat,
+} from '../data/mealStats'
 import { MacrosBadge } from './MacrosBadge'
 
 function dishLabel(item: MenuDishRef): string {
@@ -67,7 +77,122 @@ function RecipeBlock({ item }: { item: MenuDishRef }) {
   )
 }
 
-function SlotCard({ slot }: { slot: MenuSlot }) {
+function SlotStats({
+  week,
+  slot,
+  dishes,
+  store,
+  onChange,
+}: {
+  week: number
+  slot: MenuSlot
+  dishes: MenuDishRef[]
+  store: MealStatsStore
+  onChange: (store: MealStatsStore) => void
+}) {
+  const key = slotStatKey(week, slot.id)
+  const slotStat: SlotStat = store[key] ?? { dishes: {} }
+
+  function patchSlot(next: SlotStat) {
+    const updated = { ...store, [key]: next }
+    onChange(updated)
+    saveMealStats(updated)
+  }
+
+  function setLeftover(dishId: string, leftover: LeftoverLevel) {
+    const prev: DishStat = slotStat.dishes[dishId] ?? {}
+    const same = prev.leftover === leftover
+    patchSlot({
+      ...slotStat,
+      dishes: {
+        ...slotStat.dishes,
+        [dishId]: same
+          ? { ...prev, leftover: undefined }
+          : { ...prev, leftover },
+      },
+    })
+  }
+
+  function setDishNote(dishId: string, note: string) {
+    const prev: DishStat = slotStat.dishes[dishId] ?? {}
+    patchSlot({
+      ...slotStat,
+      dishes: {
+        ...slotStat.dishes,
+        [dishId]: { ...prev, note: note || undefined },
+      },
+    })
+  }
+
+  function setSlotNote(note: string) {
+    patchSlot({ ...slotStat, note: note || undefined })
+  }
+
+  return (
+    <div className="slot-stats">
+      <h4>Итог</h4>
+      <p className="muted slot-stats-hint">
+        Сколько осталось после двух дней — потом подправим закладки.
+      </p>
+      <ul className="slot-stats-list">
+        {dishes.map((item) => {
+          const stat = slotStat.dishes[item.dishId] ?? {}
+          return (
+            <li key={item.dishId} className="slot-stat-row">
+              <span className="slot-stat-name">{dishLabel(item)}</span>
+              <div
+                className="leftover-btns"
+                role="group"
+                aria-label={`Остаток: ${dishLabel(item)}`}
+              >
+                {LEFTOVER_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    className={
+                      stat.leftover === opt.id
+                        ? 'leftover-btn is-active'
+                        : 'leftover-btn'
+                    }
+                    onClick={() => setLeftover(item.dishId, opt.id)}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              <input
+                className="slot-stat-note"
+                type="text"
+                placeholder="заметка"
+                value={stat.note ?? ''}
+                onChange={(e) => setDishNote(item.dishId, e.target.value)}
+              />
+            </li>
+          )
+        })}
+      </ul>
+      <textarea
+        className="slot-stats-textarea"
+        rows={2}
+        placeholder="Общая заметка по слоту…"
+        value={slotStat.note ?? ''}
+        onChange={(e) => setSlotNote(e.target.value)}
+      />
+    </div>
+  )
+}
+
+function SlotCard({
+  week,
+  slot,
+  store,
+  onStatsChange,
+}: {
+  week: number
+  slot: MenuSlot
+  store: MealStatsStore
+  onStatsChange: (store: MealStatsStore) => void
+}) {
   const recipeItems: MenuDishRef[] = [
     ...(slot.complete ? [slot.complete] : []),
     ...slot.mains,
@@ -152,6 +277,14 @@ function SlotCard({ slot }: { slot: MenuSlot }) {
             />
           ))}
         </div>
+
+        <SlotStats
+          week={week}
+          slot={slot}
+          dishes={recipeItems}
+          store={store}
+          onChange={onStatsChange}
+        />
       </div>
     </details>
   )
@@ -159,7 +292,12 @@ function SlotCard({ slot }: { slot: MenuSlot }) {
 
 export function MenuTab() {
   const [weekNumber, setWeekNumber] = useState(1)
+  const [stats, setStats] = useState<MealStatsStore>({})
   const menu = getWeekMenu(weekNumber)
+
+  useEffect(() => {
+    setStats(loadMealStats())
+  }, [])
 
   return (
     <section className="view">
@@ -185,7 +323,13 @@ export function MenuTab() {
 
       <div className="cook-plan">
         {menu.slots.map((slot) => (
-          <SlotCard key={slot.id} slot={slot} />
+          <SlotCard
+            key={slot.id}
+            week={weekNumber}
+            slot={slot}
+            store={stats}
+            onStatsChange={setStats}
+          />
         ))}
       </div>
     </section>

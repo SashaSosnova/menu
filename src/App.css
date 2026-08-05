@@ -455,6 +455,18 @@
   color: #8a8378;
 }
 
+.prep-progress {
+  margin: 0.55rem 0 0;
+  font-weight: 700;
+  color: #2f4a3a;
+}
+
+.prep-group-count {
+  font-weight: 600;
+  color: #6b655b;
+  font-size: 0.9rem;
+}
+
 .prep-list {
   display: grid;
   gap: 0.65rem;
@@ -463,10 +475,59 @@
   list-style: none;
 }
 
-.prep-item {
+.prep-block {
   padding: 0.75rem 0.85rem;
   border-radius: 0.65rem;
   background: #f7f3eb;
+}
+
+.prep-block-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-weight: 600;
+}
+
+.prep-pack-count {
+  font-weight: 600;
+  color: #6b655b;
+  font-size: 0.9rem;
+}
+
+.prep-packs {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0.55rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.prep-packs .prep-item {
+  background: #fffdf8;
+  padding: 0.55rem 0.65rem;
+}
+
+.prep-item {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.7rem;
+  align-items: start;
+  padding: 0.75rem 0.85rem;
+  border-radius: 0.65rem;
+  background: #f7f3eb;
+  cursor: pointer;
+}
+
+.prep-item input {
+  margin-top: 0.2rem;
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.prep-body {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
 }
 
 .prep-head {
@@ -487,8 +548,27 @@
 }
 
 .prep-how {
+  display: block;
   margin: 0.35rem 0 0;
   line-height: 1.45;
+}
+
+.prep-use {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #2f4a3a;
+}
+
+.prep-item.is-checked .prep-product {
+  text-decoration: line-through;
+  color: #8a8378;
+}
+
+.prep-item.is-checked .prep-use,
+.prep-item.is-checked .prep-how {
+  color: #8a8378;
 }
 
 .prep-marinade {
@@ -551,6 +631,85 @@
   color: #6b655b;
   font-size: 0.92rem;
   line-height: 1.4;
+}
+
+.slot-stats {
+  margin-top: 0.85rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #e5dfd3;
+}
+
+.slot-stats h4 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.slot-stats-hint {
+  margin: 0.25rem 0 0.55rem;
+  font-size: 0.88rem;
+}
+
+.slot-stats-list {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.slot-stat-row {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 0.55rem;
+  background: #f7f3eb;
+}
+
+.slot-stat-name {
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+.leftover-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.leftover-btn {
+  border: 1px solid #cfc6b6;
+  background: #fffdf8;
+  color: #4a463f;
+  border-radius: 0.45rem;
+  padding: 0.3rem 0.55rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.leftover-btn.is-active {
+  border-color: #2f4a3a;
+  background: #2f4a3a;
+  color: #fffdf8;
+}
+
+.slot-stat-note,
+.slot-stats-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #ddd6cb;
+  border-radius: 0.45rem;
+  background: #fffdf8;
+  padding: 0.4rem 0.55rem;
+  font: inherit;
+  font-size: 0.88rem;
+  color: #2c2924;
+}
+
+.slot-stats-textarea {
+  margin-top: 0.55rem;
+  resize: vertical;
+  min-height: 2.5rem;
 }
 
 .rules-list {
