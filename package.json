@@ -11,7 +11,7 @@
     "clean:steps": "tsx scripts/clean-steps.ts",
     "clean:servings": "tsx scripts/clean-servings.ts",
     "add:fry-oil": "tsx scripts/add-fry-oil.ts",
-    "build": "tsx scripts/export-dishes.ts && tsx scripts/export-prep-labels.ts && tsc -b && vite build",
+    "build": "tsx scripts/export-dishes.ts && tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
     "snapshot:macros": "tsx scripts/snapshot-macros.ts",
