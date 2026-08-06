@@ -6,11 +6,12 @@
   "scripts": {
     "dev": "vite",
     "export:dishes": "tsx scripts/export-dishes.ts",
+    "export:prep-labels": "tsx scripts/export-prep-labels.ts",
     "align:ingredients": "tsx scripts/align-ingredients.ts",
     "clean:steps": "tsx scripts/clean-steps.ts",
     "clean:servings": "tsx scripts/clean-servings.ts",
     "add:fry-oil": "tsx scripts/add-fry-oil.ts",
-    "build": "tsx scripts/export-dishes.ts && tsc -b && vite build",
+    "build": "tsx scripts/export-dishes.ts && tsx scripts/export-prep-labels.ts && tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
     "snapshot:macros": "tsx scripts/snapshot-macros.ts",
@@ -26,7 +27,9 @@
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
+    "exceljs": "^4.4.0",
     "oxlint": "^1.71.0",
+    "sharp": "^0.35.3",
     "tsx": "^4.21.0",
     "typescript": "~6.0.2",
     "vite": "^8.1.1"

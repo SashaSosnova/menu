@@ -70,6 +70,19 @@ export function packUseLabel(week: number, slot: MenuSlotId): string {
   return `нед.${week} · ${rangeLabel(from, to)}`
 }
 
+/** Срок хранения в морозилке: дата заготовки + N месяцев → «до ДД.ММ.ГГГГ» */
+export function freezerBestBefore(
+  from: Date = monthStart,
+  months = 3,
+): string {
+  const d = new Date(from)
+  d.setMonth(d.getMonth() + months)
+  const dd = String(d.getDate()).padStart(2, '0')
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const yyyy = d.getFullYear()
+  return `до ${dd}.${mm}.${yyyy}`
+}
+
 function dateRangeGenitive(from: Date, to: Date): string {
   if (from.getMonth() === to.getMonth()) {
     return `${from.getDate()} – ${to.getDate()} ${MONTH_GENITIVE[from.getMonth()]}`

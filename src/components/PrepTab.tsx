@@ -75,6 +75,19 @@ export function PrepTab() {
         <p className="prep-progress">
           В заморозку: {done} из {total}
         </p>
+        <p className="prep-labels-export">
+          <a className="link-btn" href={`${import.meta.env.BASE_URL}prep-labels.xlsx`} download>
+            Excel для NIIMBOT
+          </a>
+          <span className="muted"> · </span>
+          <a className="link-btn" href={`${import.meta.env.BASE_URL}prep-labels/index.html`} target="_blank" rel="noreferrer">
+            PNG-этикетки 50×30
+          </a>
+          <span className="muted prep-labels-hint">
+            {' '}
+            — импорт Excel в шаблон или печать PNG как картинок
+          </span>
+        </p>
       </div>
 
       <div className="week-sections">

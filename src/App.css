@@ -521,6 +521,21 @@
   color: #2f4a3a;
 }
 
+.prep-labels-export {
+  margin: 0.45rem 0 0;
+  font-size: 0.9rem;
+}
+
+.prep-labels-export .link-btn {
+  margin-top: 0;
+  display: inline;
+  color: #2f4a3a;
+}
+
+.prep-labels-hint {
+  font-size: 0.82rem;
+}
+
 .prep-group-count {
   font-weight: 600;
   color: #6b655b;
