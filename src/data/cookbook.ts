@@ -3,8 +3,8 @@ import { dishMeta } from './dishMeta'
 import type { Dish, Recipe } from './types'
 import { withPrepPackStep } from '../lib/recipeSteps'
 
-/** Соусы день в день — не показываем в книге */
-const SAUCE_IDS = new Set(['cream_sauce', 'tomato_cream_sauce', 'cream_dill_sauce'])
+/** Соусы день в день — не показываем в книге (сейчас не используются) */
+const SAUCE_IDS = new Set<string>()
 
 export type RecipeRating = 1 | 2 | 3 | 4 | 5
 

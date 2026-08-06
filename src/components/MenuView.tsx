@@ -61,20 +61,15 @@ function BatchItemLine({ item }: { item: BatchItem }) {
   const dish = getDish(item.dishId)
   if (!dish) return null
   const macros = dish.macros ? ` (${formatMacros(dish.macros)})` : ''
-  const isBigSalad = item.dishId === 'big_salad'
 
   return (
     <li>
       <span className="batch-item-name">
         {dish.name}
         {dish.kind === 'complete' ? <span className="kind-tag">цельное</span> : null}
-        {isBigSalad ? <span className="kind-tag">вместо гарнира</span> : null}
         {macros}
       </span>
-      <span className="batch-item-meta">
-        {item.portions}
-        {isBigSalad ? ' · резать в еду' : ''}
-      </span>
+      <span className="batch-item-meta">{item.portions}</span>
     </li>
   )
 }
@@ -219,10 +214,11 @@ export function MenuView() {
           <summary>Порции</summary>
           <div className="fold-body">
             <p className="muted">
-              6 порций ≈ 2 семейных приёма (ты / муж / ребёнок). Цели ккал на приём:{' '}
-              {people.map((p) => `${p.label} ~${p.mealKcal}`).join(' · ')}. Белок ~
-              {familyMeal.proteinG} г · гарнир ~{familyMeal.sideCookedG} г готового на семью за
-              приём.
+              Семья из 3 (женщина · мужчина · ребёнок). Цели ккал на приём:{' '}
+              {people.map((p) => `${p.label} ~${p.mealKcal}`).join(' · ')}.
+              За приём: горячее ~{familyMeal.proteinG} г · гарнир ~{familyMeal.sideCookedG} г.
+              Заготовка на 2 приёма: горячее ~{familyMeal.proteinG * 2} г · гарнир ~
+              {familyMeal.sideCookedG * 2} г.
             </p>
             {plateGuide.map((block) => (
               <div key={block.title} className="portion-block">

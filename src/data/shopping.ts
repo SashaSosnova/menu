@@ -2,14 +2,14 @@ import type { ShoppingItem } from './types'
 
 /** Итого на месяц — что купить. Нарезка и пакеты — во вкладке «Заготовки». */
 export const monthlyMeatFish: ShoppingItem[] = [
-  { product: 'Говядина (мякоть)', amount: '4,7 кг' },
-  { product: 'Куриное филе', amount: '4,2 кг' },
+  { product: 'Говядина (мякоть)', amount: '5,2 кг' },
+  { product: 'Куриное филе', amount: '3,45 кг' },
   { product: 'Куриные ножки', amount: '2 кг' },
   { product: 'Куриные бёдра без кожи и костей', amount: '1,3 кг' },
-  { product: 'Куриные крылья', amount: '3 кг' },
-  { product: 'Форель (филе)', amount: '1,4 кг' },
+  { product: 'Куриные крылья', amount: '1,5 кг' },
+  { product: 'Форель (филе)', amount: '1,6 кг' },
   { product: 'Минтай (филе)', amount: '700 г' },
-  { product: 'Креветки очищенные', amount: '400 г' },
+  { product: 'Креветки очищенные', amount: '900 г' },
 ]
 
 export const monthlyFrozenVeg: ShoppingItem[] = [
@@ -47,17 +47,15 @@ export const weeklyShopping: Record<number, ShoppingItem[]> = {
   2: [
     { product: 'Лук', amount: '1,5 кг' },
     { product: 'Морковь', amount: '0,8 кг' },
-    { product: 'Перец сладкий', amount: '3 шт' },
-    { product: 'Шампиньоны', amount: '400 г' },
-    { product: 'Сметана 20%', amount: '500 г' },
-    { product: 'Сливки 10%', amount: '300 мл' },
-    { product: 'Укроп', amount: '1 пучок' },
-    { product: 'Картофель', amount: '1,8 кг' },
-    { product: 'Цветная капуста', amount: '1 кочан' },
-    { product: 'Макароны', amount: '370 г' },
-    { product: 'Киноа', amount: '280 г' },
-    { product: 'Булгур', amount: '330 г' },
-    { product: 'Лимон', amount: '1 шт' },
+    { product: 'Перец сладкий', amount: '500 г' },
+    { product: 'Сметана 20%', amount: '400 г' },
+    { product: 'Сливки 10%', amount: '175 мл', note: 'Паста с креветками' },
+    { product: 'Креветки', amount: '450 г', note: 'Пт цельное' },
+    { product: 'Картофель', amount: '700 г', note: 'Пн пюре' },
+    { product: 'Цветная капуста', amount: '900 г' },
+    { product: 'Макароны', amount: '370 г', note: 'Пт цельное' },
+    { product: 'Рис', amount: '180 г' },
+    { product: 'Булгур', amount: '180 г' },
     { product: 'Зелень', amount: '1 пучок' },
   ],
   3: [
@@ -89,9 +87,13 @@ export const weeklyShopping: Record<number, ShoppingItem[]> = {
     { product: 'Цветная капуста', amount: '1 кочан' },
     { product: 'Макароны', amount: '550 г' },
     { product: 'Гречка', amount: '330 г' },
-    { product: 'Киноа', amount: '280 г' },
     { product: 'Шампиньоны', amount: '200 г' },
     { product: 'Зелень', amount: '1 пучок' },
+    { product: 'Горчица дижонская', amount: '1 баночка', note: 'Запечённая говядина пн' },
+    { product: 'Красное сухое вино', amount: '1 бутылка', note: 'Запечённая говядина пн' },
+    { product: 'Бульон говяжий', amount: '200 мл', note: 'Запечённая говядина пн' },
+    { product: 'Тимьян свежий', amount: '1 пучок', note: 'Запечённая говядина пн' },
+    { product: 'Розмарин свежий', amount: '1 пучок', note: 'Запечённая говядина пн' },
   ],
 }
 

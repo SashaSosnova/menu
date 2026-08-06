@@ -9,12 +9,9 @@ import { cleanRecipeServings } from '../src/lib/recipeServings.ts'
 
 const SERVINGS_OVERRIDES: Record<string, string> = {
   chicken_cutlets: '6 порций · ~35 мин',
-  cream_sauce: '~5 мин',
-  cream_dill_sauce: '~5 мин',
-  tomato_cream_sauce: '~10 мин',
-  trout: '700 г · ~15 мин',
-  pollock: '700 г · ~15 мин',
-  peas: '250 г · ~5 мин',
+  trout: '900 г · 2 семейных приёма · ~15 мин',
+  trout_spinach: '6 порций · ~25 мин',
+  pollock: '6 порций · ~35 мин',
 }
 
 function patchDishServings(content: string, id: string, servings: string): string | null {

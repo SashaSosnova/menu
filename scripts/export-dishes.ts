@@ -2,20 +2,8 @@ import { writeFileSync } from 'node:fs'
 import { dishes } from '../src/data/dishes.ts'
 import { withPrepPackStep } from '../src/lib/recipeSteps.ts'
 
-/** Keep in sync with planer `MENU_SYNC_SKIP_IDS`. */
-const EXPORT_SKIP_DISH_IDS = new Set([
-  'leftovers_cutlets',
-  'leftovers_roast',
-  'leftovers_baked_chicken',
-  'leftovers_wings',
-  'leftovers_fish',
-  'leftovers_thighs',
-  'salad_carrot_korean',
-])
-
 const list = Object.values(dishes)
   .filter((d) => d.recipe && d.recipe.ingredients.length > 0)
-  .filter((d) => !EXPORT_SKIP_DISH_IDS.has(d.id))
   .map((d) => ({
     id: d.id,
     name: d.name,

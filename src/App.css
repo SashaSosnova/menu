@@ -637,6 +637,7 @@
   border-radius: 0.55rem;
   background: #efe8db;
   line-height: 1.45;
+  white-space: pre-line;
 }
 
 .cook-plan {

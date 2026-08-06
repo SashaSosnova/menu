@@ -1,48 +1,20 @@
 {
   "version": 1,
-  "exportedAt": "2026-08-05T11:33:43.031Z",
+  "exportedAt": "2026-08-06T08:04:24.715Z",
   "dishes": {
     "broccoli_steam": {
-      "name": "Брокколи на пару",
-      "kcal": 45,
-      "protein": 4,
-      "fat": 1,
-      "carbs": 5
-    },
-    "stewed_potato": {
-      "name": "Картофель тушёный с луком и морковью",
-      "kcal": 95,
-      "protein": 2,
-      "fat": 3,
-      "carbs": 16
-    },
-    "cauliflower_fried": {
-      "name": "Цветная капуста жареная",
-      "kcal": 60,
-      "protein": 3,
-      "fat": 3,
-      "carbs": 5
-    },
-    "cauliflower_roast": {
-      "name": "Цветная капуста запечённая",
+      "name": "Брокколи в аэрогриле с пармезаном",
       "kcal": 55,
-      "protein": 3,
-      "fat": 3,
+      "protein": 5,
+      "fat": 2,
       "carbs": 5
     },
-    "pollock_tomato_cream": {
-      "name": "Минтай в томатно-сливочном соусе",
-      "kcal": 110,
-      "protein": 15,
-      "fat": 4,
-      "carbs": 3
-    },
-    "chicken_cubes_veg": {
-      "name": "Филе кубиками с овощами",
-      "kcal": 95,
-      "protein": 12,
-      "fat": 4,
-      "carbs": 6
+    "cauliflower": {
+      "name": "Цветная капуста",
+      "kcal": 50,
+      "protein": 3,
+      "fat": 2,
+      "carbs": 5
     },
     "thighs_sour_cream": {
       "name": "Бёдра запечённые со сметаной и чесноком",
@@ -51,40 +23,12 @@
       "fat": 11,
       "carbs": 2
     },
-    "chicken_legs_paprika": {
-      "name": "Ножки в паприке с чесноком",
-      "kcal": 210,
-      "protein": 17,
-      "fat": 15,
-      "carbs": 0
-    },
-    "wings_paprika": {
-      "name": "Крылья в паприке с чесноком",
-      "kcal": 210,
-      "protein": 17,
-      "fat": 15,
-      "carbs": 0
-    },
-    "beef_veg_stew": {
-      "name": "Тушёное мясо с овощами",
-      "kcal": 130,
-      "protein": 13,
-      "fat": 6,
-      "carbs": 7
-    },
     "beef_potato_stew": {
       "name": "Картофель тушёный с мясом",
       "kcal": 145,
       "protein": 12,
       "fat": 6,
       "carbs": 12
-    },
-    "chicken_pasta_zucchini": {
-      "name": "Паста с курицей и кабачком",
-      "kcal": 140,
-      "protein": 12,
-      "fat": 5,
-      "carbs": 14
     },
     "bolognese": {
       "name": "Болоньезе",
@@ -93,33 +37,12 @@
       "fat": 6,
       "carbs": 5
     },
-    "pineapple_chicken": {
-      "name": "Курица с ананасом",
-      "kcal": 125,
-      "protein": 14,
-      "fat": 4,
-      "carbs": 8
-    },
-    "stewed_cabbage": {
-      "name": "Тушёная капуста",
-      "kcal": 55,
-      "protein": 2,
-      "fat": 3,
-      "carbs": 5
-    },
     "chicken_legs": {
-      "name": "Ножки в медово-чесночном маринаде",
+      "name": "Ножки запечённые",
       "kcal": 210,
       "protein": 17,
       "fat": 15,
       "carbs": 0
-    },
-    "chicken_meatballs": {
-      "name": "Куриные тефтели в томатно-сметанном соусе",
-      "kcal": 130,
-      "protein": 14,
-      "fat": 6,
-      "carbs": 5
     },
     "trout": {
       "name": "Форель",
@@ -128,15 +51,8 @@
       "fat": 10,
       "carbs": 0
     },
-    "cream_sauce": {
-      "name": "Сливочно-укропный соус",
-      "kcal": 80,
-      "protein": 2,
-      "fat": 7,
-      "carbs": 2
-    },
     "wings": {
-      "name": "Крылья в соево-медовом маринаде",
+      "name": "Крылья запечённые",
       "kcal": 210,
       "protein": 17,
       "fat": 15,
@@ -149,26 +65,12 @@
       "fat": 3,
       "carbs": 14
     },
-    "baked_potato": {
-      "name": "Картофель запечённый",
-      "kcal": 95,
-      "protein": 2,
-      "fat": 3,
-      "carbs": 16
-    },
     "boiled_potato": {
       "name": "Картофель отварной",
       "kcal": 80,
       "protein": 2,
       "fat": 2,
       "carbs": 15
-    },
-    "shrimp_cream": {
-      "name": "Креветки в сливочном соусе",
-      "kcal": 120,
-      "protein": 14,
-      "fat": 6,
-      "carbs": 3
     },
     "shrimp_pasta": {
       "name": "Паста с креветками",
@@ -177,12 +79,26 @@
       "fat": 5,
       "carbs": 14
     },
-    "pineapple_shrimp": {
-      "name": "Креветки с ананасом",
-      "kcal": 110,
-      "protein": 14,
-      "fat": 3,
-      "carbs": 7
+    "shrimp_rice_hainan": {
+      "name": "Золотой рис с креветками (Хайнань)",
+      "kcal": 145,
+      "protein": 12,
+      "fat": 5,
+      "carbs": 18
+    },
+    "chicken_stroganoff": {
+      "name": "Куриный строганов",
+      "kcal": 130,
+      "protein": 16,
+      "fat": 6,
+      "carbs": 4
+    },
+    "chicken_meatballs": {
+      "name": "Куриные тефтели в томатно-сметанном соусе",
+      "kcal": 125,
+      "protein": 15,
+      "fat": 6,
+      "carbs": 5
     },
     "goulash": {
       "name": "Гуляш с паприкой",
@@ -198,68 +114,12 @@
       "fat": 5,
       "carbs": 5
     },
-    "veggie_stew": {
-      "name": "Овощное рагу",
-      "kcal": 45,
-      "protein": 1,
-      "fat": 2,
-      "carbs": 5
-    },
     "pollock": {
       "name": "Минтай",
       "kcal": 90,
       "protein": 16,
       "fat": 2,
       "carbs": 0
-    },
-    "tomato_cream_sauce": {
-      "name": "Томатно-сливочный соус",
-      "kcal": 70,
-      "protein": 2,
-      "fat": 5,
-      "carbs": 4
-    },
-    "thighs_soy": {
-      "name": "Бёдра в соевом маринаде",
-      "kcal": 190,
-      "protein": 16,
-      "fat": 12,
-      "carbs": 3
-    },
-    "chicken_cutlets": {
-      "name": "Куриные котлеты",
-      "kcal": 140,
-      "protein": 15,
-      "fat": 7,
-      "carbs": 4
-    },
-    "chicken_veg_stew": {
-      "name": "Курица тушёная с овощами",
-      "kcal": 95,
-      "protein": 12,
-      "fat": 4,
-      "carbs": 5
-    },
-    "chicken_baked_herbs": {
-      "name": "Филе запечённое с травами",
-      "kcal": 130,
-      "protein": 22,
-      "fat": 4,
-      "carbs": 1
-    },
-    "chicken_potato_roast": {
-      "name": "Жаркое: курица с картошкой",
-      "kcal": 140,
-      "protein": 12,
-      "fat": 5,
-      "carbs": 12
-    },
-    "chicken_stroganoff": {
-      "name": "Куриный строганов",
-      "kcal": 125,
-      "protein": 15,
-      "fat": 6,
-      "carbs": 4
     },
     "beef_stroganoff": {
       "name": "Бефстроганов",
@@ -268,27 +128,6 @@
       "fat": 8,
       "carbs": 4
     },
-    "beef_tomato": {
-      "name": "Говядина в томатном соусе",
-      "kcal": 130,
-      "protein": 14,
-      "fat": 6,
-      "carbs": 5
-    },
-    "beef_stew": {
-      "name": "Тушёная говядина со сметаной",
-      "kcal": 140,
-      "protein": 15,
-      "fat": 7,
-      "carbs": 4
-    },
-    "beef_paprikash": {
-      "name": "Говядина с паприкой и перцем",
-      "kcal": 135,
-      "protein": 15,
-      "fat": 6,
-      "carbs": 5
-    },
     "beef_pepper": {
       "name": "Говядина с перцем в соевом",
       "kcal": 130,
@@ -296,138 +135,12 @@
       "fat": 5,
       "carbs": 6
     },
-    "cauliflower": {
-      "name": "Цветная капуста тушёная",
-      "kcal": 50,
-      "protein": 3,
-      "fat": 2,
-      "carbs": 6
-    },
-    "rice_meat": {
-      "name": "Рис с мясом",
-      "kcal": 160,
-      "protein": 12,
-      "fat": 6,
-      "carbs": 15
-    },
-    "chicken_mushrooms": {
-      "name": "Курица с грибами в сметане",
-      "kcal": 120,
-      "protein": 15,
-      "fat": 6,
-      "carbs": 3
-    },
-    "chicken_zucchini": {
-      "name": "Курица с кабачками в сметане",
-      "kcal": 90,
-      "protein": 11,
-      "fat": 4,
-      "carbs": 5
-    },
-    "stewed_zucchini": {
-      "name": "Тушёный кабачок",
-      "kcal": 40,
-      "protein": 1,
-      "fat": 1,
-      "carbs": 6
-    },
-    "cream_dill_sauce": {
-      "name": "Сливочно-укропный соус",
-      "kcal": 80,
-      "protein": 2,
-      "fat": 7,
-      "carbs": 2
-    },
-    "salad_tomato_cucumber": {
-      "name": "Огурцы и помидоры со сметаной",
-      "kcal": 45,
-      "protein": 2,
-      "fat": 3,
-      "carbs": 4
-    },
-    "salad_tomato_herbs": {
-      "name": "Помидоры с зеленью и сметаной",
-      "kcal": 40,
-      "protein": 2,
-      "fat": 3,
-      "carbs": 4
-    },
-    "salad_pickles": {
-      "name": "Малосольные огурцы",
-      "kcal": 15,
-      "protein": 1,
-      "fat": 0,
-      "carbs": 3
-    },
-    "salad_cabbage": {
-      "name": "Капустный салат со сметаной",
-      "kcal": 40,
-      "protein": 1,
-      "fat": 2,
-      "carbs": 5
-    },
-    "salad_cabbage_cucumber": {
-      "name": "Капуста с огурцом и сметаной",
-      "kcal": 35,
-      "protein": 1,
-      "fat": 2,
-      "carbs": 4
-    },
-    "salad_pepper_tomato": {
-      "name": "Перец с помидорами",
-      "kcal": 30,
-      "protein": 1,
-      "fat": 1,
-      "carbs": 5
-    },
-    "salad_tomato_yogurt": {
-      "name": "Помидоры и огурцы с йогуртом",
-      "kcal": 35,
-      "protein": 2,
-      "fat": 1,
-      "carbs": 4
-    },
-    "corn_peas": {
-      "name": "Горошек с кукурузой",
-      "kcal": 75,
-      "protein": 4,
-      "fat": 1,
-      "carbs": 13
-    },
     "pasta": {
       "name": "Макароны",
       "kcal": 140,
       "protein": 5,
       "fat": 1,
       "carbs": 28
-    },
-    "buckwheat": {
-      "name": "Гречка",
-      "kcal": 110,
-      "protein": 4,
-      "fat": 1,
-      "carbs": 21
-    },
-    "bulgur": {
-      "name": "Булгур",
-      "kcal": 120,
-      "protein": 4,
-      "fat": 1,
-      "carbs": 25
-    },
-    "rice": {
-      "name": "Рис",
-      "kcal": 130,
-      "protein": 3,
-      "fat": 0,
-      "carbs": 28
-    },
-    "quinoa": {
-      "name": "Киноа",
-      "kcal": 120,
-      "protein": 4,
-      "fat": 2,
-      "carbs": 21
     },
     "buckwheat_veg": {
       "name": "Гречка с луком и морковью",
@@ -450,61 +163,33 @@
       "fat": 3,
       "carbs": 20
     },
-    "quinoa_veg": {
-      "name": "Киноа с луком и морковью",
-      "kcal": 115,
-      "protein": 4,
-      "fat": 3,
-      "carbs": 18
-    },
-    "pasta_tomato": {
-      "name": "Макароны с томатной зажаркой",
-      "kcal": 145,
-      "protein": 5,
-      "fat": 3,
-      "carbs": 26
-    },
-    "pasta_cream": {
-      "name": "Макароны в сливочно-чесночном соусе",
-      "kcal": 165,
-      "protein": 6,
-      "fat": 6,
-      "carbs": 24
-    },
-    "pasta_cheese": {
-      "name": "Макароны с сыром и зеленью",
-      "kcal": 170,
-      "protein": 8,
-      "fat": 6,
-      "carbs": 23
-    },
-    "pasta_mushroom": {
-      "name": "Макароны с грибной поджаркой",
-      "kcal": 150,
-      "protein": 6,
-      "fat": 4,
-      "carbs": 25
-    },
-    "broccoli_roast": {
-      "name": "Брокколи / цветная запечённая",
+    "roast_veg": {
+      "name": "Овощи запечённые",
       "kcal": 55,
-      "protein": 4,
-      "fat": 3,
-      "carbs": 4
-    },
-    "big_salad": {
-      "name": "Большой овощной салат",
-      "kcal": 45,
       "protein": 2,
-      "fat": 2,
-      "carbs": 4
+      "fat": 3,
+      "carbs": 5
     },
-    "peas": {
-      "name": "Горошек",
-      "kcal": 70,
-      "protein": 5,
-      "fat": 0,
-      "carbs": 12
+    "veg_salad": {
+      "name": "Свежий овощной салат",
+      "kcal": 40,
+      "protein": 1,
+      "fat": 3,
+      "carbs": 3
+    },
+    "beef_meatballs": {
+      "name": "Говяжьи тефтели в томатно-сметанном соусе",
+      "kcal": 130,
+      "protein": 14,
+      "fat": 6,
+      "carbs": 5
+    },
+    "chicken_pasta_mushroom": {
+      "name": "Паста с курицей и грибами",
+      "kcal": 145,
+      "protein": 12,
+      "fat": 5,
+      "carbs": 14
     }
   }
 }

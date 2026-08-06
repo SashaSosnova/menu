@@ -73,9 +73,9 @@ export const completeBaseLabel: Record<CompleteBase, string> = {
 }
 
 export const weekCompleteBase: Record<number, CompleteBase> = {
-  1: 'pasta',
-  2: 'potato',
-  3: 'vegetables',
-  4: 'grain',
+  1: 'grain',
+  2: 'pasta',
+  3: 'potato',
+  4: 'pasta',
 }
 

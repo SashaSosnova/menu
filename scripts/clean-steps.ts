@@ -7,12 +7,7 @@ import { dishes } from '../src/data/dishes.ts'
 import { extraDishes } from '../src/data/extraDishes.ts'
 import { cleanRecipeSteps } from '../src/lib/recipeSteps.ts'
 
-const STEP_OVERRIDES: Record<string, string> = {
-  pineapple_chicken:
-    'Курицу кубиками обжарить с луком 6–7 мин. Перец и чеснок 3 мин. Ананас, соевый соус, мёд, 50 мл сока из банки — 5 мин. Рис варить отдельно. Без острого.',
-  salad_pickles: 'Подать как есть.',
-  salad_carrot_korean: 'Покупная — по желанию.',
-}
+const STEP_OVERRIDES: Record<string, string> = {}
 
 function patchDishSteps(content: string, id: string, steps: string): string | null {
   const keyRe = new RegExp(`\\n  ${id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}: \\{`)
