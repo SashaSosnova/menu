@@ -102,7 +102,17 @@ export const dishMeta: Record<string, DishMeta> = {
       'roast_veg',
     ],
   },
-  chicken_legs: {
+  chicken_legs_honey: {
+    kind: 'component',
+    protein: 'chicken',
+    sides: [
+      ...dryGrainSides,
+      ...potatoSides,
+      ...alwaysSides,
+      ...vegSides,
+    ],
+  },
+  chicken_legs_paprika: {
     kind: 'component',
     protein: 'chicken',
     sides: [
@@ -164,7 +174,18 @@ export const dishMeta: Record<string, DishMeta> = {
       ...vegSides,
     ],
   },
-  wings: {
+  wings_soy: {
+    kind: 'component',
+    protein: 'chicken',
+    sides: [
+      ...dryGrainSides,
+      ...alwaysSides,
+      'broccoli_steam',
+      'cauliflower',
+      'roast_veg',
+    ],
+  },
+  wings_paprika: {
     kind: 'component',
     protein: 'chicken',
     sides: [

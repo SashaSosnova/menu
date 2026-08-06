@@ -74,7 +74,11 @@ export const weekPlans: WeekPlan[] = [
         'Отбивные в панировке + ножки · пюре + овощи запечённые',
         [
           { dishId: 'chicken_schnitzel', portions: portion6 },
-          { dishId: 'chicken_legs', portions: '8 шт (~6 порций)' },
+          {
+            dishId: 'chicken_legs_honey',
+            orDishIds: ['chicken_legs_paprika'],
+            portions: '8 шт (~6 порций)',
+          },
         ],
         [
           { dishId: 'mash', portions: portion6 },
@@ -99,7 +103,7 @@ export const weekPlans: WeekPlan[] = [
       { product: 'Томаты в соку', amount: '400 г', note: 'Болоньезе пт' },
       { product: 'Томаты / томатная паста', amount: '300 г + 2 ст.л.', note: 'Курица в соусе пн' },
       { product: 'Брокколи', amount: '850 г', note: 'Пн в аэрогриле' },
-      { product: 'Пармезан', amount: '40 г', note: 'Пн брокколи' },
+      { product: 'Сыр твёрдый Пармезан', amount: '40 г', note: 'Пн брокколи' },
       { product: 'Креветки', amount: '450 г', note: 'Пт цельное' },
       { product: 'Чеснок', amount: '2 головки доп.', note: 'Пт золотой рис — много чеснока' },
       { product: 'Горошек', amount: '120 г', note: 'Пт золотой рис' },
@@ -162,7 +166,11 @@ export const weekPlans: WeekPlan[] = [
         'Гуляш + крылья · рис + овощи запечённые',
         [
           { dishId: 'goulash', portions: portion6 },
-          { dishId: 'wings', portions: '16 шт (~6 порций)' },
+          {
+            dishId: 'wings_soy',
+            orDishIds: ['wings_paprika'],
+            portions: '16 шт (~6 порций)',
+          },
         ],
         [
           { dishId: 'rice_veg', portions: portion6 },
@@ -247,7 +255,11 @@ export const weekPlans: WeekPlan[] = [
         'Говяжьи тефтели + ножки · булгур + картофель отварной',
         [
           { dishId: 'beef_meatballs', portions: portion6 },
-          { dishId: 'chicken_legs', portions: '8 шт (~6 порций)' },
+          {
+            dishId: 'chicken_legs_honey',
+            orDishIds: ['chicken_legs_paprika'],
+            portions: '8 шт (~6 порций)',
+          },
         ],
         [
           { dishId: 'bulgur_veg', portions: portion6 },
@@ -277,7 +289,7 @@ export const weekPlans: WeekPlan[] = [
       { product: 'Салат листовой доп.', amount: '250 г', note: 'Пт гарнир к строганову' },
       { product: 'Лук фиолетовый', amount: '50 г', note: 'Пт салат' },
       { product: 'Соус майонезный лёгкий', amount: '80 г', note: 'Минтай пн' },
-      { product: 'Сыр твёрдый', amount: '80 г', note: 'Минтай пн' },
+      { product: 'Сыр твёрдый Пармезан', amount: '80 г', note: 'Минтай пн' },
       { product: 'Томаты в соку', amount: '200 г', note: 'Ср говяжьи тефтели' },
       { product: 'Томатная паста', amount: '80 г + 1 ч.л.', note: 'Пт цельное + строганов' },
       { product: 'Паприка сладкая', amount: '1 ст.л.', note: 'Картофель с мясом пт' },

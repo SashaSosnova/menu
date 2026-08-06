@@ -5,10 +5,26 @@
 
 export type MenuDishRef = {
   dishId: string
+  /** Варианты на выбор — в меню через « / » (напр. два маринада) */
+  orDishIds?: string[]
   /** Подпись, если отличается от dishes[id].name */
   label?: string
   /** Соус день в день */
   daySauceId?: string
+}
+
+export function menuRefIds(item: MenuDishRef): string[] {
+  return [item.dishId, ...(item.orDishIds ?? [])]
+}
+
+export function menuRefLabel(
+  item: MenuDishRef,
+  nameOf: (id: string) => string | undefined = () => undefined,
+): string {
+  if (item.label) return item.label
+  return menuRefIds(item)
+    .map((id) => nameOf(id) ?? id)
+    .join(' / ')
 }
 
 export type MenuSlot = {
@@ -52,7 +68,7 @@ export const weekMenus: WeekMenu[] = [
         note: 'Курица + курица → пюре + овощи запечённые.',
         mains: [
           { dishId: 'chicken_schnitzel' },
-          { dishId: 'chicken_legs' },
+          { dishId: 'chicken_legs_honey', orDishIds: ['chicken_legs_paprika'] },
         ],
         sides: [{ dishId: 'mash' }, { dishId: 'roast_veg' }],
       },
@@ -89,12 +105,13 @@ export const weekMenus: WeekMenu[] = [
         note: 'Фиксированные пары: гуляш→рис, крылья→запечённые овощи.',
         mains: [
           { dishId: 'goulash' },
-          { dishId: 'wings' },
+          { dishId: 'wings_soy', orDishIds: ['wings_paprika'] },
         ],
         sides: [{ dishId: 'rice_veg' }, { dishId: 'roast_veg' }],
         pairs: [
           ['goulash', 'rice_veg'],
-          ['wings', 'roast_veg'],
+          ['wings_soy', 'roast_veg'],
+          ['wings_paprika', 'roast_veg'],
         ],
       },
       {
@@ -130,7 +147,7 @@ export const weekMenus: WeekMenu[] = [
         note: 'Говяжьи тефтели + ножки · булгур + картофель отварной.',
         mains: [
           { dishId: 'beef_meatballs' },
-          { dishId: 'chicken_legs' },
+          { dishId: 'chicken_legs_honey', orDishIds: ['chicken_legs_paprika'] },
         ],
         sides: [{ dishId: 'bulgur_veg' }, { dishId: 'boiled_potato' }],
       },

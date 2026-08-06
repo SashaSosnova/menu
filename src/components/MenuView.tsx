@@ -57,15 +57,26 @@ function RecipeDetails({ dishId }: { dishId: string }) {
   )
 }
 
+function batchItemIds(item: BatchItem): string[] {
+  return [item.dishId, ...(item.orDishIds ?? [])]
+}
+
+function batchItemLabel(item: BatchItem): string {
+  return batchItemIds(item)
+    .map((id) => getDish(id)?.name ?? id)
+    .join(' / ')
+}
+
 function BatchItemLine({ item }: { item: BatchItem }) {
   const dish = getDish(item.dishId)
   if (!dish) return null
+  const name = batchItemLabel(item)
   const macros = dish.macros ? ` (${formatMacros(dish.macros)})` : ''
 
   return (
     <li>
       <span className="batch-item-name">
-        {dish.name}
+        {name}
         {dish.kind === 'complete' ? <span className="kind-tag">цельное</span> : null}
         {macros}
       </span>
@@ -75,7 +86,7 @@ function BatchItemLine({ item }: { item: BatchItem }) {
 }
 
 function CookBatchCard({ batch }: { batch: CookBatch }) {
-  const dishIds = [...batch.mains, ...batch.sides].map((i) => i.dishId)
+  const dishIds = [...batch.mains, ...batch.sides].flatMap(batchItemIds)
 
   return (
     <details className="cook-task" open>
@@ -252,14 +263,14 @@ export function MenuView() {
             <p>
               Основное:{' '}
               {b.mains
-                .map((m) => `${getDish(m.dishId)?.name ?? m.dishId} (${m.portions})`)
+                .map((m) => `${batchItemLabel(m)} (${m.portions})`)
                 .join('; ')}
             </p>
             {b.sides.length > 0 && (
               <p>
                 Гарниры:{' '}
                 {b.sides
-                  .map((m) => `${getDish(m.dishId)?.name ?? m.dishId} (${m.portions})`)
+                  .map((m) => `${batchItemLabel(m)} (${m.portions})`)
                   .join('; ')}
               </p>
             )}

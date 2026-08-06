@@ -20,8 +20,10 @@ export type CatalogDish = {
 /** —— ГОРЯЧЕЕ —— */
 
 export const chickenMains: CatalogDish[] = [
-  { name: 'Ножки запечённые (маринад на выбор)', wetness: 'dry' },
-  { name: 'Крылья запечённые (маринад на выбор)', wetness: 'dry' },
+  { name: 'Ножки медово-чесночные', wetness: 'dry' },
+  { name: 'Ножки в паприке', wetness: 'dry' },
+  { name: 'Крылья соево-медовые', wetness: 'dry' },
+  { name: 'Крылья в паприке', wetness: 'dry' },
   { name: 'Бёдра запечённые со сметаной и чесноком', wetness: 'sauce' },
   { name: 'Филе в томатно-сметанном соусе', wetness: 'sauce' },
   { name: 'Куриный строганов', wetness: 'sauce' },

@@ -1,6 +1,12 @@
 import { useState } from 'react'
 import { weekNumbers } from '../data/weeks'
-import { getWeekMenu, type MenuDishRef, type MenuSlot } from '../data/menu'
+import {
+  getWeekMenu,
+  menuRefIds,
+  menuRefLabel,
+  type MenuDishRef,
+  type MenuSlot,
+} from '../data/menu'
 import { getDish } from '../data/dishes'
 import { formatMacros } from '../lib/macros'
 import { getCookbookDish, getEffectiveRecipe, type CookbookStore } from '../data/cookbook'
@@ -16,7 +22,62 @@ import { useMenuSync } from '../hooks/useMenuSync'
 import { formatServingsDisplay } from '../lib/recipeServings'
 
 function dishLabel(item: MenuDishRef): string {
-  return item.label ?? getDish(item.dishId)?.name ?? item.dishId
+  return menuRefLabel(item, (id) => getDish(id)?.name)
+}
+
+function RecipeVariantBlock({
+  dishId,
+  cookbook,
+  sauceNote,
+}: {
+  dishId: string
+  cookbook: CookbookStore
+  sauceNote?: string
+}) {
+  const dish = getCookbookDish(dishId, cookbook) ?? getDish(dishId)
+  const recipe = getEffectiveRecipe(dishId, cookbook)
+  if (!dish) return null
+
+  return (
+    <div className="menu-recipe-variant">
+      <h3>{dish.name}</h3>
+      {dish.macros ? (
+        <p className="modal-macros muted">КБЖУ {formatMacros(dish.macros)} на 100 г</p>
+      ) : null}
+      {recipe ? (
+        <>
+          {recipe.servings ? (
+            <p className="muted">{formatServingsDisplay(dishId, recipe.servings)}</p>
+          ) : null}
+          {sauceNote ? <p className="muted">{sauceNote}</p> : null}
+          {recipe.ingredients.length > 0 ? (
+            <>
+              <h4>Ингредиенты</h4>
+              <ul className="ingredient-list">
+                {recipe.ingredients.map((line) => (
+                  <li key={line}>{line}</li>
+                ))}
+              </ul>
+            </>
+          ) : null}
+          {recipe.steps ? (
+            <>
+              <h4>Как готовить</h4>
+              <p className="steps">{recipe.steps}</p>
+            </>
+          ) : null}
+          {recipe.storage ? (
+            <>
+              <h4>Хранение</h4>
+              <p>{recipe.storage}</p>
+            </>
+          ) : null}
+        </>
+      ) : (
+        <p className="muted">Рецепт пока не добавлен — можно дописать во вкладке «Книга».</p>
+      )}
+    </div>
+  )
 }
 
 function RecipePeekModal({
@@ -28,11 +89,11 @@ function RecipePeekModal({
   cookbook: CookbookStore
   onClose: () => void
 }) {
-  const dish = getCookbookDish(item.dishId, cookbook) ?? getDish(item.dishId)
-  const recipe = getEffectiveRecipe(item.dishId, cookbook)
+  const ids = menuRefIds(item)
   const sauce = item.daySauceId ? getDish(item.daySauceId) : undefined
-
-  if (!dish) return null
+  const sauceNote = sauce?.recipe
+    ? `Соус: ${sauce.name}. ${sauce.recipe.steps}`
+    : undefined
 
   return (
     <div className="modal-backdrop" onClick={onClose} role="presentation">
@@ -40,10 +101,8 @@ function RecipePeekModal({
         <div className="modal-header">
           <div>
             <h2>{dishLabel(item)}</h2>
-            {dish.macros ? (
-              <p className="modal-macros muted">
-                КБЖУ {formatMacros(dish.macros)} на 100 г
-              </p>
+            {ids.length > 1 ? (
+              <p className="muted">На выбор один вариант маринада</p>
             ) : null}
           </div>
           <button type="button" className="modal-close" onClick={onClose} aria-label="Закрыть">
@@ -51,42 +110,14 @@ function RecipePeekModal({
           </button>
         </div>
         <div className="modal-body">
-          {recipe ? (
-            <>
-              {recipe.servings ? (
-                <p className="muted">{formatServingsDisplay(item.dishId, recipe.servings)}</p>
-              ) : null}
-              {sauce?.recipe ? (
-                <p className="muted">
-                  Соус: {sauce.name}. {sauce.recipe.steps}
-                </p>
-              ) : null}
-              {recipe.ingredients.length > 0 ? (
-                <>
-                  <h3>Ингредиенты</h3>
-                  <ul className="ingredient-list">
-                    {recipe.ingredients.map((line) => (
-                      <li key={line}>{line}</li>
-                    ))}
-                  </ul>
-                </>
-              ) : null}
-              {recipe.steps ? (
-                <>
-                  <h3>Как готовить</h3>
-                  <p className="steps">{recipe.steps}</p>
-                </>
-              ) : null}
-              {recipe.storage ? (
-                <>
-                  <h3>Хранение</h3>
-                  <p>{recipe.storage}</p>
-                </>
-              ) : null}
-            </>
-          ) : (
-            <p className="muted">Рецепт пока не добавлен — можно дописать во вкладке «Книга».</p>
-          )}
+          {ids.map((id) => (
+            <RecipeVariantBlock
+              key={id}
+              dishId={id}
+              cookbook={cookbook}
+              sauceNote={id === item.dishId ? sauceNote : undefined}
+            />
+          ))}
         </div>
       </div>
     </div>

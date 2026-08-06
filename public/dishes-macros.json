@@ -37,9 +37,16 @@
       "fat": 6,
       "carbs": 5
     },
-    "chicken_legs": {
-      "name": "Ножки запечённые",
+    "chicken_legs_honey": {
+      "name": "Ножки медово-чесночные",
       "kcal": 210,
+      "protein": 17,
+      "fat": 15,
+      "carbs": 1
+    },
+    "chicken_legs_paprika": {
+      "name": "Ножки в паприке",
+      "kcal": 205,
       "protein": 17,
       "fat": 15,
       "carbs": 0
@@ -51,9 +58,16 @@
       "fat": 10,
       "carbs": 0
     },
-    "wings": {
-      "name": "Крылья запечённые",
+    "wings_soy": {
+      "name": "Крылья соево-медовые",
       "kcal": 210,
+      "protein": 17,
+      "fat": 15,
+      "carbs": 2
+    },
+    "wings_paprika": {
+      "name": "Крылья в паприке",
+      "kcal": 205,
       "protein": 17,
       "fat": 15,
       "carbs": 0

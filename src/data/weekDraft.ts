@@ -64,7 +64,7 @@ export const week1: DraftWeek = {
           protein: 'chicken',
         },
         {
-          name: 'Ножки запечённые (маринад на выбор)',
+          name: 'Ножки медово-чесночные / Ножки в паприке',
           wetness: 'dry',
           protein: 'chicken',
         },
@@ -118,7 +118,7 @@ export const week2: DraftWeek = {
       mains: [
         { name: 'Гуляш с паприкой', wetness: 'sauce', protein: 'beef' },
         {
-          name: 'Крылья запечённые (маринад на выбор)',
+          name: 'Крылья соево-медовые / Крылья в паприке',
           wetness: 'dry',
           protein: 'chicken',
         },
@@ -129,7 +129,7 @@ export const week2: DraftWeek = {
       ],
       pairs: [
         ['Гуляш с паприкой', 'Рис с луком и морковью'],
-        ['Крылья запечённые (маринад на выбор)', 'Овощи запечённые'],
+        ['Крылья соево-медовые / Крылья в паприке', 'Овощи запечённые'],
       ],
     },
     {
@@ -182,7 +182,7 @@ export const week3: DraftWeek = {
           protein: 'beef',
         },
         {
-          name: 'Ножки запечённые (маринад на выбор)',
+          name: 'Ножки медово-чесночные / Ножки в паприке',
           wetness: 'dry',
           protein: 'chicken',
         },

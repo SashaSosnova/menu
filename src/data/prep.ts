@@ -244,9 +244,9 @@ export const prepGroups: PrepGroup[] = [
     id: 'marinate-legs-wings',
     title: 'Ножки и крылья — маринад на выбор',
     intro:
-      'На каждый пакет — один маринад. Подписать пакет выбранным вариантом.',
+      'На пакет — один маринад из двух рецептов. Подписать пакет выбранным вариантом.',
     marinade:
-      'Ножки: (А) мёд 1 ч.л. + чеснок 2 зуб. + соль + масло 1–2 ст.л. + чуть паприки · (Б) паприка 1–2 ч.л. + чеснок 2 зуб. + соль + масло 1–2 ст.л.\nКрылья: (А) соевый 3 ст.л. + мёд 1 ч.л. + паприка + чеснок 1 зуб. + чуть масла · (Б) паприка 1–2 ч.л. + чеснок 2 зуб. + соль + масло 1–2 ст.л.',
+      'Ножки медово-чесночные: мёд 5 г + чеснок 10 г + паприка 2 г + масло + соль · Ножки в паприке: паприка 5 г + чеснок 10 г + масло + соль.\nКрылья соево-медовые: соевый 45 г + мёд 5 г + паприка 2 г + чеснок 5 г · Крылья в паприке: паприка 5 г + чеснок 10 г + масло + соль.',
     items: [
       {
         id: 'legs-w1',
@@ -254,7 +254,7 @@ export const prepGroups: PrepGroup[] = [
         amount: '1 кг',
         week: 1,
         slot: 'wed-thu',
-        dishIds: ['chicken_legs'],
+        dishIds: ['chicken_legs_honey', 'chicken_legs_paprika'],
       },
       {
         id: 'legs-w3',
@@ -262,7 +262,7 @@ export const prepGroups: PrepGroup[] = [
         amount: '1 кг',
         week: 3,
         slot: 'wed-thu',
-        dishIds: ['chicken_legs'],
+        dishIds: ['chicken_legs_honey', 'chicken_legs_paprika'],
       },
       {
         id: 'wings-w2',
@@ -270,7 +270,7 @@ export const prepGroups: PrepGroup[] = [
         amount: '1,5 кг',
         week: 2,
         slot: 'wed-thu',
-        dishIds: ['wings'],
+        dishIds: ['wings_soy', 'wings_paprika'],
       },
     ],
   },

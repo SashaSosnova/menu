@@ -38,6 +38,8 @@ export type ShoppingItem = {
 
 export type BatchItem = {
   dishId: string
+  /** Варианты на выбор — в списке через « / » */
+  orDishIds?: string[]
   /** Обычно «6 порций» ≈ 2 семейных приёма */
   portions: string
 }
