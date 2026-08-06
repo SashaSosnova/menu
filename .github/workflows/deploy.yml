@@ -6,25 +6,17 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
   group: pages
-  # false: cancel-in-progress оставлял «висящие» Pages deployments и блокировал следующие
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ fromJSON(steps.deployment.outputs.outputs || '{}').page_url }}
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -38,17 +30,12 @@ jobs:
           VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
           VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
-      - uses: actions/upload-pages-artifact@v3
+      # Не используем actions/deploy-pages — у GitHub сейчас залипает
+      # deployment_in_progress на ~10 мин и падает по таймауту.
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          path: dist
-      # GitHub Pages backend часто зависает в deployment_in_progress до 10 мин.
-      # Короткий timeout + ретраи вместо одного долгого зависания.
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: Wandalen/wretry.action@v3.8.0
-        with:
-          action: actions/deploy-pages@v4
-          attempt_limit: 3
-          attempt_delay: 20000
-          with: |
-            timeout: 90000
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          force_orphan: true
+          enable_nojekyll: true
