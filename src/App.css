@@ -1663,3 +1663,98 @@
     line-height: 1.35;
   }
 }
+
+.ration-person {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0 0 0.85rem;
+}
+
+.ration-person-btn {
+  border: 1px solid #d8d0c3;
+  background: #fff;
+  color: #3d3a34;
+  padding: 0.4rem 0.7rem;
+  border-radius: 999px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.ration-person-btn.is-active {
+  border-color: #2f4a3a;
+  background: #2f4a3a;
+  color: #fffdf8;
+}
+
+.ration-week-summary {
+  margin: 0 0 0.85rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: 0.75rem;
+  background: #f7f3eb;
+}
+
+.ration-week-summary p {
+  margin: 0;
+  line-height: 1.4;
+}
+
+.ration-week-summary p + p {
+  margin-top: 0.3rem;
+}
+
+.ration-hint {
+  margin: 0.55rem 0 0.35rem;
+  font-size: 0.88rem;
+}
+
+.ration-combos {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0.55rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ration-combo {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 0.55rem;
+  background: #fffdf8;
+  border: 1px solid #e5dfd3;
+}
+
+.ration-combo-text {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.ration-combo-text strong {
+  font-size: 0.9rem;
+  color: #2f4a3a;
+}
+
+.ration-combo-text .muted {
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+
+.ration-kcal {
+  flex-shrink: 0;
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: #3d3a34;
+  white-space: nowrap;
+}
+
+.ration-slot-total {
+  margin: 0.65rem 0 0;
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
