@@ -17,7 +17,7 @@ import {
   type PortionOutcome,
   type SlotStat,
 } from '../data/mealStats'
-import { slotRangeLabel, weekRangeLabel } from '../data/calendar'
+import { getCurrentWeekNumber, slotRangeLabel, weekRangeLabel } from '../data/calendar'
 import { useMenuSync } from '../hooks/useMenuSync'
 import { formatServingsDisplay } from '../lib/recipeServings'
 
@@ -248,7 +248,7 @@ function SlotCard({
 
 export function MenuTab() {
   const { state, setMealStats } = useMenuSync()
-  const [weekNumber, setWeekNumber] = useState(1)
+  const [weekNumber, setWeekNumber] = useState(getCurrentWeekNumber)
   const [recipeItem, setRecipeItem] = useState<MenuDishRef | null>(null)
   const stats = state.mealStats
   const menu = getWeekMenu(weekNumber)

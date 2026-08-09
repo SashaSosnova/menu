@@ -29,10 +29,12 @@ type EditDraft = {
   note: string
 }
 
-type CookbookSection = 'mains' | 'sides'
+type CookbookSection = 'mains' | 'sides' | 'extras'
 
 function sectionToKind(section: CookbookSection): CustomDish['kind'] {
-  return section === 'mains' ? 'component' : 'side'
+  if (section === 'mains') return 'component'
+  if (section === 'extras') return 'extra'
+  return 'side'
 }
 
 function draftFromDish(dish: Dish, store: CookbookStore): EditDraft {
@@ -100,6 +102,13 @@ function RecipeFormFields({
               onClick={() => onKindChange('sides')}
             >
               Гарнир
+            </button>
+            <button
+              type="button"
+              className={kind === 'extras' ? 'kind-picker-btn is-active' : 'kind-picker-btn'}
+              onClick={() => onKindChange('extras')}
+            >
+              Дополнительно
             </button>
           </div>
         </div>
@@ -352,6 +361,7 @@ function RecipeModal({
               {displayDish.kind === 'complete' ? 'полноценное · ' : null}
               {displayDish.kind === 'side' ? 'гарнир · ' : null}
               {displayDish.kind === 'component' ? 'горячее · ' : null}
+              {displayDish.kind === 'extra' ? 'дополнение · ' : null}
               {'macros' in displayDish && displayDish.macros
                 ? `КБЖУ ${formatMacros(displayDish.macros)} на 100 г`
                 : 'без КБЖУ'}
@@ -514,7 +524,7 @@ export function CookbookTab() {
   const [openId, setOpenId] = useState<string | null>(null)
   const [adding, setAdding] = useState(false)
 
-  const { mains, sides } = useMemo(() => getCookbookDishes(store), [store])
+  const { mains, sides, extras } = useMemo(() => getCookbookDishes(store), [store])
 
   function matches(dish: Dish): boolean {
     const q = query.trim().toLowerCase()
@@ -529,7 +539,13 @@ export function CookbookTab() {
 
   const filteredMains = mains.filter(matches)
   const filteredSides = sides.filter(matches)
-  const visible = section === 'mains' ? filteredMains : filteredSides
+  const filteredExtras = extras.filter(matches)
+  const visible =
+    section === 'mains'
+      ? filteredMains
+      : section === 'extras'
+        ? filteredExtras
+        : filteredSides
   const openDish = openId ? getCookbookDish(openId, store) : undefined
 
   function handleAdded(next: CookbookStore, newId: string, newSection: CookbookSection) {
@@ -543,7 +559,11 @@ export function CookbookTab() {
     <section className="view cookbook-view">
       <div className="view-heading">
         <h2>Кулинарная книга</h2>
-        <p className="muted">Рецепты и оценки синхронизируются с облаком после входа.</p>
+        <p className="muted">
+          {section === 'extras'
+            ? 'Добавки к тарелке — рядом с основным гарниром и горячим, не вместо них.'
+            : 'Рецепты и оценки синхронизируются с облаком после входа.'}
+        </p>
       </div>
 
       <nav className="sub-nav" aria-label="Раздел книги">
@@ -560,6 +580,13 @@ export function CookbookTab() {
           onClick={() => setSection('sides')}
         >
           Гарниры · {filteredSides.length}
+        </button>
+        <button
+          type="button"
+          className={section === 'extras' ? 'sub-nav-item is-active' : 'sub-nav-item'}
+          onClick={() => setSection('extras')}
+        >
+          Дополнительно · {filteredExtras.length}
         </button>
       </nav>
 

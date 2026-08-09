@@ -1,4 +1,5 @@
 import type { ShoppingItem } from './types'
+import { buildWeeklyShopping } from './weekShopping'
 
 /** Итого на месяц — что купить. Нарезка и пакеты — во вкладке «Заготовки». */
 export const monthlyMeatFish: ShoppingItem[] = [
@@ -23,79 +24,12 @@ export const monthlyShopping: ShoppingItem[] = [
   ...monthlyFrozenVeg,
 ]
 
-/** Скоропорт и овощи по неделям — только продукт и количество */
-export const weeklyShopping: Record<number, ShoppingItem[]> = {
-  1: [
-    { product: 'Лук', amount: '1,5 кг' },
-    { product: 'Морковь', amount: '0,8 кг' },
-    { product: 'Перец сладкий', amount: '4 шт' },
-    { product: 'Кабачок', amount: '2 шт' },
-    { product: 'Томаты', amount: '800 г' },
-    { product: 'Томаты в соку', amount: '1 банка' },
-    { product: 'Сметана 20%', amount: '400 г' },
-    { product: 'Сливки 10%', amount: '200 мл' },
-    { product: 'Чеснок', amount: '2 головки' },
-    { product: 'Картофель', amount: '1 кг' },
-    { product: 'Макароны', amount: '550 г' },
-    { product: 'Гречка', amount: '330 г' },
-    { product: 'Рис', amount: '290 г' },
-    { product: 'Брокколи', amount: '900 г' },
-    { product: 'Зелень', amount: '2 пучка' },
-    { product: 'Огурцы', amount: '4 шт' },
-    { product: 'Помидоры на салат', amount: '4 шт' },
-  ],
-  2: [
-    { product: 'Лук', amount: '1,5 кг' },
-    { product: 'Морковь', amount: '0,8 кг' },
-    { product: 'Перец сладкий', amount: '500 г' },
-    { product: 'Сметана 20%', amount: '400 г' },
-    { product: 'Сливки 10%', amount: '175 мл', note: 'Паста с креветками' },
-    { product: 'Креветки', amount: '450 г', note: 'Пт цельное' },
-    { product: 'Картофель', amount: '700 г', note: 'Пн пюре' },
-    { product: 'Цветная капуста', amount: '900 г' },
-    { product: 'Макароны', amount: '370 г', note: 'Пт цельное' },
-    { product: 'Рис', amount: '180 г' },
-    { product: 'Булгур', amount: '180 г' },
-    { product: 'Зелень', amount: '1 пучок' },
-  ],
-  3: [
-    { product: 'Лук', amount: '1,5 кг' },
-    { product: 'Морковь', amount: '1 кг' },
-    { product: 'Перец сладкий', amount: '5 шт' },
-    { product: 'Кабачок', amount: '2 шт' },
-    { product: 'Томаты', amount: '500 г' },
-    { product: 'Сметана 20%', amount: '400 г' },
-    { product: 'Сливки 10%', amount: '150 мл' },
-    { product: 'Картофель', amount: '2 кг' },
-    { product: 'Брокколи', amount: '900 г' },
-    { product: 'Рис', amount: '290 г' },
-    { product: 'Булгур', amount: '330 г' },
-    { product: 'Макароны', amount: '370 г' },
-    { product: 'Твёрдый сыр', amount: '100 г' },
-    { product: 'Зелень', amount: '2 пучка' },
-  ],
-  4: [
-    { product: 'Лук', amount: '1,5 кг' },
-    { product: 'Морковь', amount: '1 кг' },
-    { product: 'Перец сладкий', amount: '3 шт' },
-    { product: 'Кабачок', amount: '5 шт' },
-    { product: 'Сметана 20%', amount: '400 г' },
-    { product: 'Сливки 10%', amount: '250 мл' },
-    { product: 'Укроп', amount: '1 пучок' },
-    { product: 'Лимон', amount: '1 шт' },
-    { product: 'Картофель', amount: '1 кг' },
-    { product: 'Цветная капуста', amount: '1 кочан' },
-    { product: 'Макароны', amount: '550 г' },
-    { product: 'Гречка', amount: '330 г' },
-    { product: 'Шампиньоны', amount: '200 г' },
-    { product: 'Зелень', amount: '1 пучок' },
-    { product: 'Горчица дижонская', amount: '1 баночка', note: 'Запечённая говядина пн' },
-    { product: 'Красное сухое вино', amount: '1 бутылка', note: 'Запечённая говядина пн' },
-    { product: 'Бульон говяжий', amount: '200 мл', note: 'Запечённая говядина пн' },
-    { product: 'Тимьян свежий', amount: '1 пучок', note: 'Запечённая говядина пн' },
-    { product: 'Розмарин свежий', amount: '1 пучок', note: 'Запечённая говядина пн' },
-  ],
-}
+/**
+ * Скоропорт по неделям — сумма ингредиентов из рецептов меню
+ * (мясо/рыба из морозилки и кладовая не дублируются).
+ */
+export const weeklyShopping: Record<number, ShoppingItem[]> =
+  buildWeeklyShopping()
 
 /** @deprecated */
 export const monthlyMarinades: ShoppingItem[] = []

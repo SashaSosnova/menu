@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { weekNumbers } from '../data/weeks'
+import { getCurrentWeekNumber } from '../data/calendar'
 import { getDish } from '../data/dishes'
 import { formatMacros } from '../lib/macros'
 import { monthlyFreezer } from '../data/shopping'
@@ -133,7 +134,7 @@ function CookBatchCard({ batch }: { batch: CookBatch }) {
 }
 
 export function MenuView() {
-  const [weekNumber, setWeekNumber] = useState(1)
+  const [weekNumber, setWeekNumber] = useState(getCurrentWeekNumber)
   const plan = getWeekPlan(weekNumber)
   const completeName = plan.completeDishId
     ? getDish(plan.completeDishId)?.name

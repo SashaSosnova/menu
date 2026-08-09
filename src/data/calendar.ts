@@ -1,8 +1,10 @@
 /**
- * Календарь меню. Нед.1 начинается в понедельник.
- * Сейчас: 3.08–9.08.2026.
+ * Календарь меню: 4 недели с первого понедельника месяца.
+ * В воскресенье уже переключаемся на следующую неделю (подготовка).
+ * После 4-й недели цикл стартует заново со следующего месяца.
  */
-export const monthStart = new Date(2026, 7, 3) // 3 августа 2026
+
+import { weekNumbers, type WeekNumber } from './weeks'
 
 export type MenuSlotId = 'mon-tue' | 'wed-thu' | 'fri-sat'
 
@@ -33,11 +35,83 @@ const SLOT_DAY_NAMES: Record<MenuSlotId, [string, string]> = {
   'fri-sat': ['Пятница', 'Суббота'],
 }
 
+const MS_DAY = 24 * 60 * 60 * 1000
+const CYCLE_DAYS = 28
+
+function startOfDay(d: Date): Date {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate())
+}
+
 function addDays(base: Date, days: number): Date {
   const d = new Date(base)
   d.setDate(d.getDate() + days)
   return d
 }
+
+function daysBetween(from: Date, to: Date): number {
+  return Math.round((startOfDay(to).getTime() - startOfDay(from).getTime()) / MS_DAY)
+}
+
+/** Первый понедельник месяца (1-е, если оно уже понедельник). */
+export function firstMondayOfMonth(year: number, monthIndex: number): Date {
+  const d = new Date(year, monthIndex, 1)
+  const day = d.getDay() // 0=вс … 1=пн … 6=сб
+  const add = day === 0 ? 1 : day === 1 ? 0 : 8 - day
+  return new Date(year, monthIndex, 1 + add)
+}
+
+/**
+ * Опорная дата для выбора недели: в воскресенье смотрим уже на понедельник
+ * следующей недели (свободный день / заготовки вперёд).
+ */
+export function weekRefDate(today: Date = new Date()): Date {
+  const d = startOfDay(today)
+  if (d.getDay() === 0) d.setDate(d.getDate() + 1)
+  return d
+}
+
+export type CycleContext = {
+  monthStart: Date
+  week: WeekNumber
+}
+
+/** Текущий 4-недельный цикл и номер вкладки. */
+export function getCycleContext(today: Date = new Date()): CycleContext {
+  const ref = weekRefDate(today)
+  let start = firstMondayOfMonth(ref.getFullYear(), ref.getMonth())
+
+  if (ref < start) {
+    const prev = new Date(ref.getFullYear(), ref.getMonth() - 1, 1)
+    start = firstMondayOfMonth(prev.getFullYear(), prev.getMonth())
+  }
+
+  let offset = daysBetween(start, ref)
+
+  if (offset >= CYCLE_DAYS) {
+    const nextMonth = new Date(start.getFullYear(), start.getMonth() + 1, 1)
+    start = firstMondayOfMonth(nextMonth.getFullYear(), nextMonth.getMonth())
+    offset = daysBetween(start, ref)
+    if (offset < 0) {
+      return { monthStart: start, week: 1 }
+    }
+  }
+
+  const week = weekNumbers[
+    Math.min(weekNumbers.length - 1, Math.max(0, Math.floor(offset / 7)))
+  ]
+  return { monthStart: start, week }
+}
+
+export function getMonthStart(today: Date = new Date()): Date {
+  return getCycleContext(today).monthStart
+}
+
+export function getCurrentWeekNumber(today: Date = new Date()): WeekNumber {
+  return getCycleContext(today).week
+}
+
+/** Старт текущего цикла (обновляется при загрузке страницы). */
+export const monthStart: Date = getMonthStart()
 
 function dayMonthGenitive(d: Date): string {
   return `${d.getDate()} ${MONTH_GENITIVE[d.getMonth()]}`
@@ -51,9 +125,24 @@ function rangeLabel(from: Date, to: Date): string {
   return `${dayMonthNumeric(from)} - ${dayMonthNumeric(to)}`
 }
 
+function dateRangeGenitive(from: Date, to: Date): string {
+  if (from.getMonth() === to.getMonth()) {
+    return `${from.getDate()} – ${to.getDate()} ${MONTH_GENITIVE[from.getMonth()]}`
+  }
+  return `${dayMonthGenitive(from)} – ${dayMonthGenitive(to)}`
+}
+
+function weekStartDate(week: number, cycleStart: Date = monthStart): Date {
+  return addDays(cycleStart, (week - 1) * 7)
+}
+
 /** «5 августа - 6 августа (Среда + Четверг)» */
-export function slotRangeLabel(week: number, slot: MenuSlotId): string {
-  const weekStart = addDays(monthStart, (week - 1) * 7)
+export function slotRangeLabel(
+  week: number,
+  slot: MenuSlotId,
+  cycleStart: Date = monthStart,
+): string {
+  const weekStart = weekStartDate(week, cycleStart)
   const { start, end } = slotOffset[slot]
   const from = addDays(weekStart, start)
   const to = addDays(weekStart, end)
@@ -62,8 +151,12 @@ export function slotRangeLabel(week: number, slot: MenuSlotId): string {
 }
 
 /** Подпись на пакет: «нед.1 · 5.08 - 6.08» */
-export function packUseLabel(week: number, slot: MenuSlotId): string {
-  const weekStart = addDays(monthStart, (week - 1) * 7)
+export function packUseLabel(
+  week: number,
+  slot: MenuSlotId,
+  cycleStart: Date = monthStart,
+): string {
+  const weekStart = weekStartDate(week, cycleStart)
   const { start, end } = slotOffset[slot]
   const from = addDays(weekStart, start)
   const to = addDays(weekStart, end)
@@ -83,16 +176,12 @@ export function freezerBestBefore(
   return `до ${dd}.${mm}.${yyyy}`
 }
 
-function dateRangeGenitive(from: Date, to: Date): string {
-  if (from.getMonth() === to.getMonth()) {
-    return `${from.getDate()} – ${to.getDate()} ${MONTH_GENITIVE[from.getMonth()]}`
-  }
-  return `${dayMonthGenitive(from)} – ${dayMonthGenitive(to)}`
-}
-
 /** «3 – 9 августа» — полная неделя пн–вс */
-export function weekRangeLabel(week: number): string {
-  const weekStart = addDays(monthStart, (week - 1) * 7)
+export function weekRangeLabel(
+  week: number,
+  cycleStart: Date = monthStart,
+): string {
+  const weekStart = weekStartDate(week, cycleStart)
   const weekEnd = addDays(weekStart, 6)
   return dateRangeGenitive(weekStart, weekEnd)
 }

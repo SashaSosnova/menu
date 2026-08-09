@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { weekNumbers } from '../data/weeks'
 import { getWeekMenu, type MenuSlot } from '../data/menu'
 import { people, prepMeals, type PersonId } from '../data/portions'
-import { slotRangeLabel, weekRangeLabel } from '../data/calendar'
+import { getCurrentWeekNumber, slotRangeLabel, weekRangeLabel } from '../data/calendar'
 import {
   getPersonPortion,
   slotDishesTotalKcal,
@@ -77,7 +77,7 @@ function SlotRation({
 }
 
 export function RationTab() {
-  const [weekNumber, setWeekNumber] = useState(1)
+  const [weekNumber, setWeekNumber] = useState(getCurrentWeekNumber)
   const [personId, setPersonId] = useState<PersonId>('woman')
   const menu = getWeekMenu(weekNumber)
   const person = getPersonPortion(personId)

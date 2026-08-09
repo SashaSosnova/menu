@@ -267,4 +267,12 @@ export const dishMeta: Record<string, DishMeta> = {
   bulgur_veg: { kind: 'side' },
   mash: { kind: 'side' },
   boiled_potato: { kind: 'side' },
+
+  // —— Дополнительно (к тарелке, не основной гарнир) ——
+  peas_cream: { kind: 'extra' },
+  peas_sour_cream: { kind: 'extra' },
+  green_beans_garlic: { kind: 'extra' },
+  corn_cream: { kind: 'extra' },
+  carrots_butter: { kind: 'extra' },
+  mushrooms_cream: { kind: 'extra' },
 }

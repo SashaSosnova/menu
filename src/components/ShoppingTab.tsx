@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { weekRangeLabel } from '../data/calendar'
+import { getCurrentWeekNumber, weekRangeLabel } from '../data/calendar'
 import { weekNumbers } from '../data/weeks'
 import {
   monthlyFrozenVeg,
@@ -9,14 +9,17 @@ import {
 import { Checklist } from './Checklist'
 
 export function ShoppingTab() {
-  const [weekNumber, setWeekNumber] = useState(1)
+  const [weekNumber, setWeekNumber] = useState(getCurrentWeekNumber)
   const weekItems = weeklyShopping[weekNumber] ?? []
 
   return (
     <section className="view">
       <div className="view-heading">
         <h2>Закупки</h2>
-        <p className="muted">Сначала месяц, потом скоропорт по неделям.</p>
+        <p className="muted">
+          Сначала месяц, потом скоропорт по неделям — веса суммируются из рецептов
+          меню (например сметана на два блюда → одна строка с общим весом).
+        </p>
       </div>
 
       <div className="week-sections">

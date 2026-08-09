@@ -28,7 +28,7 @@ export type RecipeOverride = {
 export type CustomDish = {
   id: string
   name: string
-  kind: 'component' | 'side'
+  kind: 'component' | 'side' | 'extra'
 }
 
 export type CookbookStore = {
@@ -86,9 +86,14 @@ export function removeCustomDish(store: CookbookStore, id: string): CookbookStor
   }
 }
 
-export function getCookbookDishes(store: CookbookStore): { mains: Dish[]; sides: Dish[] } {
+export function getCookbookDishes(store: CookbookStore): {
+  mains: Dish[]
+  sides: Dish[]
+  extras: Dish[]
+} {
   const mains: Dish[] = []
   const sides: Dish[] = []
+  const extras: Dish[] = []
 
   for (const id of Object.keys(dishes)) {
     const meta = dishMeta[id]
@@ -100,20 +105,24 @@ export function getCookbookDishes(store: CookbookStore): { mains: Dish[]; sides:
       mains.push(dish)
     } else if (meta.kind === 'side' && !SAUCE_IDS.has(id)) {
       sides.push(dish)
+    } else if (meta.kind === 'extra') {
+      extras.push(dish)
     }
   }
 
   for (const custom of store.customDishes ?? []) {
     const dish: Dish = { id: custom.id, name: custom.name, kind: custom.kind }
     if (custom.kind === 'component') mains.push(dish)
+    else if (custom.kind === 'extra') extras.push(dish)
     else sides.push(dish)
   }
 
   const byName = (a: Dish, b: Dish) => a.name.localeCompare(b.name, 'ru')
   mains.sort(byName)
   sides.sort(byName)
+  extras.sort(byName)
 
-  return { mains, sides }
+  return { mains, sides, extras }
 }
 
 export function getEffectiveRecipe(

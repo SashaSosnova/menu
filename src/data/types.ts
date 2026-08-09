@@ -13,8 +13,8 @@ export type Recipe = {
   weeks?: number[]
 }
 
-/** component = белок отдельно; complete = всё в одной кастрюле; side = гарнир */
-export type DishKind = 'component' | 'complete' | 'side'
+/** component = белок отдельно; complete = всё в одной кастрюле; side = гарнир; extra = дополнение к тарелке */
+export type DishKind = 'component' | 'complete' | 'side' | 'extra'
 
 export type ProteinType = 'beef' | 'chicken' | 'fish' | 'shrimp' | 'veg'
 

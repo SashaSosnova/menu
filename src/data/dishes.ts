@@ -2,10 +2,12 @@ import type { Dish } from './types'
 import { getDishMacros } from './dishMacros'
 import { dishMeta } from './dishMeta'
 import { extraDishes } from './extraDishes'
+import { extras } from './extras'
 
 /** Рецепты и ингредиенты. КБЖУ — в public/dishes-macros.json (из planer). */
 export const dishes: Record<string, Dish> = {
   ...extraDishes,
+  ...extras,
   bolognese: {
     id: 'bolognese',
     name: 'Болоньезе',
