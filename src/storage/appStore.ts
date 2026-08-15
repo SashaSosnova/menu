@@ -1,5 +1,7 @@
 import type { CookbookStore } from '../data/cookbook'
 import { seedStats, migrateMealStats, type MealStatsStore } from '../data/mealStats'
+import type { MenuOverrides } from '../data/menuOverrides'
+import type { PortionScales } from '../lib/portionScale'
 
 export const APP_STATE_KEY = 'menu-app-state-v1'
 
@@ -7,6 +9,8 @@ export type MenuAppState = {
   cookbook: CookbookStore
   mealStats: MealStatsStore
   checklists: Record<string, Record<string, boolean>>
+  menuOverrides: MenuOverrides
+  portionScales: PortionScales
   updatedAt: number
 }
 
@@ -29,6 +33,8 @@ export function emptyAppState(): MenuAppState {
     cookbook: emptyCookbook(),
     mealStats: structuredClone(seedStats),
     checklists: {},
+    menuOverrides: {},
+    portionScales: {},
     updatedAt: Date.now(),
   }
 }
@@ -103,6 +109,8 @@ export function loadLocalAppState(): MenuAppState {
       },
       mealStats: mergeSeedStats(parsed.mealStats ?? {}),
       checklists: parsed.checklists ?? {},
+      menuOverrides: parsed.menuOverrides ?? {},
+      portionScales: parsed.portionScales ?? {},
       updatedAt: parsed.updatedAt ?? Date.now(),
     }
   } catch {
@@ -124,6 +132,8 @@ export function normalizeAppState(raw: Partial<MenuAppState> | null): MenuAppSta
     },
     mealStats: mergeSeedStats(raw.mealStats ?? {}),
     checklists: raw.checklists ?? {},
+    menuOverrides: raw.menuOverrides ?? {},
+    portionScales: raw.portionScales ?? {},
     updatedAt: raw.updatedAt ?? Date.now(),
   }
 }

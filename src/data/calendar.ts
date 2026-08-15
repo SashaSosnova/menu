@@ -110,8 +110,23 @@ export function getCurrentWeekNumber(today: Date = new Date()): WeekNumber {
   return getCycleContext(today).week
 }
 
-/** Старт текущего цикла (обновляется при загрузке страницы). */
+/** Старт текущего цикла на момент загрузки модуля (этикетки, скрипты). */
 export const monthStart: Date = getMonthStart()
+
+/** Идентификатор 4-недельного цикла, например «2026-08». */
+export function cycleId(start: Date = getMonthStart()): string {
+  return `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}`
+}
+
+export function previousCycleStart(start: Date = getMonthStart()): Date {
+  const prevMonth = new Date(start.getFullYear(), start.getMonth() - 1, 1)
+  return firstMondayOfMonth(prevMonth.getFullYear(), prevMonth.getMonth())
+}
+
+/** «3 августа – 30 августа» — пн недели 1 … вс недели 4 */
+export function cycleRangeLabel(start: Date = getMonthStart()): string {
+  return dateRangeGenitive(start, addDays(start, 27))
+}
 
 function dayMonthGenitive(d: Date): string {
   return `${d.getDate()} ${MONTH_GENITIVE[d.getMonth()]}`
@@ -132,7 +147,7 @@ function dateRangeGenitive(from: Date, to: Date): string {
   return `${dayMonthGenitive(from)} – ${dayMonthGenitive(to)}`
 }
 
-function weekStartDate(week: number, cycleStart: Date = monthStart): Date {
+function weekStartDate(week: number, cycleStart: Date = getMonthStart()): Date {
   return addDays(cycleStart, (week - 1) * 7)
 }
 
@@ -140,7 +155,7 @@ function weekStartDate(week: number, cycleStart: Date = monthStart): Date {
 export function slotRangeLabel(
   week: number,
   slot: MenuSlotId,
-  cycleStart: Date = monthStart,
+  cycleStart: Date = getMonthStart(),
 ): string {
   const weekStart = weekStartDate(week, cycleStart)
   const { start, end } = slotOffset[slot]
@@ -154,7 +169,7 @@ export function slotRangeLabel(
 export function packUseLabel(
   week: number,
   slot: MenuSlotId,
-  cycleStart: Date = monthStart,
+  cycleStart: Date = getMonthStart(),
 ): string {
   const weekStart = weekStartDate(week, cycleStart)
   const { start, end } = slotOffset[slot]
@@ -165,7 +180,7 @@ export function packUseLabel(
 
 /** Срок хранения в морозилке: дата заготовки + N месяцев → «до ДД.ММ.ГГГГ» */
 export function freezerBestBefore(
-  from: Date = monthStart,
+  from: Date = getMonthStart(),
   months = 3,
 ): string {
   const d = new Date(from)
@@ -179,7 +194,7 @@ export function freezerBestBefore(
 /** «3 – 9 августа» — полная неделя пн–вс */
 export function weekRangeLabel(
   week: number,
-  cycleStart: Date = monthStart,
+  cycleStart: Date = getMonthStart(),
 ): string {
   const weekStart = weekStartDate(week, cycleStart)
   const weekEnd = addDays(weekStart, 6)

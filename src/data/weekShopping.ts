@@ -4,9 +4,10 @@
  */
 
 import { getDish } from './dishes'
-import { getWeekMenu } from './menu'
+import { getWeekMenu, type WeekMenu } from './menu'
 import type { ShoppingItem } from './types'
 import type { WeekNumber } from './weeks'
+import { normalizePortionScale, scaleIngredientLine } from '../lib/portionScale'
 
 type ParsedQty = {
   name: string
@@ -201,8 +202,7 @@ function sortKey(name: string): number {
 }
 
 /** Блюда недели: primary dishId (без альтернатив orDishIds). */
-function weekDishIds(week: number): string[] {
-  const menu = getWeekMenu(week)
+function weekDishIds(menu: WeekMenu): string[] {
   const ids = new Set<string>()
   for (const slot of menu.slots) {
     if (slot.complete) ids.add(slot.complete.dishId)
@@ -212,14 +212,19 @@ function weekDishIds(week: number): string[] {
   return [...ids]
 }
 
-export function aggregateWeekShopping(week: number): ShoppingItem[] {
+export function aggregateWeekShopping(
+  week: number,
+  menu: WeekMenu = getWeekMenu(week),
+  scales: Record<string, number> = {},
+): ShoppingItem[] {
   const agg = new Map<string, { name: string; unit: string; value: number }>()
 
-  for (const id of weekDishIds(week)) {
+  for (const id of weekDishIds(menu)) {
     const dish = getDish(id)
     if (!dish?.recipe) continue
+    const scale = normalizePortionScale(scales[id])
     for (const line of dish.recipe.ingredients) {
-      const parsed = parseIngredientLine(line)
+      const parsed = parseIngredientLine(scale === 1 ? line : scaleIngredientLine(line, scale))
       if (!parsed) continue
       const key = `${parsed.name.toLowerCase()}|${parsed.unit}`
       const prev = agg.get(key)

@@ -1,6 +1,9 @@
 /**
  * Итог по порциям после двух дней готовки.
+ * Ключ слота: «цикл|неделя|слот», например «2026-08|1|mon-tue».
  */
+
+import { cycleId } from './calendar'
 
 export type PortionOutcome = 'fast' | 'exact' | 'leftover'
 
@@ -22,20 +25,43 @@ export const PORTION_OUTCOME_OPTIONS: { id: PortionOutcome; label: string }[] = 
 
 export const MEAL_STATS_KEY = 'meal-stats-v1'
 
-export function slotStatKey(week: number, slotId: string): string {
-  return `${week}|${slotId}`
+export function slotStatKey(
+  week: number,
+  slotId: string,
+  cycle: string = cycleId(),
+): string {
+  return `${cycle}|${week}|${slotId}`
 }
 
-export const seedStats: MealStatsStore = {
-  [slotStatKey(1, 'mon-tue')]: {
-    dishes: {
-      chicken_tomato_cream: { outcome: 'exact' },
-      buckwheat_veg: { outcome: 'exact' },
-      pasta: { outcome: 'exact' },
-      bolognese: { outcome: 'leftover' },
-    },
-  },
+export function parseSlotStatKey(
+  key: string,
+): { cycle: string; week: number; slotId: string } | null {
+  const parts = key.split('|')
+  if (parts.length === 3) {
+    return { cycle: parts[0]!, week: Number(parts[1]), slotId: parts[2]! }
+  }
+  if (parts.length === 2) {
+    return { cycle: '', week: Number(parts[0]), slotId: parts[1]! }
+  }
+  return null
 }
+
+/** Старые ключи «1|mon-tue» → текущий цикл. Уже префиксированные не трогаем. */
+export function migrateCycleKeys(
+  store: MealStatsStore,
+  cycle: string = cycleId(),
+): MealStatsStore {
+  const out: MealStatsStore = {}
+  for (const [key, value] of Object.entries(store)) {
+    const parsed = parseSlotStatKey(key)
+    if (!parsed) continue
+    const nextKey = parsed.cycle ? key : `${cycle}|${key}`
+    if (!out[nextKey]) out[nextKey] = value
+  }
+  return out
+}
+
+export const seedStats: MealStatsStore = {}
 
 type LegacyDishStat = {
   outcome?: PortionOutcome
@@ -65,22 +91,17 @@ export function migrateMealStats(raw: MealStatsStore | LegacySlotStat): MealStat
     }
     out[key] = { dishes }
   }
-  return out
+  return migrateCycleKeys(out)
 }
 
 /** @deprecated Используйте useMenuSync */
 export function loadMealStats(): MealStatsStore {
   try {
     const raw = localStorage.getItem(MEAL_STATS_KEY)
-    if (!raw) return structuredClone(seedStats)
-    const parsed = migrateMealStats(JSON.parse(raw) as MealStatsStore)
-    const next = { ...parsed }
-    for (const [key, value] of Object.entries(seedStats)) {
-      if (!next[key]) next[key] = structuredClone(value)
-    }
-    return next
+    if (!raw) return {}
+    return migrateMealStats(JSON.parse(raw) as MealStatsStore)
   } catch {
-    return structuredClone(seedStats)
+    return {}
   }
 }
 

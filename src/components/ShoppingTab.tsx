@@ -1,16 +1,19 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { getCurrentWeekNumber, weekRangeLabel } from '../data/calendar'
 import { weekNumbers } from '../data/weeks'
-import {
-  monthlyFrozenVeg,
-  monthlyMeatFish,
-  weeklyShopping,
-} from '../data/shopping'
+import { monthlyFrozenVeg, monthlyMeatFish } from '../data/shopping'
+import { aggregateWeekShopping } from '../data/weekShopping'
+import { getEffectiveWeekMenu } from '../data/menuOverrides'
+import { useMenuSync } from '../hooks/useMenuSync'
 import { Checklist } from './Checklist'
 
 export function ShoppingTab() {
+  const { state } = useMenuSync()
   const [weekNumber, setWeekNumber] = useState(getCurrentWeekNumber)
-  const weekItems = weeklyShopping[weekNumber] ?? []
+  const weekItems = useMemo(() => {
+    const menu = getEffectiveWeekMenu(weekNumber, state.menuOverrides)
+    return aggregateWeekShopping(weekNumber, menu, state.portionScales ?? {})
+  }, [weekNumber, state.menuOverrides, state.portionScales])
 
   return (
     <section className="view">

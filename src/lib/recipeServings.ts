@@ -199,7 +199,11 @@ function meaningfulNotes(raw: string): string {
 }
 
 /** Порции + граммы + время без дат готовки (всегда расчёт на 6 порций) */
-export function formatServingsDisplay(dishId: string, servings: string): string {
+export function formatServingsDisplay(
+  dishId: string,
+  servings: string,
+  scale = 1,
+): string {
   const raw = servings.trim()
   if (!raw) return ''
 
@@ -212,8 +216,9 @@ export function formatServingsDisplay(dishId: string, servings: string): string 
   const notes = meaningfulNotes(raw)
 
   const parts: string[] = []
-  if (totalG) parts.push(buildGramLine(totalG))
+  if (totalG) parts.push(buildGramLine(Math.round(totalG * scale)))
   else parts.push(stripCookSchedule(raw))
+  if (scale !== 1) parts.push(`закладка ${Math.round(scale * 100)}%`)
   if (notes) parts.push(notes)
   if (time) parts.push(time)
 

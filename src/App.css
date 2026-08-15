@@ -809,6 +809,11 @@
   border: 1px solid #ddd6cb;
 }
 
+.menu-dish-card-head {
+  display: flex;
+  align-items: stretch;
+}
+
 .menu-dish-row--main .menu-dish-card {
   border-color: #b7cfc0;
   box-shadow: inset 3px 0 0 #2f4a3a;
@@ -820,7 +825,8 @@
 }
 
 .menu-recipe-link {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -834,11 +840,13 @@
   font: inherit;
 }
 
-.menu-recipe-link--main {
+.menu-recipe-link--main,
+.menu-dish-row--main .menu-dish-card-head {
   background: #edf5ef;
 }
 
-.menu-recipe-link--side {
+.menu-recipe-link--side,
+.menu-dish-row--side .menu-dish-card-head {
   background: #faf4ea;
 }
 
@@ -848,6 +856,16 @@
   line-height: 1.25;
   color: #2c2924;
   min-width: 0;
+}
+
+.menu-replaced-tag {
+  display: inline-block;
+  margin-left: 0.4rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6b655b;
 }
 
 .menu-recipe-link-tail {
@@ -872,6 +890,37 @@
 
 .menu-recipe-link:active {
   filter: brightness(0.98);
+}
+
+.menu-swap-btn {
+  flex-shrink: 0;
+  border: 0;
+  background: transparent;
+  padding: 0 0.65rem;
+  font: inherit;
+  font-size: 1.15rem;
+  line-height: 1;
+  color: #6b655b;
+  cursor: pointer;
+}
+
+.menu-swap-btn:active {
+  color: #2c2924;
+}
+
+.menu-week-edit {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin: 0 0 0.7rem;
+}
+
+.menu-week-edit .muted {
+  margin: 0;
+}
+
+.menu-week-edit .link-btn {
+  margin-top: 0;
 }
 
 .outcome-chips {
@@ -1513,6 +1562,63 @@
   margin-top: 1rem;
 }
 
+.replace-restore {
+  margin: 0.35rem 0 0.75rem;
+}
+
+.replace-section {
+  margin-top: 1rem;
+}
+
+.replace-section h3 {
+  margin: 0 0 0.25rem;
+  font-size: 0.92rem;
+}
+
+.replace-section-hint {
+  margin: 0 0 0.5rem;
+  font-size: 0.82rem;
+}
+
+.replace-option-list {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.replace-option {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.12rem;
+  border: 1px solid #ddd6cb;
+  border-radius: 0.55rem;
+  background: #fffdf8;
+  padding: 0.5rem 0.65rem;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+
+.replace-option:active {
+  background: #efe8db;
+}
+
+.replace-option-name {
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: #2c2924;
+}
+
+.replace-hint {
+  font-size: 0.75rem;
+  color: #6b655b;
+}
+
+.replace-hint.warn {
+  color: #8b6b3a;
+}
+
 .primary-btn,
 .ghost-btn {
   border: 0;
@@ -1662,6 +1768,77 @@
     width: 44%;
     line-height: 1.35;
   }
+}
+
+.cycle-range {
+  margin: 0 0 0.55rem;
+  font-size: 0.85rem;
+}
+
+.cycle-review {
+  margin: 0 0 1rem;
+}
+
+.cycle-review-list {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0.55rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cycle-review-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 0.55rem;
+  background: #fffdf8;
+  border: 1px solid #e5dfd3;
+}
+
+.cycle-review-text {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.cycle-review-text strong {
+  font-size: 0.9rem;
+  color: #2c2924;
+}
+
+.portion-scale {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.portion-scale-btn {
+  width: 1.85rem;
+  height: 1.85rem;
+  border: 1px solid #ddd6cb;
+  border-radius: 999px;
+  background: #fffdf8;
+  font: inherit;
+  font-size: 1.05rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #4a463f;
+}
+
+.portion-scale-value {
+  min-width: 2.6rem;
+  text-align: center;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #6b655b;
+}
+
+.portion-scale-value.is-changed {
+  color: #2f4a3a;
 }
 
 .ration-person {

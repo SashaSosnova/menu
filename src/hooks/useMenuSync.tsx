@@ -13,6 +13,8 @@ import { isFirebaseConfigured } from '../firebase'
 import { isAnonymousSuppressed, watchAuth } from '../lib/accountAuth'
 import type { CookbookStore } from '../data/cookbook'
 import type { MealStatsStore } from '../data/mealStats'
+import type { MenuOverrides } from '../data/menuOverrides'
+import type { PortionScales } from '../lib/portionScale'
 import {
   loadLocalAppState,
   normalizeAppState,
@@ -29,6 +31,8 @@ type MenuSyncContextValue = {
   state: MenuAppState
   setCookbook: (cookbook: CookbookStore) => void
   setMealStats: (mealStats: MealStatsStore) => void
+  setMenuOverrides: (menuOverrides: MenuOverrides) => void
+  setPortionScales: (portionScales: PortionScales) => void
   getChecklist: (storageKey: string) => Record<string, boolean>
   setChecklist: (storageKey: string, checked: Record<string, boolean>) => void
   patchState: (updater: (prev: MenuAppState) => MenuAppState) => void
@@ -180,6 +184,20 @@ export function MenuSyncProvider({ children }: { children: ReactNode }) {
     [persist],
   )
 
+  const setMenuOverrides = useCallback(
+    (menuOverrides: MenuOverrides) => {
+      persist((prev) => ({ ...prev, menuOverrides }))
+    },
+    [persist],
+  )
+
+  const setPortionScales = useCallback(
+    (portionScales: PortionScales) => {
+      persist((prev) => ({ ...prev, portionScales }))
+    },
+    [persist],
+  )
+
   const getChecklist = useCallback(
     (storageKey: string) => state.checklists[storageKey] ?? {},
     [state.checklists],
@@ -204,11 +222,26 @@ export function MenuSyncProvider({ children }: { children: ReactNode }) {
       state,
       setCookbook,
       setMealStats,
+      setMenuOverrides,
+      setPortionScales,
       getChecklist,
       setChecklist,
       patchState: persist,
     }),
-    [ready, user, cloudError, uid, state, setCookbook, setMealStats, getChecklist, setChecklist, persist],
+    [
+      ready,
+      user,
+      cloudError,
+      uid,
+      state,
+      setCookbook,
+      setMealStats,
+      setMenuOverrides,
+      setPortionScales,
+      getChecklist,
+      setChecklist,
+      persist,
+    ],
   )
 
   return <MenuSyncContext.Provider value={value}>{children}</MenuSyncContext.Provider>
