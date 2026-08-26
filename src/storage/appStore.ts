@@ -2,7 +2,7 @@ import type { CookbookStore } from '../data/cookbook'
 import { seedStats, migrateMealStats, type MealStatsStore } from '../data/mealStats'
 import type { MenuOverrides } from '../data/menuOverrides'
 import type { PortionScales } from '../lib/portionScale'
-import { emptyCookBoard, resolveCookBoard, COOK_BOARD_REV, type CookBoard } from '../data/cookBoard'
+import { emptyCookBoard, resolveCookBoard, FRIDGE_LEFTOVER_PATCH, type CookBoard } from '../data/cookBoard'
 
 export const APP_STATE_KEY = 'menu-app-state-v1'
 
@@ -37,7 +37,7 @@ export function emptyAppState(): MenuAppState {
     checklists: {},
     menuOverrides: {},
     portionScales: {},
-    cookBoard: emptyCookBoard(),
+    cookBoard: resolveCookBoard(emptyCookBoard()),
     updatedAt: Date.now(),
   }
 }
@@ -104,8 +104,13 @@ export function loadLocalAppState(): MenuAppState {
       return migrated
     }
     const parsed = JSON.parse(raw) as MenuAppState
-    const cookBoard = resolveCookBoard(parsed.cookBoard)
-    const wiped = parsed.cookBoard?.rev !== COOK_BOARD_REV
+    const prev = parsed.cookBoard
+    const cookBoard = resolveCookBoard(prev)
+    const seeded =
+      Object.keys(prev?.cooked ?? {}).length === 0 && Object.keys(cookBoard.cooked).length > 0
+    const patched =
+      !(prev?.patches ?? []).includes(FRIDGE_LEFTOVER_PATCH) &&
+      (cookBoard.patches ?? []).includes(FRIDGE_LEFTOVER_PATCH)
     const state: MenuAppState = {
       cookbook: {
         recipes: parsed.cookbook?.recipes ?? {},
@@ -117,9 +122,9 @@ export function loadLocalAppState(): MenuAppState {
       menuOverrides: parsed.menuOverrides ?? {},
       portionScales: parsed.portionScales ?? {},
       cookBoard,
-      updatedAt: wiped ? Date.now() : (parsed.updatedAt ?? Date.now()),
+      updatedAt: seeded || patched ? Date.now() : (parsed.updatedAt ?? Date.now()),
     }
-    if (wiped) saveLocalAppState(state)
+    if (seeded || patched) saveLocalAppState(state)
     return state
   } catch {
     return migrateLegacyState()
@@ -132,8 +137,13 @@ export function saveLocalAppState(state: MenuAppState): void {
 
 export function normalizeAppState(raw: Partial<MenuAppState> | null): MenuAppState {
   if (!raw) return emptyAppState()
-  const cookBoard = resolveCookBoard(raw.cookBoard)
-  const wiped = raw.cookBoard?.rev !== COOK_BOARD_REV
+  const prev = raw.cookBoard
+  const cookBoard = resolveCookBoard(prev)
+  const seeded =
+    Object.keys(prev?.cooked ?? {}).length === 0 && Object.keys(cookBoard.cooked).length > 0
+  const patched =
+    !(prev?.patches ?? []).includes(FRIDGE_LEFTOVER_PATCH) &&
+    (cookBoard.patches ?? []).includes(FRIDGE_LEFTOVER_PATCH)
   return {
     cookbook: {
       recipes: raw.cookbook?.recipes ?? {},
@@ -145,6 +155,6 @@ export function normalizeAppState(raw: Partial<MenuAppState> | null): MenuAppSta
     menuOverrides: raw.menuOverrides ?? {},
     portionScales: raw.portionScales ?? {},
     cookBoard,
-    updatedAt: wiped ? Date.now() : (raw.updatedAt ?? Date.now()),
+    updatedAt: seeded || patched ? Date.now() : (raw.updatedAt ?? Date.now()),
   }
 }

@@ -60,6 +60,8 @@ export type CookBoard = {
   plannedDishIds: string[]
   /** Ингредиенты, которые уже есть (ключ — нормализованная строка). */
   shopHave: Record<string, true>
+  /** Одноразовые правки живых данных (не сбрасывать повторно). */
+  patches?: string[]
   rev?: number
 }
 
@@ -85,6 +87,7 @@ export function emptyCookBoard(cycle: string = cycleId()): CookBoard {
     dishMarks: {},
     plannedDishIds: [],
     shopHave: {},
+    patches: [],
     rev: COOK_BOARD_REV,
   }
 }
@@ -170,6 +173,89 @@ export function templateBatchIds(cycle: string): string[] {
     }
   }
   return ids
+}
+
+export function isBareCookBoard(board: CookBoard): boolean {
+  return (
+    board.fridge.length === 0 &&
+    Object.keys(board.cooked).length === 0 &&
+    Object.keys(board.dishMarks ?? {}).length === 0 &&
+    (board.plannedDishIds?.length ?? 0) === 0
+  )
+}
+
+/** Даты готовки из шаблона: пн / ср / пт слота. Прошедшие наборы помечаем съеденными. */
+export function seedPastPlanCooks(
+  board: CookBoard,
+  today: Date = new Date(),
+): CookBoard {
+  const start = cycleStartFromId(board.cycleId)
+  const todayIso = isoDate(today)
+  const cooked = { ...board.cooked }
+  const dishMarks = { ...(board.dishMarks ?? {}) }
+  let changed = false
+  for (const id of templateBatchIds(board.cycleId)) {
+    const parsed = parseBatchId(id)
+    if (!parsed || cooked[id]) continue
+    const cookIso = slotStartIso(parsed.week, parsed.slotId, start)
+    if (cookIso >= todayIso) continue
+    const slot = getWeekMenu(parsed.week).slots.find((s) => s.id === parsed.slotId)
+    if (!slot) continue
+    cooked[id] = { cookedOn: cookIso, eatDays: DEFAULT_EAT_DAYS }
+    for (const dishId of slotPrimaryDishIds(slot)) {
+      dishMarks[fridgeDishKey(id, dishId)] = 'eaten'
+    }
+    changed = true
+  }
+  if (!changed) return board
+  return { ...board, cooked, dishMarks }
+}
+
+export const FRIDGE_LEFTOVER_PATCH = '2026-08-w4-fridge-1'
+
+const WEEK4_FRIDGE_LEFTOVERS: { dishId: string; remaining: number }[] = [
+  { dishId: 'beef_pulled', remaining: 1 },
+  { dishId: 'chicken_meatballs', remaining: 1 },
+  { dishId: 'buckwheat_veg', remaining: 1 },
+  { dishId: 'mash', remaining: 1 },
+]
+
+/** Рваная говядина, тефтели, гречка, пюре — по 1 порции с готовки пн–вт недели 4. */
+export function applyFridgeLeftoverPatch(board: CookBoard): CookBoard {
+  const patches = board.patches ?? []
+  if (patches.includes(FRIDGE_LEFTOVER_PATCH)) return board
+  const nextPatches = [...patches, FRIDGE_LEFTOVER_PATCH]
+  if (board.cycleId !== '2026-08') return { ...board, patches: nextPatches }
+
+  const batchId = makeBatchId('2026-08', 4, 'mon-tue')
+  const cookedOn =
+    board.cooked[batchId]?.cookedOn ??
+    slotStartIso(4, 'mon-tue', cycleStartFromId('2026-08'))
+  const leftoverIds = new Set(WEEK4_FRIDGE_LEFTOVERS.map((d) => d.dishId))
+  const fridge = board.fridge.filter(
+    (d) => !(d.batchId === batchId && leftoverIds.has(d.dishId)),
+  )
+  const dishMarks = { ...(board.dishMarks ?? {}) }
+  const cooked = {
+    ...board.cooked,
+    [batchId]: board.cooked[batchId] ?? { cookedOn, eatDays: DEFAULT_EAT_DAYS },
+  }
+
+  for (const { dishId, remaining } of WEEK4_FRIDGE_LEFTOVERS) {
+    const key = fridgeDishKey(batchId, dishId)
+    fridge.push({
+      key,
+      batchId,
+      dishId,
+      cookedOn,
+      cookedPortions: DEFAULT_COOK_PORTIONS,
+      remaining,
+      eatDays: DEFAULT_EAT_DAYS,
+    })
+    dishMarks[key] = 'leftover'
+  }
+
+  return { ...board, fridge, dishMarks, cooked, patches: nextPatches }
 }
 
 export function slotPrimaryDishIds(slot: MenuSlot): string[] {
@@ -265,7 +351,6 @@ export function normalizeCookBoard(raw: unknown): CookBoard {
   if (!raw || typeof raw !== 'object') return empty
   const rec = raw as Partial<CookBoard> & { fridge?: unknown }
   const cycle = typeof rec.cycleId === 'string' && rec.cycleId ? rec.cycleId : empty.cycleId
-  if (rec.rev !== COOK_BOARD_REV) return emptyCookBoard(cycle)
 
   const cooked: Record<string, CookedBatch> = {}
   if (rec.cooked && typeof rec.cooked === 'object') {
@@ -296,6 +381,7 @@ export function normalizeCookBoard(raw: unknown): CookBoard {
     dishMarks,
     plannedDishIds: asStringIds(rec.plannedDishIds),
     shopHave: asShopHave(rec.shopHave),
+    patches: asStringIds(rec.patches),
     rev: COOK_BOARD_REV,
   }
 }
@@ -319,7 +405,9 @@ export function resolveCookBoard(
   raw: unknown,
   todayCycle: string = cycleId(),
 ): CookBoard {
-  return advanceCookBoard(normalizeCookBoard(raw), todayCycle)
+  let board = advanceCookBoard(normalizeCookBoard(raw), todayCycle)
+  if (isBareCookBoard(board)) board = seedPastPlanCooks(board)
+  return applyFridgeLeftoverPatch(board)
 }
 
 export function getDishMark(board: CookBoard, batchId: string, dishId: string): DishMark | undefined {
