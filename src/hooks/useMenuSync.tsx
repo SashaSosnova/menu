@@ -12,9 +12,6 @@ import type { User } from 'firebase/auth'
 import { isFirebaseConfigured } from '../firebase'
 import { isAnonymousSuppressed, watchAuth } from '../lib/accountAuth'
 import type { CookbookStore } from '../data/cookbook'
-import type { MealStatsStore } from '../data/mealStats'
-import type { MenuOverrides } from '../data/menuOverrides'
-import type { PortionScales } from '../lib/portionScale'
 import type { CookBoard } from '../data/cookBoard'
 import { resolveCookBoard } from '../data/cookBoard'
 import {
@@ -32,11 +29,7 @@ type MenuSyncContextValue = {
   useCloud: boolean
   state: MenuAppState
   setCookbook: (cookbook: CookbookStore) => void
-  setMealStats: (mealStats: MealStatsStore) => void
-  setMenuOverrides: (menuOverrides: MenuOverrides) => void
-  setPortionScales: (portionScales: PortionScales) => void
   setCookBoard: (cookBoard: CookBoard | ((prev: CookBoard) => CookBoard)) => void
-  getChecklist: (storageKey: string) => Record<string, boolean>
   setChecklist: (storageKey: string, checked: Record<string, boolean>) => void
   patchState: (updater: (prev: MenuAppState) => MenuAppState) => void
 }
@@ -188,27 +181,6 @@ export function MenuSyncProvider({ children }: { children: ReactNode }) {
     [persist],
   )
 
-  const setMealStats = useCallback(
-    (mealStats: MealStatsStore) => {
-      persist((prev) => ({ ...prev, mealStats }))
-    },
-    [persist],
-  )
-
-  const setMenuOverrides = useCallback(
-    (menuOverrides: MenuOverrides) => {
-      persist((prev) => ({ ...prev, menuOverrides }))
-    },
-    [persist],
-  )
-
-  const setPortionScales = useCallback(
-    (portionScales: PortionScales) => {
-      persist((prev) => ({ ...prev, portionScales }))
-    },
-    [persist],
-  )
-
   const setCookBoard = useCallback(
     (cookBoard: CookBoard | ((prev: CookBoard) => CookBoard)) => {
       persist((prev) => ({
@@ -217,11 +189,6 @@ export function MenuSyncProvider({ children }: { children: ReactNode }) {
       }))
     },
     [persist],
-  )
-
-  const getChecklist = useCallback(
-    (storageKey: string) => state.checklists[storageKey] ?? {},
-    [state.checklists],
   )
 
   const setChecklist = useCallback(
@@ -242,11 +209,7 @@ export function MenuSyncProvider({ children }: { children: ReactNode }) {
       useCloud: Boolean(uid),
       state: withBoard(state),
       setCookbook,
-      setMealStats,
-      setMenuOverrides,
-      setPortionScales,
       setCookBoard,
-      getChecklist,
       setChecklist,
       patchState: persist,
     }),
@@ -257,11 +220,7 @@ export function MenuSyncProvider({ children }: { children: ReactNode }) {
       uid,
       state,
       setCookbook,
-      setMealStats,
-      setMenuOverrides,
-      setPortionScales,
       setCookBoard,
-      getChecklist,
       setChecklist,
       persist,
     ],

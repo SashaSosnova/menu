@@ -23,23 +23,9 @@ export type SlotStat = {
 
 export type MealStatsStore = Record<string, SlotStat>
 
-export const PORTION_OUTCOME_OPTIONS: { id: PortionOutcome; label: string }[] = [
-  { id: 'fast', label: 'Не хватило' },
-  { id: 'exact', label: 'Ровно' },
-  { id: 'leftover', label: 'Осталось' },
-]
-
 export const MEAL_STATS_KEY = 'meal-stats-v1'
 
-export function slotStatKey(
-  week: number,
-  slotId: string,
-  cycle: string = cycleId(),
-): string {
-  return `${cycle}|${week}|${slotId}`
-}
-
-export function parseSlotStatKey(
+function parseSlotStatKey(
   key: string,
 ): { cycle: string; week: number; slotId: string } | null {
   const parts = key.split('|')

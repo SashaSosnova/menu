@@ -14,27 +14,6 @@ const slotOffset: Record<MenuSlotId, { start: number; end: number }> = {
   'fri-sat': { start: 4, end: 5 },
 }
 
-const MONTH_GENITIVE = [
-  'января',
-  'февраля',
-  'марта',
-  'апреля',
-  'мая',
-  'июня',
-  'июля',
-  'августа',
-  'сентября',
-  'октября',
-  'ноября',
-  'декабря',
-] as const
-
-const SLOT_DAY_NAMES: Record<MenuSlotId, [string, string]> = {
-  'mon-tue': ['Понедельник', 'Вторник'],
-  'wed-thu': ['Среда', 'Четверг'],
-  'fri-sat': ['Пятница', 'Суббота'],
-}
-
 const MS_DAY = 24 * 60 * 60 * 1000
 const CYCLE_DAYS = 28
 
@@ -57,11 +36,6 @@ export function isoDate(d: Date = new Date()): string {
 export function dateFromIso(iso: string): Date {
   const [y, m, d] = iso.split('-').map(Number)
   return new Date(y, (m ?? 1) - 1, d ?? 1)
-}
-
-/** «5 августа» */
-export function formatIsoGenitive(iso: string): string {
-  return dayMonthGenitive(dateFromIso(iso))
 }
 
 /** Старт цикла из id «2026-08». */
@@ -130,45 +104,12 @@ export function getMonthStart(today: Date = new Date()): Date {
   return getCycleContext(today).monthStart
 }
 
-export function getCurrentWeekNumber(today: Date = new Date()): WeekNumber {
-  return getCycleContext(today).week
-}
-
 /** Старт текущего цикла на момент загрузки модуля (этикетки, скрипты). */
 export const monthStart: Date = getMonthStart()
 
 /** Идентификатор 4-недельного цикла, например «2026-08». */
 export function cycleId(start: Date = getMonthStart()): string {
   return `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}`
-}
-
-export function previousCycleStart(start: Date = getMonthStart()): Date {
-  const prevMonth = new Date(start.getFullYear(), start.getMonth() - 1, 1)
-  return firstMondayOfMonth(prevMonth.getFullYear(), prevMonth.getMonth())
-}
-
-/** «3 августа – 30 августа» — пн недели 1 … вс недели 4 */
-export function cycleRangeLabel(start: Date = getMonthStart()): string {
-  return dateRangeGenitive(start, addDays(start, 27))
-}
-
-function dayMonthGenitive(d: Date): string {
-  return `${d.getDate()} ${MONTH_GENITIVE[d.getMonth()]}`
-}
-
-function dayMonthNumeric(d: Date): string {
-  return `${d.getDate()}.${String(d.getMonth() + 1).padStart(2, '0')}`
-}
-
-function rangeLabel(from: Date, to: Date): string {
-  return `${dayMonthNumeric(from)} - ${dayMonthNumeric(to)}`
-}
-
-function dateRangeGenitive(from: Date, to: Date): string {
-  if (from.getMonth() === to.getMonth()) {
-    return `${from.getDate()} – ${to.getDate()} ${MONTH_GENITIVE[from.getMonth()]}`
-  }
-  return `${dayMonthGenitive(from)} – ${dayMonthGenitive(to)}`
 }
 
 function weekStartDate(week: number, cycleStart: Date = getMonthStart()): Date {
@@ -184,33 +125,6 @@ export function slotStartIso(
   return isoDate(addDays(weekStartDate(week, cycleStart), slotOffset[slot].start))
 }
 
-/** «5 августа - 6 августа (Среда + Четверг)» */
-export function slotRangeLabel(
-  week: number,
-  slot: MenuSlotId,
-  cycleStart: Date = getMonthStart(),
-): string {
-  const weekStart = weekStartDate(week, cycleStart)
-  const { start, end } = slotOffset[slot]
-  const from = addDays(weekStart, start)
-  const to = addDays(weekStart, end)
-  const [day1, day2] = SLOT_DAY_NAMES[slot]
-  return `${dayMonthGenitive(from)} - ${dayMonthGenitive(to)} (${day1} + ${day2})`
-}
-
-/** Подпись на пакет: «нед.1 · 5.08 - 6.08» */
-export function packUseLabel(
-  week: number,
-  slot: MenuSlotId,
-  cycleStart: Date = getMonthStart(),
-): string {
-  const weekStart = weekStartDate(week, cycleStart)
-  const { start, end } = slotOffset[slot]
-  const from = addDays(weekStart, start)
-  const to = addDays(weekStart, end)
-  return `нед.${week} · ${rangeLabel(from, to)}`
-}
-
 /** Срок хранения в морозилке: дата заготовки + N месяцев → «до ДД.ММ.ГГГГ» */
 export function freezerBestBefore(
   from: Date = getMonthStart(),
@@ -224,12 +138,3 @@ export function freezerBestBefore(
   return `до ${dd}.${mm}.${yyyy}`
 }
 
-/** «3 – 9 августа» — полная неделя пн–вс */
-export function weekRangeLabel(
-  week: number,
-  cycleStart: Date = getMonthStart(),
-): string {
-  const weekStart = weekStartDate(week, cycleStart)
-  const weekEnd = addDays(weekStart, 6)
-  return dateRangeGenitive(weekStart, weekEnd)
-}

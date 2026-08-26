@@ -5,16 +5,13 @@
  */
 
 import {
-  addDays,
   cycleId,
   cycleStartFromId,
-  dateFromIso,
-  formatIsoGenitive,
   isoDate,
   slotStartIso,
   type MenuSlotId,
 } from './calendar'
-import { getWeekMenu, weekMenus, type MenuSlot, type WeekMenu } from './menu'
+import { getWeekMenu, weekMenus, type MenuSlot } from './menu'
 import { getEffectiveSlot, type MenuOverrides } from './menuOverrides'
 import {
   dishHasOutcomeThisCycle,
@@ -27,7 +24,6 @@ import { weekNumbers } from './weeks'
 
 export const DEFAULT_EAT_DAYS = 2
 export const DEFAULT_COOK_PORTIONS = 6
-export const SHOP_WINDOW_SIZE = 3
 export const SLOT_ORDER: MenuSlotId[] = ['mon-tue', 'wed-thu', 'fri-sat']
 
 export function cookPortionsFromScale(scale?: number): number {
@@ -77,15 +73,6 @@ export type CookBatchView = {
   slot: MenuSlot
   status: BatchStatus
   cookedOn?: string
-}
-
-export type ShopWindow = {
-  index: number
-  id: string
-  label: string
-  batchIds: string[]
-  batches: CookBatchView[]
-  menu: WeekMenu
 }
 
 export const COOK_BOARD_REV = 2
@@ -315,10 +302,6 @@ export function normalizeCookBoard(raw: unknown): CookBoard {
 
 export function pendingBatchIds(board: CookBoard): string[] {
   return templateBatchIds(board.cycleId).filter((id) => !board.cooked[id])
-}
-
-export function nextBatchId(board: CookBoard): string | undefined {
-  return pendingBatchIds(board)[0]
 }
 
 export function cycleHasPendingOrFridge(board: CookBoard): boolean {
@@ -553,39 +536,6 @@ export function setDishPrepared(
   )
 }
 
-export function setDishMark(
-  board: CookBoard,
-  batchId: string,
-  dishId: string,
-  batchDishIds: string[],
-  mark: DishMark | undefined,
-  cookedOn: string = isoDate(),
-  cookedPortions: number = DEFAULT_COOK_PORTIONS,
-): CookBoard {
-  const shown =
-    displayDishMarkForDish(board, dishId) ?? displayDishMark(board, batchId, dishId)
-  const cooking =
-    shown === 'cooked' ||
-    shown === 'leftover' ||
-    board.fridge.some((d) => d.dishId === dishId && d.remaining > 0)
-  if (!mark || (mark === 'cooked' && cooking) || shown === mark) {
-    return forgetDishCook(board, dishId, batchId, batchDishIds)
-  }
-  if (mark === 'leftover') return board
-  return applyDishMark(board, batchId, dishId, batchDishIds, mark, cookedOn, cookedPortions)
-}
-
-export function addDishToFridge(
-  board: CookBoard,
-  batchId: string,
-  dishId: string,
-  batchDishIds: string[],
-  cookedPortions: number = DEFAULT_COOK_PORTIONS,
-  cookedOn: string = isoDate(),
-): CookBoard {
-  return applyDishMark(board, batchId, dishId, batchDishIds, 'cooked', cookedOn, cookedPortions)
-}
-
 export function bumpFridgePortions(
   board: CookBoard,
   key: string,
@@ -669,89 +619,3 @@ export function listCookQueue(
   })
 }
 
-export function pendingBatches(queue: CookBatchView[]): CookBatchView[] {
-  return queue.filter((b) => b.status === 'next' || b.status === 'pending')
-}
-
-export function dishUntilIso(dish: FridgeDish): string {
-  return isoDate(addDays(dateFromIso(dish.cookedOn), (dish.eatDays ?? DEFAULT_EAT_DAYS) - 1))
-}
-
-export function nextCookIsoFromFridge(fridge: FridgeDish[]): string | undefined {
-  if (fridge.length === 0) return undefined
-  const dates = fridge.map((d) => dishUntilIso(d)).sort()
-  const earliest = dates[0]
-  if (!earliest) return undefined
-  return isoDate(addDays(dateFromIso(earliest), 1))
-}
-
-export function markBatchCooked(
-  board: CookBoard,
-  batchId: string,
-  dishIds: string[],
-  cookedOn: string = isoDate(),
-): CookBoard {
-  let next = board
-  for (const dishId of dishIds) {
-    next = applyDishMark(next, batchId, dishId, dishIds, 'cooked', cookedOn)
-  }
-  return next
-}
-
-export function addFridgeDishDay(board: CookBoard, key: string): CookBoard {
-  return bumpFridgePortions(board, key, 1)
-}
-
-export function shoppingWindows(
-  board: CookBoard,
-  overrides: MenuOverrides | undefined,
-  stats?: MealStatsStore,
-): ShopWindow[] {
-  const pending = pendingBatches(listCookQueue(board, overrides, stats))
-  const windows: ShopWindow[] = []
-  for (let i = 0; i < pending.length; i += SHOP_WINDOW_SIZE) {
-    const batches = pending.slice(i, i + SHOP_WINDOW_SIZE)
-    const index = windows.length + 1
-    const batchIds = batches.map((b) => b.id)
-    windows.push({
-      index,
-      id: batchIds.join('_'),
-      label: index === 1 ? 'Следующие готовки' : 'Позже в очереди',
-      batchIds,
-      batches,
-      menu: {
-        week: index,
-        summary: '',
-        slots: batches.map((b) => b.slot),
-      },
-    })
-  }
-  return windows
-}
-
-export function shopChecklistKey(cycle: string, windowId: string): string {
-  return `checklist-shop-${cycle}-${windowId}`
-}
-
-function fridgePortionsLeft(left: FridgeDish[]): number {
-  return left.reduce((sum, dish) => sum + dish.remaining, 0)
-}
-
-export function batchStatusLabel(batch: CookBatchView, fridge: FridgeDish[] = []): string {
-  const left = fridge.filter((d) => d.batchId === batch.id)
-  const portions = fridgePortionsLeft(left)
-  if (batch.status === 'next') {
-    if (left.length === 0) return 'следующая готовка'
-    return portions > 0
-      ? `в холодильнике · ${portions} пор. · ещё готовим`
-      : 'ещё готовим'
-  }
-  if (batch.status === 'eating') {
-    if (left.length === 0) return 'едим'
-    return portions > 0 ? `в холодильнике · ${portions} пор.` : 'в холодильнике'
-  }
-  if (batch.status === 'cooked' && batch.cookedOn) {
-    return `приготовлено ${formatIsoGenitive(batch.cookedOn)}`
-  }
-  return 'в очереди'
-}
