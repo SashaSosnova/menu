@@ -1,34 +1,41 @@
 import { useMemo, useState } from 'react'
-import { weekNumbers } from '../data/weeks'
 import {
   menuRefIds,
   menuRefLabel,
   type MenuDishRef,
-  type MenuSlot,
 } from '../data/menu'
 import { getDish } from '../data/dishes'
 import { formatMacros } from '../lib/macros'
 import { getCookbookDish, getEffectiveRecipe, type CookbookStore } from '../data/cookbook'
+import { isoDate } from '../data/calendar'
 import {
-  PORTION_OUTCOME_OPTIONS,
-  slotStatKey,
-  type MealStatsStore,
-  type PortionOutcome,
-  type SlotStat,
-} from '../data/mealStats'
-import { getCurrentWeekNumber, cycleRangeLabel, slotRangeLabel, weekRangeLabel } from '../data/calendar'
+  batchIdForDish,
+  bumpFridgePortions,
+  cookPortionsFromScale,
+  DISH_MARK_OPTIONS,
+  displayDishMarkForDish,
+  dishQueueGroup,
+  isDishPlanned,
+  lastCookedOnForDish,
+  listCookQueue,
+  markShopHave,
+  setDishPrepared,
+  slotPrimaryDishIds,
+  toggleDishPlanned,
+  type CookBatchView,
+  type CookBoard,
+  type DishMark,
+} from '../data/cookBoard'
+import { plannedDishNames, plannedShopNeeds } from '../data/cookShop'
 import {
-  getEffectiveWeekMenu,
-  isPositionOverridden,
-  resetWeekOverrides,
-  weekHasOverrides,
-  type MenuOverrides,
+  pairFitForSide,
   type MenuRole,
+  type PairFit,
 } from '../data/menuOverrides'
 import { useMenuSync } from '../hooks/useMenuSync'
+import type { MealStatsStore } from '../data/mealStats'
 import { scaleIngredientLine } from '../lib/portionScale'
 import { formatServingsDisplay } from '../lib/recipeServings'
-import { ReplaceDishModal, type ReplaceTarget } from './ReplaceDishModal'
 
 function dishLabel(item: MenuDishRef): string {
   return menuRefLabel(item, (id) => getDish(id)?.name)
@@ -145,217 +152,426 @@ function RecipePeekModal({
 function DishRow({
   item,
   kind,
-  portions,
-  outcome,
-  replaced,
-  onOutcome,
+  mark,
+  selected,
+  fit,
+  complete,
+  planned,
+  onToggleCooked,
+  onTogglePlanned,
   onOpenRecipe,
-  onReplace,
+  onSelect,
 }: {
   item: MenuDishRef
   kind: 'main' | 'side'
-  portions: string
-  outcome?: PortionOutcome
-  replaced?: boolean
-  onOutcome: (value: PortionOutcome) => void
+  mark?: DishMark
+  selected?: boolean
+  fit?: PairFit | null
+  complete?: boolean
+  planned?: boolean
+  onToggleCooked: (nextPrepared: boolean) => void
+  onTogglePlanned: () => void
   onOpenRecipe: () => void
-  onReplace: () => void
+  onSelect?: () => void
 }) {
+  const fitClass = fit ? ` is-fit-${fit}` : ''
+  const selectedClass = selected ? ' is-selected' : ''
+  const cooked = mark === 'cooked' || mark === 'leftover'
+
   return (
     <li className={`menu-dish-row menu-dish-row--${kind}`}>
-      <div className="menu-dish-card">
+      <div className={`menu-dish-card${selectedClass}${fitClass}`}>
         <div className="menu-dish-card-head">
           <button
             type="button"
             className={`menu-recipe-link menu-recipe-link--${kind}`}
-            onClick={onOpenRecipe}
+            onClick={() => {
+              if (onSelect) onSelect()
+              else onOpenRecipe()
+            }}
           >
             <span className="menu-recipe-link-name">
               {dishLabel(item)}
-              {replaced ? <span className="menu-replaced-tag">заменено</span> : null}
-            </span>
-            <span className="menu-recipe-link-tail">
-              <span className="menu-recipe-link-portions">{portions}</span>
-              <span className="menu-recipe-link-arrow" aria-hidden>
-                ›
-              </span>
+              {complete ? <span className="menu-replaced-tag">цельное</span> : null}
             </span>
           </button>
           <button
             type="button"
-            className="menu-swap-btn no-print"
-            onClick={onReplace}
-            aria-label={`Заменить: ${dishLabel(item)}`}
-            title="Заменить или поменять местами"
+            className="menu-recipe-open"
+            onClick={onOpenRecipe}
+            aria-label={`Рецепт: ${dishLabel(item)}`}
           >
-            ⇄
+            ›
           </button>
         </div>
-        <div className="outcome-chips" role="group" aria-label={`Итог: ${dishLabel(item)}`}>
-          {PORTION_OUTCOME_OPTIONS.map((opt) => (
+        <div
+          className="outcome-chips"
+          role="group"
+          aria-label={`${dishLabel(item)}: статус`}
+        >
+          {DISH_MARK_OPTIONS.map((opt) => (
             <button
               key={opt.id}
               type="button"
-              className={outcome === opt.id ? 'outcome-chip is-active' : 'outcome-chip'}
-              onClick={() => onOutcome(opt.id)}
+              className={cooked ? 'outcome-chip is-active' : 'outcome-chip'}
+              aria-pressed={cooked}
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                onToggleCooked(!cooked)
+              }}
             >
               {opt.label}
             </button>
           ))}
+          <button
+            type="button"
+            className={planned ? 'outcome-chip is-active' : 'outcome-chip'}
+            aria-pressed={Boolean(planned)}
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              onTogglePlanned()
+            }}
+          >
+            Закупки
+          </button>
         </div>
       </div>
     </li>
   )
 }
 
-function SlotCard({
-  week,
-  slot,
-  store,
-  overrides,
-  onStatsChange,
-  onOpenRecipe,
-  onReplace,
-}: {
-  week: number
-  slot: MenuSlot
-  store: MealStatsStore
-  overrides: MenuOverrides
-  onStatsChange: (store: MealStatsStore) => void
-  onOpenRecipe: (item: MenuDishRef) => void
-  onReplace: (target: ReplaceTarget) => void
-}) {
-  const key = slotStatKey(week, slot.id)
-  const slotStat: SlotStat = store[key] ?? { dishes: {} }
+type QueueDish = {
+  key: string
+  batch: CookBatchView
+  item: MenuDishRef
+  kind: 'main' | 'side'
+  role: MenuRole
+  index: number
+  complete?: boolean
+}
 
-  function setOutcome(dishId: string, outcome: PortionOutcome) {
-    const prev = slotStat.dishes[dishId]?.outcome
-    const nextOutcome = prev === outcome ? undefined : outcome
-    onStatsChange({
-      ...store,
-      [key]: {
-        dishes: {
-          ...slotStat.dishes,
-          [dishId]: nextOutcome ? { outcome: nextOutcome } : {},
-        },
-      },
+function uniqueByDishId(dishes: QueueDish[]): QueueDish[] {
+  const seen = new Set<string>()
+  const out: QueueDish[] = []
+  for (const dish of dishes) {
+    if (seen.has(dish.item.dishId)) continue
+    seen.add(dish.item.dishId)
+    out.push(dish)
+  }
+  return out
+}
+
+function queueColumns(queue: CookBatchView[]): { mains: QueueDish[]; sides: QueueDish[] } {
+  const mains: QueueDish[] = []
+  const sides: QueueDish[] = []
+  for (const batch of queue) {
+    const { slot } = batch
+    if (slot.complete) {
+      mains.push({
+        key: `${batch.id}::${slot.complete.dishId}::complete`,
+        batch,
+        item: slot.complete,
+        kind: 'main',
+        role: 'complete',
+        index: 0,
+        complete: true,
+      })
+    }
+    slot.mains.forEach((item, index) => {
+      mains.push({
+        key: `${batch.id}::${item.dishId}::mains::${index}`,
+        batch,
+        item,
+        kind: 'main',
+        role: 'mains',
+        index,
+      })
+    })
+    slot.sides.forEach((item, index) => {
+      sides.push({
+        key: `${batch.id}::${item.dishId}::sides::${index}`,
+        batch,
+        item,
+        kind: 'side',
+        role: 'sides',
+        index,
+      })
     })
   }
+  return { mains: uniqueByDishId(mains), sides: uniqueByDishId(sides) }
+}
 
-  function renderDish(
-    item: MenuDishRef,
-    kind: 'main' | 'side',
-    role: MenuRole,
-    index: number,
-    portions = '6 пор.',
-  ) {
+const QUEUE_GROUP_ORDER = { cooking: 0, todo: 1, done: 2 } as const
+
+function recencyKey(board: CookBoard, dishId: string, stats?: MealStatsStore): string {
+  return lastCookedOnForDish(board, dishId, stats) ?? ''
+}
+
+function sortMains(mains: QueueDish[], board: CookBoard, stats?: MealStatsStore): QueueDish[] {
+  return [...mains].sort((a, b) => {
+    const aGroup = QUEUE_GROUP_ORDER[dishQueueGroup(board, a.item.dishId, stats)]
+    const bGroup = QUEUE_GROUP_ORDER[dishQueueGroup(board, b.item.dishId, stats)]
+    if (aGroup !== bGroup) return aGroup - bGroup
+    return recencyKey(board, a.item.dishId, stats).localeCompare(
+      recencyKey(board, b.item.dishId, stats),
+    )
+  })
+}
+
+function fitForSide(selected: QueueDish | null, side: QueueDish): PairFit | null {
+  if (!selected) return null
+  return pairFitForSide(
+    {
+      item: selected.item,
+      slot: selected.batch.slot,
+      complete: selected.complete,
+    },
+    { item: side.item },
+  )
+}
+
+function sortSides(
+  sides: QueueDish[],
+  board: CookBoard,
+  selected: QueueDish | null,
+  stats?: MealStatsStore,
+): QueueDish[] {
+  return [...sides].sort((a, b) => {
+    if (selected && !selected.complete) {
+      const aTasty = fitForSide(selected, a) === 'good' ? 0 : 1
+      const bTasty = fitForSide(selected, b) === 'good' ? 0 : 1
+      if (aTasty !== bTasty) return aTasty - bTasty
+    }
+    return recencyKey(board, a.item.dishId, stats).localeCompare(
+      recencyKey(board, b.item.dishId, stats),
+    )
+  })
+}
+
+function CookColumns({
+  queue,
+  board,
+  stats,
+  scales,
+  selectedKey,
+  onSelect,
+  onBoardChange,
+  onOpenRecipe,
+}: {
+  queue: CookBatchView[]
+  board: CookBoard
+  stats: MealStatsStore
+  scales: Record<string, number>
+  selectedKey: string | null
+  onSelect: (dish: QueueDish) => void
+  onBoardChange: (board: CookBoard | ((prev: CookBoard) => CookBoard)) => void
+  onOpenRecipe: (item: MenuDishRef) => void
+}) {
+  const columns = useMemo(() => queueColumns(queue), [queue])
+  const selected = columns.mains.find((d) => d.key === selectedKey) ?? null
+  const mains = sortMains(columns.mains, board, stats)
+  const sides = sortSides(columns.sides, board, selected, stats)
+
+  function renderDish(dish: QueueDish) {
+    const { batch, item, kind } = dish
+    const mark = displayDishMarkForDish(board, item.dishId, stats)
+    const markBatchId = batchIdForDish(board, item.dishId, batch.id)
+    const markBatch = queue.find((b) => b.id === markBatchId) ?? batch
+    const dishIds = slotPrimaryDishIds(markBatch.slot)
+    const fit = kind === 'side' ? fitForSide(selected, dish) : null
+
     return (
       <DishRow
-        key={item.dishId + (item.label ?? '') + role + index}
+        key={dish.item.dishId}
         item={item}
         kind={kind}
-        portions={portions}
-        replaced={isPositionOverridden(overrides, {
-          week,
-          slotId: slot.id,
-          role,
-          index,
-        })}
-        outcome={slotStat.dishes[item.dishId]?.outcome}
-        onOutcome={(value) => setOutcome(item.dishId, value)}
+        complete={dish.complete}
+        mark={mark}
+        planned={isDishPlanned(board, item.dishId)}
+        selected={kind === 'main' && dish.key === selectedKey}
+        fit={kind === 'side' ? fit : undefined}
+        onToggleCooked={(nextPrepared) => {
+          onBoardChange((current) =>
+            setDishPrepared(
+              current,
+              batchIdForDish(current, item.dishId, batch.id),
+              item.dishId,
+              dishIds,
+              nextPrepared,
+              isoDate(),
+              cookPortionsFromScale(scales[item.dishId]),
+            ),
+          )
+          if (kind === 'main' && nextPrepared) onSelect(dish)
+        }}
+        onTogglePlanned={() => {
+          onBoardChange((current) => toggleDishPlanned(current, item.dishId))
+        }}
         onOpenRecipe={() => onOpenRecipe(item)}
-        onReplace={() => onReplace({ slotId: slot.id, role, index })}
+        onSelect={kind === 'main' ? () => onSelect(dish) : undefined}
       />
     )
   }
 
   return (
-    <details className="cook-task" open>
-      <summary className="cook-task-summary">
-        <span className="cook-task-text">
-          <strong>{slotRangeLabel(week, slot.id)}</strong>
-        </span>
-      </summary>
-      <div className="cook-task-body">
-        <div className="batch-lists menu-batch-lists">
-          <section className="menu-dish-group menu-dish-group--main">
-            <h4>Горячее</h4>
-            <ul className="menu-slot-dishes">
-              {slot.complete ? renderDish(slot.complete, 'main', 'complete', 0) : null}
-              {slot.mains.map((m, i) => renderDish(m, 'main', 'mains', i))}
-            </ul>
-          </section>
-          {slot.sides.length > 0 ? (
-            <section className="menu-dish-group menu-dish-group--side">
-              <h4>Гарнир</h4>
-              <ul className="menu-slot-dishes">
-                {slot.sides.map((s, i) => renderDish(s, 'side', 'sides', i))}
-              </ul>
-            </section>
-          ) : null}
-        </div>
-      </div>
-    </details>
+    <div className="cook-columns">
+      <section className="menu-dish-group menu-dish-group--main">
+        <h4>Горячее</h4>
+        <ul className="menu-slot-dishes">{mains.map(renderDish)}</ul>
+      </section>
+      <section className="menu-dish-group menu-dish-group--side">
+        <h4>Гарнир</h4>
+        <ul className="menu-slot-dishes">{sides.map(renderDish)}</ul>
+      </section>
+    </div>
+  )
+}
+
+function FridgeBlock({
+  board,
+  cookbook,
+  onBoardChange,
+}: {
+  board: CookBoard
+  cookbook: CookbookStore
+  onBoardChange: (board: CookBoard | ((prev: CookBoard) => CookBoard)) => void
+}) {
+  const fridge = board.fridge
+
+  return (
+    <section className="fridge-block">
+      <h3 className="cook-queue-heading">Холодильник</h3>
+      {fridge.length === 0 ? (
+        <p className="fridge-empty">Пусто</p>
+      ) : (
+        <ul className="fridge-list">
+        {fridge.map((dish) => (
+          <li key={dish.key} className="fridge-row">
+            <div className="fridge-row-text">
+              <strong>
+                {getCookbookDish(dish.dishId, cookbook)?.name ??
+                  getDish(dish.dishId)?.name ??
+                  dish.dishId}
+              </strong>
+            </div>
+            <div className="fridge-step">
+              <button
+                type="button"
+                className="fridge-step-btn"
+                aria-label="Списать порцию"
+                onClick={() => onBoardChange((current) => bumpFridgePortions(current, dish.key, -1))}
+              >
+                −
+              </button>
+              <span className="fridge-portions">{dish.remaining} пор.</span>
+              <button
+                type="button"
+                className="fridge-step-btn"
+                aria-label="Вернуть порцию"
+                disabled={dish.remaining >= dish.cookedPortions}
+                onClick={() =>
+                  onBoardChange((current) => bumpFridgePortions(current, dish.key, 1))
+                }
+              >
+                +
+              </button>
+            </div>
+          </li>
+        ))}
+        </ul>
+      )}
+    </section>
+  )
+}
+
+function NeedToBuyBlock({
+  board,
+  cookbook,
+  scales,
+  onBoardChange,
+}: {
+  board: CookBoard
+  cookbook: CookbookStore
+  scales: Record<string, number>
+  onBoardChange: (board: CookBoard | ((prev: CookBoard) => CookBoard)) => void
+}) {
+  const lines = plannedShopNeeds(board, cookbook, scales)
+  if (lines.length === 0) return null
+  const names = plannedDishNames(board, cookbook)
+
+  return (
+    <section className="buy-block">
+      <h3 className="cook-queue-heading">Нужно купить</h3>
+      {names.length > 0 ? <p className="buy-dishes">{names.join(' · ')}</p> : null}
+      <ul className="buy-list">
+        {lines.map((line) => (
+          <li key={line.key}>
+            <label className="buy-row">
+              <input
+                type="checkbox"
+                checked={false}
+                onChange={() => onBoardChange((current) => markShopHave(current, line.key))}
+              />
+              <span>{line.text}</span>
+            </label>
+          </li>
+        ))}
+      </ul>
+    </section>
   )
 }
 
 export function MenuTab() {
-  const { state, setMealStats, setMenuOverrides } = useMenuSync()
-  const [weekNumber, setWeekNumber] = useState(getCurrentWeekNumber)
+  const { state, setCookBoard } = useMenuSync()
   const [recipeItem, setRecipeItem] = useState<MenuDishRef | null>(null)
-  const [replaceTarget, setReplaceTarget] = useState<ReplaceTarget | null>(null)
-  const stats = state.mealStats
+  const [selectedKey, setSelectedKey] = useState<string | null>(null)
   const overrides = state.menuOverrides
-  const menu = useMemo(
-    () => getEffectiveWeekMenu(weekNumber, overrides),
-    [weekNumber, overrides],
+  const board = state.cookBoard
+  const stats = state.mealStats
+  const queue = useMemo(
+    () => listCookQueue(board, overrides, stats),
+    [board, overrides, stats],
   )
-  const weekEdited = weekHasOverrides(overrides, weekNumber)
+  const columns = useMemo(() => queueColumns(queue), [queue])
+  const resolvedSelect =
+    selectedKey && columns.mains.some((d) => d.key === selectedKey)
+      ? selectedKey
+      : (columns.mains.find(
+          (d) => dishQueueGroup(board, d.item.dishId, stats) === 'cooking',
+        )?.key ??
+        columns.mains.find(
+          (d) => dishQueueGroup(board, d.item.dishId, stats) === 'todo',
+        )?.key ??
+        columns.mains[0]?.key ??
+        null)
 
   return (
     <section className="view">
-      <p className="muted cycle-range">Цикл {cycleRangeLabel()}</p>
-      <div className="week-tabs menu-week-tabs" role="tablist" aria-label="Недели">
-        {weekNumbers.map((w) => (
-          <button
-            key={w}
-            type="button"
-            role="tab"
-            aria-selected={w === weekNumber}
-            className={w === weekNumber ? 'week-tab is-active' : 'week-tab'}
-            onClick={() => setWeekNumber(w)}
-          >
-            {weekRangeLabel(w)}
-          </button>
-        ))}
-      </div>
-
-      {weekEdited ? (
-        <div className="menu-week-edit no-print">
-          <p className="muted">Меню этой недели изменено.</p>
-          <button
-            type="button"
-            className="link-btn"
-            onClick={() => setMenuOverrides(resetWeekOverrides(overrides, weekNumber))}
-          >
-            Вернуть план
-          </button>
-        </div>
-      ) : null}
+      <FridgeBlock
+        board={board}
+        cookbook={state.cookbook}
+        onBoardChange={setCookBoard}
+      />
+      <NeedToBuyBlock
+        board={board}
+        cookbook={state.cookbook}
+        scales={state.portionScales ?? {}}
+        onBoardChange={setCookBoard}
+      />
 
       <div className="cook-plan">
-        {menu.slots.map((slot) => (
-          <SlotCard
-            key={slot.id}
-            week={weekNumber}
-            slot={slot}
-            store={stats}
-            overrides={overrides}
-            onStatsChange={setMealStats}
-            onOpenRecipe={setRecipeItem}
-            onReplace={setReplaceTarget}
-          />
-        ))}
+        <CookColumns
+          queue={queue}
+          board={board}
+          stats={stats}
+          scales={state.portionScales ?? {}}
+          selectedKey={resolvedSelect}
+          onSelect={(dish) => setSelectedKey(dish.key)}
+          onBoardChange={setCookBoard}
+          onOpenRecipe={setRecipeItem}
+        />
       </div>
 
       {recipeItem ? (
@@ -364,17 +580,6 @@ export function MenuTab() {
           cookbook={state.cookbook}
           scales={state.portionScales ?? {}}
           onClose={() => setRecipeItem(null)}
-        />
-      ) : null}
-
-      {replaceTarget ? (
-        <ReplaceDishModal
-          week={weekNumber}
-          target={replaceTarget}
-          overrides={overrides}
-          cookbook={state.cookbook}
-          onOverridesChange={setMenuOverrides}
-          onClose={() => setReplaceTarget(null)}
         />
       ) : null}
     </section>

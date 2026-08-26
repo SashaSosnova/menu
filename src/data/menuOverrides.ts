@@ -168,6 +168,15 @@ export function getEffectiveWeekMenu(
   return applyMenuOverrides(base, overrides)
 }
 
+export function getEffectiveSlot(
+  week: number,
+  slotId: MenuSlotId,
+  overrides: MenuOverrides | undefined,
+): MenuSlot {
+  const menu = getEffectiveWeekMenu(week, overrides)
+  return menu.slots.find((s) => s.id === slotId) ?? getWeekMenu(week).slots.find((s) => s.id === slotId)!
+}
+
 export function findDishPosition(
   menu: WeekMenu,
   dishId: string,
@@ -294,6 +303,24 @@ export function sideFitsMain(sideId: string, mainId: string): boolean {
   const allowed = dishMeta[mainId]?.sides
   if (!allowed?.length) return true
   return allowed.includes(sideId)
+}
+
+export type PairFit = 'good'
+
+/** Как гарнир сочетается с выбранным горячим. */
+export function pairFitForSide(
+  main: { item: MenuDishRef; slot: MenuSlot; complete?: boolean },
+  side: { item: MenuDishRef },
+): PairFit | null {
+  if (main.complete) return null
+  const mainIds = menuRefIds(main.item)
+  const sideIds = menuRefIds(side.item)
+  const tasty = mainIds.some((mid) => sideIds.some((sid) => sideFitsMain(sid, mid)))
+  return tasty ? 'good' : null
+}
+
+export const PAIR_FIT_LABEL: Record<PairFit, string> = {
+  good: 'вкусно',
 }
 
 export function sideFitInSlot(

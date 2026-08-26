@@ -26,7 +26,7 @@ export type Dish = {
   recipe?: Recipe
   kind?: DishKind
   protein?: ProteinType
-  /** Сочетаемые гарниры (id). Для complete не нужно. */
+  /** Вкусные гарниры (id). Для complete не нужно. */
   sides?: string[]
 }
 

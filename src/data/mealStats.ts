@@ -3,7 +3,13 @@
  * Ключ слота: «цикл|неделя|слот», например «2026-08|1|mon-tue».
  */
 
-import { cycleId } from './calendar'
+import {
+  cycleId,
+  cycleStartFromId,
+  getMonthStart,
+  slotStartIso,
+  type MenuSlotId,
+} from './calendar'
 
 export type PortionOutcome = 'fast' | 'exact' | 'leftover'
 
@@ -44,6 +50,59 @@ export function parseSlotStatKey(
     return { cycle: '', week: Number(parts[0]), slotId: parts[1]! }
   }
   return null
+}
+
+const SLOT_IDS: MenuSlotId[] = ['mon-tue', 'wed-thu', 'fri-sat']
+
+function isSlotId(value: string): value is MenuSlotId {
+  return SLOT_IDS.includes(value as MenuSlotId)
+}
+
+function slotIsoFromStatKey(key: string): string | undefined {
+  const parsed = parseSlotStatKey(key)
+  if (!parsed || !isSlotId(parsed.slotId)) return undefined
+  const start = parsed.cycle ? cycleStartFromId(parsed.cycle) : getMonthStart()
+  return slotStartIso(parsed.week, parsed.slotId, start)
+}
+
+export function lastOutcomeCookedOn(
+  stats: MealStatsStore,
+  dishId: string,
+  cycle?: string,
+): string | undefined {
+  let latest: string | undefined
+  for (const [key, slot] of Object.entries(stats)) {
+    if (!slot.dishes[dishId]?.outcome) continue
+    const parsed = parseSlotStatKey(key)
+    if (!parsed) continue
+    if (cycle && parsed.cycle && parsed.cycle !== cycle) continue
+    const iso = slotIsoFromStatKey(key)
+    if (iso && (!latest || iso > latest)) latest = iso
+  }
+  return latest
+}
+
+export function dishHasOutcomeThisCycle(
+  stats: MealStatsStore,
+  dishId: string,
+  cycle: string,
+): boolean {
+  for (const [key, slot] of Object.entries(stats)) {
+    if (!slot.dishes[dishId]?.outcome) continue
+    const parsed = parseSlotStatKey(key)
+    if (!parsed) continue
+    if (parsed.cycle && parsed.cycle !== cycle) continue
+    return true
+  }
+  return false
+}
+
+export function slotDishHasOutcome(
+  stats: MealStatsStore | undefined,
+  batchId: string,
+  dishId: string,
+): boolean {
+  return Boolean(stats?.[batchId]?.dishes[dishId]?.outcome)
 }
 
 /** Старые ключи «1|mon-tue» → текущий цикл. Уже префиксированные не трогаем. */

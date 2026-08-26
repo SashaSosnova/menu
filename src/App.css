@@ -593,6 +593,16 @@
   cursor: pointer;
 }
 
+.prep-item.is-next {
+  background: #eef4ef;
+  box-shadow: inset 0 0 0 1px #2f4a3a;
+}
+
+.prep-use.is-next {
+  color: #2f4a3a;
+  font-weight: 700;
+}
+
 .prep-item input {
   margin-top: 0.2rem;
   width: 1.1rem;
@@ -661,6 +671,261 @@
   margin-top: 0.7rem;
 }
 
+.cook-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem 0.65rem;
+  align-items: start;
+}
+
+.cook-columns .menu-dish-group h4 {
+  min-height: 1.15rem;
+}
+
+.menu-dish-row--main .menu-dish-card.is-selected {
+  overflow: visible;
+  border-color: #2f4a3a;
+  box-shadow: inset 3px 0 0 #2f4a3a;
+  outline: 2px solid #2f4a3a;
+  outline-offset: 1px;
+}
+
+.menu-dish-row--main .menu-dish-card.is-selected .menu-dish-card-head,
+.menu-dish-row--main .menu-dish-card.is-selected .menu-recipe-link {
+  background: #dceee3;
+}
+
+.menu-dish-row--side .menu-dish-card.is-fit-good {
+  border-color: #2f4a3a;
+  box-shadow: inset 3px 0 0 #2f4a3a;
+  background: #e7f3eb;
+}
+
+.menu-dish-row--side .menu-dish-card.is-fit-good .menu-dish-card-head,
+.menu-dish-row--side .menu-dish-card.is-fit-good .menu-recipe-link,
+.menu-dish-row--side .menu-dish-card.is-fit-good .outcome-chips {
+  background: #e7f3eb;
+}
+
+.menu-recipe-open {
+  flex-shrink: 0;
+  border: 0;
+  background: transparent;
+  padding: 0 0.2rem 0 0.15rem;
+  font: inherit;
+  font-size: 1.15rem;
+  line-height: 1;
+  color: #6b655b;
+  cursor: pointer;
+}
+
+.cook-now {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0.2rem 0 0.4rem;
+  padding: 0.85rem 0.85rem 0.75rem;
+  border-radius: 0.75rem;
+  background: #f7f3eb;
+}
+
+.cook-now-block {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.cook-now-kicker {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #6b655b;
+}
+
+.cook-now-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #2f4a3a;
+}
+
+.cook-now-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.45rem;
+}
+
+.cook-now-rest {
+  margin: 0.15rem 0 0;
+}
+
+.cook-queue-heading {
+  margin: 1.1rem 0 0.35rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #2f4a3a;
+}
+
+.fridge-list {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0.55rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fridge-block {
+  margin: 0 0 1rem;
+}
+
+.fridge-block .cook-queue-heading {
+  margin-top: 0;
+}
+
+.fridge-empty {
+  margin: 0.45rem 0 0;
+  padding: 0.7rem 0.75rem;
+  border-radius: 0.55rem;
+  background: #fffdf8;
+  color: #8a847a;
+  font-size: 0.88rem;
+}
+
+.fridge-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem 0.75rem;
+  padding: 0.65rem 0.7rem;
+  border-radius: 0.55rem;
+  background: #fffdf8;
+}
+
+.fridge-row-text {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.fridge-row-text strong {
+  font-size: 0.95rem;
+  color: #2f4a3a;
+}
+
+.fridge-step {
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.fridge-portions {
+  min-width: 3.4rem;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #2f4a3a;
+}
+
+.fridge-step-btn {
+  width: 1.85rem;
+  height: 1.85rem;
+  border: 1px solid #ddd6cb;
+  border-radius: 999px;
+  background: #fff;
+  color: #2f4a3a;
+  font: inherit;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.fridge-step-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.buy-block {
+  margin: 0 0 0.75rem;
+  padding: 0.4rem 0.55rem 0.45rem;
+  border-radius: 0.55rem;
+  background: #fffdf8;
+  max-height: 10.5rem;
+  overflow: auto;
+}
+
+.buy-block .cook-queue-heading {
+  margin: 0;
+  font-size: 0.82rem;
+}
+
+.buy-dishes {
+  margin: 0.1rem 0 0.25rem;
+  font-size: 0.75rem;
+  line-height: 1.3;
+  color: #6b655b;
+}
+
+.buy-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.05rem 0.65rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.buy-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.12rem 0;
+  font-size: 0.78rem;
+  line-height: 1.25;
+  color: #2c2924;
+  cursor: pointer;
+}
+
+.buy-row input {
+  width: 0.85rem;
+  height: 0.85rem;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.buy-row span {
+  min-width: 0;
+}
+
+@media (max-width: 639px) {
+  .buy-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cook-status {
+  color: #6b655b;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.cook-task--eating {
+  box-shadow: inset 0 0 0 1px #2f4a3a;
+}
+
+.cook-task--cooked {
+  opacity: 0.72;
+}
+
+.cook-task--next strong {
+  color: #2f4a3a;
+}
+
 .cook-task {
   border-radius: 0.75rem;
   background: #f7f3eb;
@@ -702,6 +967,10 @@
 .cook-task-body {
   padding: 0 0 0.75rem;
   border-top: 1px solid #e5dfd3;
+}
+
+.cook-task-body .cook-now-actions {
+  margin-top: 0.7rem;
 }
 
 .cook-note {
@@ -829,7 +1098,6 @@
   min-width: 0;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 0.55rem;
   border: 0;
   border-radius: 0;
@@ -868,44 +1136,8 @@
   color: #6b655b;
 }
 
-.menu-recipe-link-tail {
-  display: flex;
-  align-items: center;
-  gap: 0.2rem;
-  flex-shrink: 0;
-}
-
-.menu-recipe-link-portions {
-  font-size: 0.68rem;
-  font-weight: 600;
-  color: #6b655b;
-  white-space: nowrap;
-}
-
-.menu-recipe-link-arrow {
-  font-size: 1rem;
-  line-height: 1;
-  color: #6b655b;
-}
-
 .menu-recipe-link:active {
   filter: brightness(0.98);
-}
-
-.menu-swap-btn {
-  flex-shrink: 0;
-  border: 0;
-  background: transparent;
-  padding: 0 0.65rem;
-  font: inherit;
-  font-size: 1.15rem;
-  line-height: 1;
-  color: #6b655b;
-  cursor: pointer;
-}
-
-.menu-swap-btn:active {
-  color: #2c2924;
 }
 
 .menu-week-edit {
@@ -1562,63 +1794,6 @@
   margin-top: 1rem;
 }
 
-.replace-restore {
-  margin: 0.35rem 0 0.75rem;
-}
-
-.replace-section {
-  margin-top: 1rem;
-}
-
-.replace-section h3 {
-  margin: 0 0 0.25rem;
-  font-size: 0.92rem;
-}
-
-.replace-section-hint {
-  margin: 0 0 0.5rem;
-  font-size: 0.82rem;
-}
-
-.replace-option-list {
-  display: grid;
-  gap: 0.35rem;
-}
-
-.replace-option {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.12rem;
-  border: 1px solid #ddd6cb;
-  border-radius: 0.55rem;
-  background: #fffdf8;
-  padding: 0.5rem 0.65rem;
-  text-align: left;
-  cursor: pointer;
-  font: inherit;
-}
-
-.replace-option:active {
-  background: #efe8db;
-}
-
-.replace-option-name {
-  font-weight: 600;
-  font-size: 0.92rem;
-  color: #2c2924;
-}
-
-.replace-hint {
-  font-size: 0.75rem;
-  color: #6b655b;
-}
-
-.replace-hint.warn {
-  color: #8b6b3a;
-}
-
 .primary-btn,
 .ghost-btn {
   border: 0;
@@ -1770,11 +1945,6 @@
   }
 }
 
-.cycle-range {
-  margin: 0 0 0.55rem;
-  font-size: 0.85rem;
-}
-
 .cycle-review {
   margin: 0 0 1rem;
 }
@@ -1841,97 +2011,3 @@
   color: #2f4a3a;
 }
 
-.ration-person {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  margin: 0 0 0.85rem;
-}
-
-.ration-person-btn {
-  border: 1px solid #d8d0c3;
-  background: #fff;
-  color: #3d3a34;
-  padding: 0.4rem 0.7rem;
-  border-radius: 999px;
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.82rem;
-  font-weight: 600;
-}
-
-.ration-person-btn.is-active {
-  border-color: #2f4a3a;
-  background: #2f4a3a;
-  color: #fffdf8;
-}
-
-.ration-week-summary {
-  margin: 0 0 0.85rem;
-  padding: 0.75rem 0.85rem;
-  border-radius: 0.75rem;
-  background: #f7f3eb;
-}
-
-.ration-week-summary p {
-  margin: 0;
-  line-height: 1.4;
-}
-
-.ration-week-summary p + p {
-  margin-top: 0.3rem;
-}
-
-.ration-hint {
-  margin: 0.55rem 0 0.35rem;
-  font-size: 0.88rem;
-}
-
-.ration-combos {
-  display: grid;
-  gap: 0.4rem;
-  margin: 0.55rem 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.ration-combo {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 0.75rem;
-  padding: 0.55rem 0.65rem;
-  border-radius: 0.55rem;
-  background: #fffdf8;
-  border: 1px solid #e5dfd3;
-}
-
-.ration-combo-text {
-  display: grid;
-  gap: 0.15rem;
-  min-width: 0;
-}
-
-.ration-combo-text strong {
-  font-size: 0.9rem;
-  color: #2f4a3a;
-}
-
-.ration-combo-text .muted {
-  font-size: 0.85rem;
-  line-height: 1.35;
-}
-
-.ration-kcal {
-  flex-shrink: 0;
-  font-weight: 700;
-  font-size: 0.92rem;
-  color: #3d3a34;
-  white-space: nowrap;
-}
-
-.ration-slot-total {
-  margin: 0.65rem 0 0;
-  font-size: 0.92rem;
-  line-height: 1.4;
-}

@@ -1,22 +1,18 @@
 import { useState } from 'react'
 import './App.css'
 import { MenuTab } from './components/MenuTab'
-import { ShoppingTab } from './components/ShoppingTab'
 import { PrepTab } from './components/PrepTab'
 import { CookbookTab } from './components/CookbookTab'
-import { RationTab } from './components/RationTab'
 import { AccountPanel } from './components/AccountPanel'
 import { MenuSyncProvider, useMenuSync } from './hooks/useMenuSync'
 import { authAccountLabel, isLinkedAccount } from './lib/accountAuth'
 import { isFirebaseConfigured } from './firebase'
 
-type TabId = 'menu' | 'ration' | 'shopping' | 'prep' | 'cookbook'
+type TabId = 'menu' | 'cookbook' | 'prep'
 
 const tabs: { id: TabId; label: string }[] = [
   { id: 'menu', label: 'Меню' },
-  { id: 'ration', label: 'Рацион' },
   { id: 'cookbook', label: 'Книга' },
-  { id: 'shopping', label: 'Закупки' },
   { id: 'prep', label: 'Заготовки' },
 ]
 
@@ -66,9 +62,7 @@ function AppShell() {
       <main className="main">
         {!ready ? <p className="muted app-loading">Загрузка данных…</p> : null}
         {ready && tab === 'menu' ? <MenuTab /> : null}
-        {ready && tab === 'ration' ? <RationTab /> : null}
         {ready && tab === 'cookbook' ? <CookbookTab /> : null}
-        {ready && tab === 'shopping' ? <ShoppingTab /> : null}
         {ready && tab === 'prep' ? <PrepTab /> : null}
       </main>
 

@@ -1,10 +1,10 @@
-import { weekRangeLabel } from '../data/calendar'
-import { weekNumbers } from '../data/weeks'
+import { listCookQueue, slotDishIds } from '../data/cookBoard'
 import {
   countPrepChecks,
   prepCheckIds,
+  prepCookHint,
   prepGroups,
-  prepUse,
+  prepMatchesNext,
 } from '../data/prep'
 import { useMenuSync } from '../hooks/useMenuSync'
 
@@ -16,6 +16,7 @@ function PackLine({
   use,
   how,
   checked,
+  isNext,
   onToggle,
 }: {
   label: string
@@ -23,17 +24,28 @@ function PackLine({
   use?: string
   how?: string
   checked: boolean
+  isNext?: boolean
   onToggle: () => void
 }) {
   return (
-    <label className={checked ? 'prep-item is-checked' : 'prep-item'}>
+    <label
+      className={[
+        'prep-item',
+        checked ? 'is-checked' : '',
+        isNext ? 'is-next' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       <input type="checkbox" checked={checked} onChange={onToggle} />
       <span className="prep-body">
         <span className="prep-head">
           <span className="prep-product">{label}</span>
           <span className="prep-amount">{amount}</span>
         </span>
-        {use && <span className="prep-use">{use}</span>}
+        {use && (
+          <span className={isNext ? 'prep-use is-next' : 'prep-use'}>{use}</span>
+        )}
         {how && <span className="prep-how">{how}</span>}
       </span>
     </label>
@@ -44,6 +56,18 @@ export function PrepTab() {
   const { state, setChecklist } = useMenuSync()
   const checked = state.checklists[STORAGE_KEY] ?? {}
   const { total } = countPrepChecks()
+  const nextBatch = listCookQueue(
+    state.cookBoard,
+    state.menuOverrides,
+    state.mealStats,
+  ).find((b) => b.status === 'next')
+  const nextCook = nextBatch
+    ? {
+        week: nextBatch.week,
+        slotId: nextBatch.slotId,
+        dishIds: new Set(slotDishIds(nextBatch.slot)),
+      }
+    : null
 
   function toggle(id: string) {
     const next = { ...checked, [id]: !checked[id] }
@@ -66,12 +90,13 @@ export function PrepTab() {
       <div className="view-heading">
         <h2>Заготовки</h2>
         <p className="muted">
-          Раз в месяц: разделать, замариновать, подписать пакет (название +
-          даты), в морозилку. Галочка на каждый пакет.
+          Раз в месяц: разделать, замариновать, подписать пакет (название блюда),
+          в морозилку. Достаёте пакет, когда готовите этот набор — не по календарным
+          пн/ср/пт. Галочка на каждый пакет.
         </p>
-        <p className="muted">
-          {weekNumbers.map((w) => weekRangeLabel(w)).join(' · ')}
-        </p>
+        {nextBatch ? (
+          <p className="muted">Подсвечен пакет для следующей готовки</p>
+        ) : null}
         <p className="prep-progress">
           В заморозку: {done} из {total}
         </p>
@@ -136,33 +161,39 @@ export function PrepTab() {
                             <p className="prep-how muted">{item.how}</p>
                           )}
                           <ul className="prep-packs">
-                            {item.packs.map((pack) => (
-                              <li key={pack.id}>
-                                <PackLine
-                                  label={pack.label}
-                                  amount={pack.amount}
-                                  use={prepUse(pack.week, pack.slot)}
-                                  checked={Boolean(checked[pack.id])}
-                                  onToggle={() => toggle(pack.id)}
-                                />
-                              </li>
-                            ))}
+                            {item.packs.map((pack) => {
+                              const isNext = prepMatchesNext(pack, nextCook)
+                              return (
+                                <li key={pack.id}>
+                                  <PackLine
+                                    label={pack.label}
+                                    amount={pack.amount}
+                                    use={prepCookHint(isNext)}
+                                    isNext={isNext}
+                                    checked={Boolean(checked[pack.id])}
+                                    onToggle={() => toggle(pack.id)}
+                                  />
+                                </li>
+                              )
+                            })}
                           </ul>
                         </li>
                       )
                     }
 
+                    const isNext = prepMatchesNext(item, nextCook)
                     return (
                       <li key={item.id}>
                         <PackLine
                           label={item.label}
                           amount={item.amount}
                           use={
-                            item.week && item.slot
-                              ? prepUse(item.week, item.slot)
+                            item.dishIds?.length || (item.week && item.slot)
+                              ? prepCookHint(isNext)
                               : undefined
                           }
                           how={item.how}
+                          isNext={isNext}
                           checked={Boolean(checked[item.id])}
                           onToggle={() => toggle(item.id)}
                         />

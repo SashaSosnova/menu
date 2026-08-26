@@ -54,7 +54,7 @@ export const weekMenus: WeekMenu[] = [
         id: 'mon-tue',
         title: 'ПН+ВТ',
         covers: 'пн–вт',
-        note: 'Мясо + курица, оба с соусом → сухие гарниры.',
+        note: 'Мясо + курица. Гречка и брокколи.',
         mains: [
           { dishId: 'beef_pepper' },
           { dishId: 'chicken_tomato_cream' },

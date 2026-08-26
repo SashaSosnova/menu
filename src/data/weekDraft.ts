@@ -5,7 +5,6 @@
 
 export type DraftItem = {
   name: string
-  wetness: 'dry' | 'sauce'
   protein?: 'beef' | 'chicken' | 'fish' | 'shrimp'
   daySauce?: string
 }
@@ -17,7 +16,7 @@ export type DraftCook = {
   complete?: string
   mains: DraftItem[]
   sides: DraftItem[]
-  /** Если мокрость горячих разная — явные пары */
+  /** Явные пары, если нужно */
   pairs?: [string, string][]
 }
 
@@ -35,22 +34,22 @@ export const week1: DraftWeek = {
     {
       day: 'Понедельник',
       covers: 'пн–вт',
-      note: 'Мясо + курица, оба с соусом.',
+      note: 'Мясо + курица.',
       mains: [
         {
           name: 'Говядина с перцем в соевом',
-          wetness: 'sauce',
+
           protein: 'beef',
         },
         {
           name: 'Филе в томатно-сметанном соусе',
-          wetness: 'sauce',
+
           protein: 'chicken',
         },
       ],
       sides: [
-        { name: 'Гречка с луком и морковью', wetness: 'dry' },
-        { name: 'Брокколи в аэрогриле с пармезаном', wetness: 'dry' },
+        { name: 'Гречка с луком и морковью' },
+        { name: 'Брокколи в аэрогриле с пармезаном' },
       ],
     },
     {
@@ -60,18 +59,18 @@ export const week1: DraftWeek = {
       mains: [
         {
           name: 'Куриные отбивные в панировке',
-          wetness: 'dry',
+
           protein: 'chicken',
         },
         {
           name: 'Ножки медово-чесночные / Ножки в паприке',
-          wetness: 'dry',
+
           protein: 'chicken',
         },
       ],
       sides: [
-        { name: 'Картофельное пюре', wetness: 'dry' },
-        { name: 'Овощи запечённые', wetness: 'dry' },
+        { name: 'Картофельное пюре' },
+        { name: 'Овощи запечённые' },
       ],
     },
     {
@@ -79,8 +78,8 @@ export const week1: DraftWeek = {
       covers: 'пт–сб',
       note: 'Болоньезе уникальное: только паста + цельное (золотой рис с креветками).',
       complete: 'Золотой рис с креветками (Хайнань)',
-      mains: [{ name: 'Болоньезе', wetness: 'sauce', protein: 'beef' }],
-      sides: [{ name: 'Паста отварная', wetness: 'dry' }],
+      mains: [{ name: 'Болоньезе', protein: 'beef' }],
+      sides: [{ name: 'Паста отварная' }],
     },
   ],
 }
@@ -97,35 +96,35 @@ export const week2: DraftWeek = {
       mains: [
         {
           name: 'Форель в аэрогриле',
-          wetness: 'dry',
+
           protein: 'fish',
         },
         {
           name: 'Куриные котлеты',
-          wetness: 'dry',
+
           protein: 'chicken',
         },
       ],
       sides: [
-        { name: 'Картофельное пюре', wetness: 'dry' },
-        { name: 'Цветная капуста (аэрогриль или духовка)', wetness: 'dry' },
+        { name: 'Картофельное пюре' },
+        { name: 'Цветная капуста (аэрогриль или духовка)' },
       ],
     },
     {
       day: 'Среда',
       covers: 'ср–чт',
-      note: 'Мясо с соусом + сухие крылья → только фиксированные пары.',
+      note: 'Гуляш + крылья → фиксированные пары по вкусу.',
       mains: [
-        { name: 'Гуляш с паприкой', wetness: 'sauce', protein: 'beef' },
+        { name: 'Гуляш с паприкой', protein: 'beef' },
         {
           name: 'Крылья соево-медовые / Крылья в паприке',
-          wetness: 'dry',
+
           protein: 'chicken',
         },
       ],
       sides: [
-        { name: 'Рис с луком и морковью', wetness: 'dry' },
-        { name: 'Овощи запечённые', wetness: 'dry' },
+        { name: 'Рис с луком и морковью' },
+        { name: 'Овощи запечённые' },
       ],
       pairs: [
         ['Гуляш с паприкой', 'Рис с луком и морковью'],
@@ -135,12 +134,12 @@ export const week2: DraftWeek = {
     {
       day: 'Пятница',
       covers: 'пт–сб',
-      note: 'Полноценное = паста с креветками. Мясо с соусом + сухая крупа.',
+      note: 'Полноценное = паста с креветками. К бефстроганову — булгур.',
       complete: 'Паста с креветками',
       mains: [
-        { name: 'Бефстроганов', wetness: 'sauce', protein: 'beef' },
+        { name: 'Бефстроганов', protein: 'beef' },
       ],
-      sides: [{ name: 'Булгур с луком и морковью', wetness: 'dry' }],
+      sides: [{ name: 'Булгур с луком и морковью' }],
     },
   ],
 }
@@ -157,18 +156,18 @@ export const week3: DraftWeek = {
       mains: [
         {
           name: 'Минтай запечённый с овощами и сыром',
-          wetness: 'sauce',
+
           protein: 'fish',
         },
         {
           name: 'Бёдра запечённые со сметаной и чесноком',
-          wetness: 'sauce',
+
           protein: 'chicken',
         },
       ],
       sides: [
-        { name: 'Паста отварная', wetness: 'dry' },
-        { name: 'Овощи запечённые', wetness: 'dry' },
+        { name: 'Паста отварная' },
+        { name: 'Овощи запечённые' },
       ],
     },
     {
@@ -178,18 +177,18 @@ export const week3: DraftWeek = {
       mains: [
         {
           name: 'Говяжьи тефтели в томатно-сметанном соусе',
-          wetness: 'sauce',
+
           protein: 'beef',
         },
         {
           name: 'Ножки медово-чесночные / Ножки в паприке',
-          wetness: 'dry',
+
           protein: 'chicken',
         },
       ],
       sides: [
-        { name: 'Булгур с луком и морковью', wetness: 'dry' },
-        { name: 'Картофель отварной с укропом', wetness: 'dry' },
+        { name: 'Булгур с луком и морковью' },
+        { name: 'Картофель отварной с укропом' },
       ],
     },
     {
@@ -200,11 +199,11 @@ export const week3: DraftWeek = {
       mains: [
         {
           name: 'Куриный строганов',
-          wetness: 'sauce',
+
           protein: 'chicken',
         },
       ],
-      sides: [{ name: 'Свежий овощной салат', wetness: 'dry' }],
+      sides: [{ name: 'Свежий овощной салат' }],
     },
   ],
 }
@@ -221,18 +220,18 @@ export const week4: DraftWeek = {
       mains: [
         {
           name: 'Рваная говядина в красном вине',
-          wetness: 'sauce',
+
           protein: 'beef',
         },
         {
           name: 'Куриные тефтели в томатно-сметанном соусе',
-          wetness: 'sauce',
+
           protein: 'chicken',
         },
       ],
       sides: [
-        { name: 'Гречка с луком и морковью', wetness: 'dry' },
-        { name: 'Картофельное пюре', wetness: 'dry' },
+        { name: 'Гречка с луком и морковью' },
+        { name: 'Картофельное пюре' },
       ],
     },
     {
@@ -242,18 +241,18 @@ export const week4: DraftWeek = {
       mains: [
         {
           name: 'Гуляш с паприкой',
-          wetness: 'sauce',
+
           protein: 'beef',
         },
         {
           name: 'Форель со шпинатом и черри в сливках',
-          wetness: 'sauce',
+
           protein: 'fish',
         },
       ],
       sides: [
-        { name: 'Рис с луком и морковью', wetness: 'dry' },
-        { name: 'Цветная капуста (аэрогриль или духовка)', wetness: 'dry' },
+        { name: 'Рис с луком и морковью' },
+        { name: 'Цветная капуста (аэрогриль или духовка)' },
       ],
     },
     {
@@ -264,14 +263,14 @@ export const week4: DraftWeek = {
       mains: [
         {
           name: 'Говядина в горчично-травной корочке',
-          wetness: 'sauce',
+
           protein: 'beef',
         },
       ],
       sides: [
         {
           name: 'Свежий овощной салат',
-          wetness: 'dry',
+
         },
       ],
     },

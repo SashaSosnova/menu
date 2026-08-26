@@ -15,6 +15,8 @@ import type { CookbookStore } from '../data/cookbook'
 import type { MealStatsStore } from '../data/mealStats'
 import type { MenuOverrides } from '../data/menuOverrides'
 import type { PortionScales } from '../lib/portionScale'
+import type { CookBoard } from '../data/cookBoard'
+import { resolveCookBoard } from '../data/cookBoard'
 import {
   loadLocalAppState,
   normalizeAppState,
@@ -33,6 +35,7 @@ type MenuSyncContextValue = {
   setMealStats: (mealStats: MealStatsStore) => void
   setMenuOverrides: (menuOverrides: MenuOverrides) => void
   setPortionScales: (portionScales: PortionScales) => void
+  setCookBoard: (cookBoard: CookBoard | ((prev: CookBoard) => CookBoard)) => void
   getChecklist: (storageKey: string) => Record<string, boolean>
   setChecklist: (storageKey: string, checked: Record<string, boolean>) => void
   patchState: (updater: (prev: MenuAppState) => MenuAppState) => void
@@ -41,6 +44,10 @@ type MenuSyncContextValue = {
 const MenuSyncContext = createContext<MenuSyncContextValue | null>(null)
 
 const CLOUD_DEBOUNCE_MS = 600
+
+function withBoard(state: MenuAppState): MenuAppState {
+  return { ...state, cookBoard: resolveCookBoard(state.cookBoard) }
+}
 
 export function MenuSyncProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<MenuAppState>(() => loadLocalAppState())
@@ -58,7 +65,11 @@ export function MenuSyncProvider({ children }: { children: ReactNode }) {
   const persist = useCallback(
     (updater: (prev: MenuAppState) => MenuAppState) => {
       setState((prev) => {
-        const next = { ...updater(prev), updatedAt: Date.now() }
+        const next = {
+          ...updater(prev),
+          updatedAt: Date.now(),
+        }
+        next.cookBoard = resolveCookBoard(next.cookBoard)
         saveLocalAppState(next)
         latestState.current = next
 
@@ -198,6 +209,16 @@ export function MenuSyncProvider({ children }: { children: ReactNode }) {
     [persist],
   )
 
+  const setCookBoard = useCallback(
+    (cookBoard: CookBoard | ((prev: CookBoard) => CookBoard)) => {
+      persist((prev) => ({
+        ...prev,
+        cookBoard: typeof cookBoard === 'function' ? cookBoard(prev.cookBoard) : cookBoard,
+      }))
+    },
+    [persist],
+  )
+
   const getChecklist = useCallback(
     (storageKey: string) => state.checklists[storageKey] ?? {},
     [state.checklists],
@@ -219,11 +240,12 @@ export function MenuSyncProvider({ children }: { children: ReactNode }) {
       user,
       cloudError,
       useCloud: Boolean(uid),
-      state,
+      state: withBoard(state),
       setCookbook,
       setMealStats,
       setMenuOverrides,
       setPortionScales,
+      setCookBoard,
       getChecklist,
       setChecklist,
       patchState: persist,
@@ -238,6 +260,7 @@ export function MenuSyncProvider({ children }: { children: ReactNode }) {
       setMealStats,
       setMenuOverrides,
       setPortionScales,
+      setCookBoard,
       getChecklist,
       setChecklist,
       persist,

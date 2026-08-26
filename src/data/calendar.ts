@@ -42,10 +42,34 @@ function startOfDay(d: Date): Date {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate())
 }
 
-function addDays(base: Date, days: number): Date {
+export function addDays(base: Date, days: number): Date {
   const d = new Date(base)
   d.setDate(d.getDate() + days)
   return d
+}
+
+/** Локальная дата YYYY-MM-DD. */
+export function isoDate(d: Date = new Date()): string {
+  const x = startOfDay(d)
+  return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`
+}
+
+export function dateFromIso(iso: string): Date {
+  const [y, m, d] = iso.split('-').map(Number)
+  return new Date(y, (m ?? 1) - 1, d ?? 1)
+}
+
+/** «5 августа» */
+export function formatIsoGenitive(iso: string): string {
+  return dayMonthGenitive(dateFromIso(iso))
+}
+
+/** Старт цикла из id «2026-08». */
+export function cycleStartFromId(id: string): Date {
+  const [ys, ms] = id.split('-')
+  const y = Number(ys)
+  const m = Number(ms)
+  return firstMondayOfMonth(y, (m || 1) - 1)
 }
 
 function daysBetween(from: Date, to: Date): number {
@@ -149,6 +173,15 @@ function dateRangeGenitive(from: Date, to: Date): string {
 
 function weekStartDate(week: number, cycleStart: Date = getMonthStart()): Date {
   return addDays(cycleStart, (week - 1) * 7)
+}
+
+/** Дата старта слота (пн / ср / пт) в цикле. */
+export function slotStartIso(
+  week: number,
+  slot: MenuSlotId,
+  cycleStart: Date = getMonthStart(),
+): string {
+  return isoDate(addDays(weekStartDate(week, cycleStart), slotOffset[slot].start))
 }
 
 /** «5 августа - 6 августа (Среда + Четверг)» */

@@ -1,9 +1,9 @@
 /**
  * Заготовки на месяц — группировка по удобству работы.
- * label = подпись на пакет; week+slot = когда достаём.
+ * label = подпись на пакет; week+slot = из какого набора шаблона достаём.
  */
 
-import { packUseLabel, type MenuSlotId } from './calendar'
+import type { MenuSlotId } from './calendar'
 
 export type PrepPack = {
   id: string
@@ -38,8 +38,19 @@ export type PrepGroup = {
   items: PrepItem[]
 }
 
-export function prepUse(week: number, slot: MenuSlotId): string {
-  return packUseLabel(week, slot)
+export function prepMatchesNext(
+  item: { dishIds?: string[]; week?: number; slot?: MenuSlotId },
+  next: { week: number; slotId: MenuSlotId; dishIds: Set<string> } | null,
+): boolean {
+  if (!next) return false
+  if (item.week != null && item.slot) {
+    return item.week === next.week && item.slot === next.slotId
+  }
+  return (item.dishIds ?? []).some((id) => next.dishIds.has(id))
+}
+
+export function prepCookHint(isNext: boolean): string {
+  return isNext ? 'следующая готовка · достать сейчас' : 'достать, когда готовите этот набор'
 }
 
 export const prepGroups: PrepGroup[] = [

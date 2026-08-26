@@ -2,6 +2,7 @@ import type { CookbookStore } from '../data/cookbook'
 import { seedStats, migrateMealStats, type MealStatsStore } from '../data/mealStats'
 import type { MenuOverrides } from '../data/menuOverrides'
 import type { PortionScales } from '../lib/portionScale'
+import { emptyCookBoard, resolveCookBoard, COOK_BOARD_REV, type CookBoard } from '../data/cookBoard'
 
 export const APP_STATE_KEY = 'menu-app-state-v1'
 
@@ -11,6 +12,7 @@ export type MenuAppState = {
   checklists: Record<string, Record<string, boolean>>
   menuOverrides: MenuOverrides
   portionScales: PortionScales
+  cookBoard: CookBoard
   updatedAt: number
 }
 
@@ -35,6 +37,7 @@ export function emptyAppState(): MenuAppState {
     checklists: {},
     menuOverrides: {},
     portionScales: {},
+    cookBoard: emptyCookBoard(),
     updatedAt: Date.now(),
   }
 }
@@ -101,7 +104,9 @@ export function loadLocalAppState(): MenuAppState {
       return migrated
     }
     const parsed = JSON.parse(raw) as MenuAppState
-    return {
+    const cookBoard = resolveCookBoard(parsed.cookBoard)
+    const wiped = parsed.cookBoard?.rev !== COOK_BOARD_REV
+    const state: MenuAppState = {
       cookbook: {
         recipes: parsed.cookbook?.recipes ?? {},
         ratings: parsed.cookbook?.ratings ?? {},
@@ -111,8 +116,11 @@ export function loadLocalAppState(): MenuAppState {
       checklists: parsed.checklists ?? {},
       menuOverrides: parsed.menuOverrides ?? {},
       portionScales: parsed.portionScales ?? {},
-      updatedAt: parsed.updatedAt ?? Date.now(),
+      cookBoard,
+      updatedAt: wiped ? Date.now() : (parsed.updatedAt ?? Date.now()),
     }
+    if (wiped) saveLocalAppState(state)
+    return state
   } catch {
     return migrateLegacyState()
   }
@@ -124,6 +132,8 @@ export function saveLocalAppState(state: MenuAppState): void {
 
 export function normalizeAppState(raw: Partial<MenuAppState> | null): MenuAppState {
   if (!raw) return emptyAppState()
+  const cookBoard = resolveCookBoard(raw.cookBoard)
+  const wiped = raw.cookBoard?.rev !== COOK_BOARD_REV
   return {
     cookbook: {
       recipes: raw.cookbook?.recipes ?? {},
@@ -134,6 +144,7 @@ export function normalizeAppState(raw: Partial<MenuAppState> | null): MenuAppSta
     checklists: raw.checklists ?? {},
     menuOverrides: raw.menuOverrides ?? {},
     portionScales: raw.portionScales ?? {},
-    updatedAt: raw.updatedAt ?? Date.now(),
+    cookBoard,
+    updatedAt: wiped ? Date.now() : (raw.updatedAt ?? Date.now()),
   }
 }
