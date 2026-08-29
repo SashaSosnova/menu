@@ -4,6 +4,7 @@ import {
   menuRefLabel,
   type MenuDishRef,
 } from '../data/menu'
+import { compareByOldestCooked, nextCookDishIds } from '../data/cycleQueue'
 import { dishMeta, childEatsKind, isCompleteDish } from '../data/dishMeta'
 import { getDish } from '../data/dishes'
 import { formatMacros } from '../lib/macros'
@@ -24,16 +25,15 @@ import {
   toggleShopHave,
   plannedSideForMain,
   setDishPrepared,
+  setDishPlanned,
   setPlannedSide,
   slotPrimaryDishIds,
-  toggleDishPlanned,
   type CookBatchView,
   type CookBoard,
   type DishMark,
 } from '../data/cookBoard'
-import { plannedDishNames, plannedShopNeeds } from '../data/cookShop'
-import { applyPrepForDishCook, type PrepFreezer } from '../data/prep'
-import { compareByOldestCooked, entryHasFrozenPrep, nextCookDishIds } from '../data/cycleQueue'
+import { plannedShopGroups } from '../data/cookShop'
+import { applyPrepForDishCook } from '../data/prep'
 import { type MenuRole } from '../data/menuOverrides'
 import { useMenuSync } from '../hooks/useMenuSync'
 import { useEscapeKey } from '../hooks/useEscapeKey'
@@ -320,7 +320,12 @@ function DishRow({
           <div className="plan-sides">
             <h4>Гарнир</h4>
             <ul className="menu-slot-dishes plan-sides-list">
-              {availableSides.map((side) => (
+              {(typeof plannedSide === 'string'
+                ? availableSides.filter((side) => side.id === plannedSide)
+                : plannedSide === null
+                  ? []
+                  : availableSides
+              ).map((side) => (
                 <SideOptionRow
                   key={side.id}
                   name={side.name}
@@ -330,11 +335,13 @@ function DishRow({
                   onOpenRecipe={() => onOpenSide({ dishId: side.id })}
                 />
               ))}
-              <SideOptionRow
-                name="Без гарнира"
-                picked={plannedSide === null}
-                onPick={() => onPickSide(null)}
-              />
+              {typeof plannedSide !== 'string' ? (
+                <SideOptionRow
+                  name="Без гарнира"
+                  picked={plannedSide === null}
+                  onPick={() => onPickSide(null)}
+                />
+              ) : null}
             </ul>
           </div>
         ) : null}
@@ -395,34 +402,94 @@ function sortMains(
   mains: QueueDish[],
   board: CookBoard,
   stats: MealStatsStore | undefined,
-  freezer: PrepFreezer,
-  nextIds: Set<string>,
 ): QueueDish[] {
-  const rank = (dish: QueueDish) => {
-    if (menuRefIds(dish.item).some((id) => nextIds.has(id))) return 0
-    if (dishQueueGroup(board, dish.item.dishId, stats) === 'cooking') return 1
-    if (entryHasFrozenPrep(freezer, dish.item)) return 2
-    return 3
-  }
-  return [...mains].sort((a, b) => {
-    const ar = rank(a)
-    const br = rank(b)
-    if (ar !== br) return ar - br
-    return compareByOldestCooked(a.item, b.item, board, stats)
-  })
+  const plannedIds = board.plannedDishIds ?? []
+  const plannedSet = new Set(plannedIds)
+  const isPlannedRow = (dish: QueueDish) =>
+    menuRefIds(dish.item).some((id) => plannedSet.has(id))
+  const planned = plannedIds
+    .map((id) => mains.find((dish) => menuRefIds(dish.item).includes(id)))
+    .filter((dish): dish is QueueDish => Boolean(dish))
+  const catalog = mains
+    .filter((dish) => !isPlannedRow(dish))
+    .sort((a, b) => compareByOldestCooked(a.item, b.item, board, stats))
+  return [...planned, ...catalog]
 }
 
 function sideLabel(sideId: string, cookbook: CookbookStore): string {
   return getCookbookDish(sideId, cookbook)?.name ?? getDish(sideId)?.name ?? sideId
 }
 
+function MainDishItem({
+  dish,
+  queue,
+  board,
+  stats,
+  cookbook,
+  nextIds,
+  showNextTag,
+  onBoardChange,
+  onDishPrepared,
+  onOpenRecipe,
+}: {
+  dish: QueueDish
+  queue: CookBatchView[]
+  board: CookBoard
+  stats: MealStatsStore
+  cookbook: CookbookStore
+  nextIds: Set<string>
+  showNextTag: boolean
+  onBoardChange: (board: CookBoard | ((prev: CookBoard) => CookBoard)) => void
+  onDishPrepared: (dish: QueueDish, nextPrepared: boolean, dishIds: string[]) => void
+  onOpenRecipe: (item: MenuDishRef) => void
+}) {
+  const { batch, item } = dish
+  const mark = displayDishMarkForDish(board, item.dishId, stats)
+  const markBatchId = batchIdForDish(board, item.dishId, batch.id)
+  const markBatch = queue.find((b) => b.id === markBatchId) ?? batch
+  const dishIds = slotPrimaryDishIds(markBatch.slot)
+  const planned = isDishPlanned(board, item.dishId)
+  const complete = Boolean(dish.complete)
+  const availableSides = planned
+    ? availableSideIdsForMain(board, item.dishId).map((id) => ({
+        id,
+        name: sideLabel(id, cookbook),
+        lastCooked: lastCookedOnForDishes(board, [id], stats),
+      }))
+    : []
+
+  return (
+    <DishRow
+      item={item}
+      complete={complete}
+      mark={mark}
+      planned={planned}
+      plannedSide={planned ? plannedSideForMain(board, item.dishId) : undefined}
+      availableSides={availableSides}
+      isNext={showNextTag && menuRefIds(item).some((id) => nextIds.has(id))}
+      lastCooked={lastCookedOnForDishes(board, menuRefIds(item), stats)}
+      onToggleCooked={(nextPrepared) => {
+        onDishPrepared(dish, nextPrepared, dishIds)
+      }}
+      onTogglePlanned={() => {
+        onBoardChange((current) => setDishPlanned(current, item.dishId, !planned))
+      }}
+      onPickSide={(sideId) => {
+        onBoardChange((current) => setPlannedSide(current, item.dishId, sideId))
+      }}
+      onOpenRecipe={() => onOpenRecipe(item)}
+      onOpenSide={onOpenRecipe}
+    />
+  )
+}
+
 function CookList({
   queue,
   board,
   stats,
-  freezer,
   cookbook,
   nextIds,
+  scales,
   onBoardChange,
   onDishPrepared,
   onOpenRecipe,
@@ -430,65 +497,78 @@ function CookList({
   queue: CookBatchView[]
   board: CookBoard
   stats: MealStatsStore
-  freezer: PrepFreezer
   cookbook: CookbookStore
   nextIds: Set<string>
+  scales: Record<string, number>
   onBoardChange: (board: CookBoard | ((prev: CookBoard) => CookBoard)) => void
   onDishPrepared: (dish: QueueDish, nextPrepared: boolean, dishIds: string[]) => void
   onOpenRecipe: (item: MenuDishRef) => void
 }) {
   const mains = useMemo(
-    () => sortMains(queueMains(queue), board, stats, freezer, nextIds),
-    [queue, board, stats, freezer, nextIds],
+    () => sortMains(queueMains(queue), board, stats),
+    [queue, board, stats],
   )
+  const plannedIds = board.plannedDishIds ?? []
+  const plannedSet = new Set(plannedIds)
+  const isPlannedRow = (dish: QueueDish) =>
+    menuRefIds(dish.item).some((id) => plannedSet.has(id))
+  const byId = new Map(mains.map((dish) => [dish.item.dishId, dish]))
+  const upcoming = plannedIds
+    .map((id) => mains.find((dish) => menuRefIds(dish.item).includes(id)) ?? byId.get(id))
+    .filter((dish): dish is QueueDish => Boolean(dish))
+    .filter((dish, i, arr) => arr.findIndex((d) => dish.item.dishId === d.item.dishId) === i)
+  const catalog = mains.filter((dish) => !isPlannedRow(dish))
+
+  const rowProps = {
+    queue,
+    board,
+    stats,
+    cookbook,
+    nextIds,
+    onBoardChange,
+    onDishPrepared,
+    onOpenRecipe,
+  }
 
   return (
-    <section className="menu-dish-group menu-dish-group--main">
-      <h4>Выбрать блюдо</h4>
-      <ul className="menu-slot-dishes">
-        {mains.map((dish) => {
-          const { batch, item } = dish
-          const mark = displayDishMarkForDish(board, item.dishId, stats)
-          const markBatchId = batchIdForDish(board, item.dishId, batch.id)
-          const markBatch = queue.find((b) => b.id === markBatchId) ?? batch
-          const dishIds = slotPrimaryDishIds(markBatch.slot)
-          const planned = isDishPlanned(board, item.dishId)
-          const complete = Boolean(dish.complete)
-          const availableSides = planned
-            ? availableSideIdsForMain(board, item.dishId).map((id) => ({
-                id,
-                name: sideLabel(id, cookbook),
-                lastCooked: lastCookedOnForDishes(board, [id], stats),
-              }))
-            : []
+    <>
+      {upcoming.length > 0 ? (
+        <section className="upcoming-cook">
+          <h3 className="cook-queue-heading">Ближайшая готовка</h3>
+          <ul className="menu-slot-dishes">
+            {upcoming.map((dish) => (
+              <MainDishItem
+                key={dish.item.dishId}
+                dish={dish}
+                showNextTag={false}
+                {...rowProps}
+              />
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
-          return (
-            <DishRow
+      <NeedToBuyBlock
+        board={board}
+        cookbook={cookbook}
+        scales={scales}
+        onBoardChange={onBoardChange}
+      />
+
+      <section className="menu-dish-group menu-dish-group--main">
+        <h4>Выбрать блюдо</h4>
+        <ul className="menu-slot-dishes">
+          {catalog.map((dish) => (
+            <MainDishItem
               key={dish.item.dishId}
-              item={item}
-              complete={complete}
-              mark={mark}
-              planned={planned}
-              plannedSide={planned ? plannedSideForMain(board, item.dishId) : undefined}
-              availableSides={availableSides}
-              isNext={menuRefIds(item).some((id) => nextIds.has(id))}
-              lastCooked={lastCookedOnForDishes(board, menuRefIds(item), stats)}
-              onToggleCooked={(nextPrepared) => {
-                onDishPrepared(dish, nextPrepared, dishIds)
-              }}
-              onTogglePlanned={() => {
-                onBoardChange((current) => toggleDishPlanned(current, item.dishId))
-              }}
-              onPickSide={(sideId) => {
-                onBoardChange((current) => setPlannedSide(current, item.dishId, sideId))
-              }}
-              onOpenRecipe={() => onOpenRecipe(item)}
-              onOpenSide={onOpenRecipe}
+              dish={dish}
+              showNextTag
+              {...rowProps}
             />
-          )
-        })}
-      </ul>
-    </section>
+          ))}
+        </ul>
+      </section>
+    </>
   )
 }
 
@@ -561,32 +641,37 @@ function NeedToBuyBlock({
   scales: Record<string, number>
   onBoardChange: (board: CookBoard | ((prev: CookBoard) => CookBoard)) => void
 }) {
-  const names = plannedDishNames(board, cookbook)
-  if (names.length === 0) return null
-  const lines = plannedShopNeeds(board, cookbook, scales)
+  const groups = plannedShopGroups(board, cookbook, scales)
+  if (groups.length === 0) return null
+  const nothing = groups.every((group) => group.lines.length === 0)
 
   return (
     <section className="buy-block">
       <h3 className="cook-queue-heading">Нужно купить</h3>
-      <p className="buy-dishes">{names.join(' · ')}</p>
-      {lines.length === 0 ? (
-        <p className="buy-empty muted">Ничего покупать не нужно</p>
-      ) : (
-        <ul className="buy-list">
-          {lines.map((line) => (
-            <li key={line.key}>
-              <label className={line.have ? 'buy-row is-have' : 'buy-row'}>
-                <input
-                  type="checkbox"
-                  checked={line.have}
-                  onChange={() => onBoardChange((current) => toggleShopHave(current, line.key))}
-                />
-                <span>{line.text}</span>
-              </label>
-            </li>
-          ))}
-        </ul>
-      )}
+      {groups.map((group) => (
+        <div key={group.key} className="buy-group">
+          <p className="buy-dishes">{group.names.join(' · ')}</p>
+          {group.lines.length === 0 ? null : (
+            <ul className="buy-list">
+              {group.lines.map((line) => (
+                <li key={line.key}>
+                  <label className={line.have ? 'buy-row is-have' : 'buy-row'}>
+                    <input
+                      type="checkbox"
+                      checked={line.have}
+                      onChange={() =>
+                        onBoardChange((current) => toggleShopHave(current, line.key))
+                      }
+                    />
+                    <span>{line.text}</span>
+                  </label>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ))}
+      {nothing ? <p className="buy-empty muted">Ничего покупать не нужно</p> : null}
     </section>
   )
 }
@@ -616,19 +701,13 @@ export function MenuTab() {
       />
 
       <div className="cook-plan">
-        <NeedToBuyBlock
-          board={board}
-          cookbook={state.cookbook}
-          scales={state.portionScales ?? {}}
-          onBoardChange={setCookBoard}
-        />
         <CookList
           queue={queue}
           board={board}
           stats={stats}
-          freezer={freezer}
           cookbook={state.cookbook}
           nextIds={nextIds}
+          scales={state.portionScales ?? {}}
           onBoardChange={setCookBoard}
           onDishPrepared={(dish, nextPrepared, dishIds) => {
             patchState((prev) => {

@@ -83,7 +83,8 @@ export async function upsertAppState(uid: string, state: MenuAppState): Promise<
     ...state,
     updatedAt: state.updatedAt || Date.now(),
   }) as Record<string, unknown>
-  await setDoc(stateDocRef(uid), payload, { merge: true })
+  // Full replace: merge:true keeps deleted nested keys (freezer packs, fridge rows).
+  await setDoc(stateDocRef(uid), payload)
 }
 
 export function subscribeAppState(

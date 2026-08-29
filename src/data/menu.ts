@@ -46,32 +46,31 @@ export type WeekMenu = {
   slots: MenuSlot[]
 }
 
-/** Горячее по кругу. Соседние позиции — разные белки (говядина / курица / рыба / креветки). */
+/** Горячее по кругу. Пары на готовку: курица + говядина, через раз рыба. Ножки и крылья — одно блюдо. */
 export const cycleMains: MenuDishRef[] = [
-  { dishId: 'navy_pasta' },
-  { dishId: 'chicken_tomato_cream' },
+  { dishId: 'chicken_grill' },
   { dishId: 'goulash' },
   { dishId: 'chicken_schnitzel' },
+  { dishId: 'beef_potato_stew' },
+  { dishId: 'chicken_liver_sour_cream' },
+  { dishId: 'beef_roast_herb' },
+  { dishId: 'chicken_tomato_cream' },
+  { dishId: 'navy_pasta' },
+  { dishId: 'chicken_legs_honey', orDishIds: ['chicken_legs_paprika'], label: 'Ножки' },
   { dishId: 'bolognese' },
   { dishId: 'chicken_cutlets' },
-  { dishId: 'beef_stroganoff' },
-  { dishId: 'chicken_legs_honey' },
-  { dishId: 'beef_meatballs' },
-  { dishId: 'wings_soy', orDishIds: ['wings_paprika'] },
-  { dishId: 'beef_potato_stew' },
-  { dishId: 'chicken_legs_paprika' },
-  { dishId: 'beef_pulled' },
-  { dishId: 'chicken_meatballs' },
-  { dishId: 'beef_roast_herb' },
-  { dishId: 'chicken_stroganoff' },
   { dishId: 'trout' },
+  { dishId: 'wings_soy', orDishIds: ['wings_paprika'], label: 'Крылья' },
+  { dishId: 'beef_stroganoff' },
   { dishId: 'thighs_sour_cream' },
   { dishId: 'pollock' },
+  { dishId: 'chicken_meatballs' },
+  { dishId: 'beef_pulled' },
+  { dishId: 'chicken_stroganoff' },
+  { dishId: 'beef_meatballs' },
   { dishId: 'chicken_pasta_zucchini' },
   { dishId: 'trout_spinach' },
-  { dishId: 'chicken_liver_sour_cream' },
   { dishId: 'shrimp_pasta' },
-  { dishId: 'chicken_grill' },
 ]
 
 export const cycleSides: MenuDishRef[] = [

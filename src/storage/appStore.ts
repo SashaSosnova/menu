@@ -2,7 +2,7 @@ import { COOKBOOK_KEY, type CookbookStore } from '../data/cookbook'
 import { seedStats, migrateMealStats, MEAL_STATS_KEY, type MealStatsStore } from '../data/mealStats'
 import type { MenuOverrides } from '../data/menuOverrides'
 import type { PortionScales } from '../lib/portionScale'
-import { emptyCookBoard, resolveCookBoard, FRIDGE_LEFTOVER_PATCH, type CookBoard } from '../data/cookBoard'
+import { emptyCookBoard, resolveCookBoard, type CookBoard } from '../data/cookBoard'
 import { parsePrepFreezer, type PrepFreezer } from '../data/prep'
 
 export const APP_STATE_KEY = 'menu-app-state-v1'
@@ -78,9 +78,8 @@ function hydrateState(raw: PersistedAppState): { state: MenuAppState; dirty: boo
   const cookBoard = resolveCookBoard(prev)
   const seeded =
     Object.keys(prev?.cooked ?? {}).length === 0 && Object.keys(cookBoard.cooked).length > 0
-  const patched =
-    !(prev?.patches ?? []).includes(FRIDGE_LEFTOVER_PATCH) &&
-    (cookBoard.patches ?? []).includes(FRIDGE_LEFTOVER_PATCH)
+  const prevPatches = new Set(prev?.patches ?? [])
+  const patched = (cookBoard.patches ?? []).some((p) => !prevPatches.has(p))
   const { freezerStock, migrated } = resolveFreezerStock(raw)
   const dirty = seeded || patched || migrated
   return {

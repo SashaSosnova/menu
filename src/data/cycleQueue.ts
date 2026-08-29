@@ -1,8 +1,9 @@
 /**
- * Следующие блюда: давно не готовили — раньше, и только если пакет ещё в морозилке.
+ * Пул горячего: фиксированный порядок из цикла.
+ * Не готовили — как в списке; приготовленное уходит в конец.
  */
 
-import { dishQueueGroup, lastCookedOnForDishes, type CookBoard } from './cookBoard'
+import { lastCookedOnForDishes, type CookBoard } from './cookBoard'
 import { cycleIndexOf, cycleMains, menuRefIds, type MenuDishRef } from './menu'
 import { dishHasFrozenPrep, type PrepFreezer } from './prep'
 import type { MealStatsStore } from './mealStats'
@@ -14,7 +15,7 @@ export function entryHasFrozenPrep(
   return menuRefIds(item).some((id) => dishHasFrozenPrep(freezer, id))
 }
 
-/** Без даты — раньше всех; при равной дате — порядок цикла. */
+/** Сначала без даты (порядок цикла), затем по дате готовки — свежие в конце. */
 export function compareByOldestCooked(
   a: MenuDishRef,
   b: MenuDishRef,
@@ -29,25 +30,18 @@ export function compareByOldestCooked(
   return (ai < 0 ? 999 : ai) - (bi < 0 ? 999 : bi)
 }
 
+function isPlannedItem(board: CookBoard, item: MenuDishRef): boolean {
+  const planned = new Set(board.plannedDishIds ?? [])
+  return menuRefIds(item).some((id) => planned.has(id))
+}
+
 function nextCookEntries(
   board: CookBoard,
   stats: MealStatsStore | undefined,
-  freezer: PrepFreezer | undefined,
   count = 2,
 ): MenuDishRef[] {
-  const todoWithPrep = cycleMains.filter((item) => {
-    const group = dishQueueGroup(board, item.dishId, stats)
-    return group === 'todo' && entryHasFrozenPrep(freezer, item)
-  })
-  const pool =
-    todoWithPrep.length > 0
-      ? todoWithPrep
-      : cycleMains.filter(
-          (item) =>
-            dishQueueGroup(board, item.dishId, stats) !== 'cooking' &&
-            entryHasFrozenPrep(freezer, item),
-        )
-  return [...pool]
+  return [...cycleMains]
+    .filter((item) => !isPlannedItem(board, item))
     .sort((a, b) => compareByOldestCooked(a, b, board, stats))
     .slice(0, count)
 }
@@ -55,11 +49,11 @@ function nextCookEntries(
 export function nextCookDishIds(
   board: CookBoard,
   stats: MealStatsStore | undefined,
-  freezer: PrepFreezer | undefined,
+  _freezer?: PrepFreezer,
   count = 2,
 ): Set<string> {
   const ids = new Set<string>()
-  for (const item of nextCookEntries(board, stats, freezer, count)) {
+  for (const item of nextCookEntries(board, stats, count)) {
     for (const id of menuRefIds(item)) ids.add(id)
   }
   return ids

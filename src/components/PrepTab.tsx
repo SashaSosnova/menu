@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import {
   frozenOnOf,
   isPrepInFreezer,
@@ -16,6 +17,60 @@ import { lastCookedOnForDishes, type CookBoard } from '../data/cookBoard'
 import { frozenOnCaption, isoDate, lastCookedCaption } from '../data/calendar'
 import { useMenuSync } from '../hooks/useMenuSync'
 import type { MealStatsStore } from '../data/mealStats'
+
+function FrozenOnEdit({
+  frozenOn,
+  onChange,
+}: {
+  frozenOn?: string
+  onChange: (iso: string) => void
+}) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [open, setOpen] = useState(false)
+
+  useEffect(() => {
+    if (!open) return
+    inputRef.current?.focus()
+  }, [open])
+
+  function openPicker() {
+    const el = inputRef.current
+    if (!el) return
+    try {
+      if (typeof el.showPicker === 'function') {
+        el.showPicker()
+        return
+      }
+    } catch {
+      // Native picker needs a visible input.
+    }
+    setOpen(true)
+  }
+
+  return (
+    <span className="prep-frozen-on">
+      <button type="button" className="prep-frozen-on-btn" onClick={openPicker}>
+        {frozenOnCaption(frozenOn)}
+      </button>
+      <input
+        ref={inputRef}
+        type="date"
+        className={open ? undefined : 'prep-frozen-on-picker'}
+        value={frozenOn ?? ''}
+        max={isoDate()}
+        aria-label="Дата заготовки"
+        tabIndex={open ? 0 : -1}
+        onChange={(event) => {
+          const value = event.target.value
+          if (!value) return
+          onChange(value)
+          setOpen(false)
+        }}
+        onBlur={() => setOpen(false)}
+      />
+    </span>
+  )
+}
 
 function packUnits(item: PrepItem) {
   if (item.packs) return item.packs
@@ -40,7 +95,7 @@ function PackLine({
   checked: boolean
   isNext?: boolean
   pool: 'freezer' | 'future'
-  onToggle: () => void
+  onToggle: (packed: boolean) => void
   onFrozenOnChange?: (iso: string) => void
 }) {
   return (
@@ -50,7 +105,11 @@ function PackLine({
         .join(' ')}
     >
       <label className="prep-item-main">
-        <input type="checkbox" checked={checked} onChange={onToggle} />
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={(event) => onToggle(event.target.checked)}
+        />
         <span className="prep-body">
           <span className="prep-head">
             <span className="prep-product">{label}</span>
@@ -60,19 +119,7 @@ function PackLine({
         </span>
       </label>
       {pool === 'freezer' && onFrozenOnChange ? (
-        <span className="prep-frozen-on">
-          <span>{frozenOnCaption(frozenOn)}</span>
-          <input
-            type="date"
-            value={frozenOn ?? ''}
-            max={isoDate()}
-            aria-label="Дата заготовки"
-            onChange={(event) => {
-              const value = event.target.value
-              if (value) onFrozenOnChange(value)
-            }}
-          />
-        </span>
+        <FrozenOnEdit frozenOn={frozenOn} onChange={onFrozenOnChange} />
       ) : null}
     </div>
   )
@@ -94,7 +141,7 @@ function GroupList({
   pool: 'freezer' | 'future'
   board: CookBoard
   stats: MealStatsStore
-  onToggle: (id: string) => void
+  onToggle: (id: string, packed: boolean) => void
   onFrozenOnChange: (id: string, iso: string) => void
 }) {
   const packs = items.flatMap(packUnits)
@@ -116,7 +163,7 @@ function GroupList({
               isNext={isNext}
               pool={pool}
               checked={isPrepInFreezer(freezer, pack.id)}
-              onToggle={() => onToggle(pack.id)}
+              onToggle={(packed) => onToggle(pack.id, packed)}
               onFrozenOnChange={(iso) => onFrozenOnChange(pack.id, iso)}
             />
           </li>
@@ -163,7 +210,7 @@ function PoolSection({
   board: CookBoard
   stats: MealStatsStore
   pool: 'freezer' | 'future'
-  onToggle: (id: string) => void
+  onToggle: (id: string, packed: boolean) => void
   onFrozenOnChange: (id: string, iso: string) => void
 }) {
   const rows = pools.filter((p) =>
@@ -180,38 +227,44 @@ function PoolSection({
       </h3>
       {total === 0 ? (
         <p className="fridge-empty">{pool === 'freezer' ? 'Пока пусто' : 'Всё в морозилке'}</p>
+      ) : pool === 'freezer' ? (
+        <GroupList
+          items={rows.flatMap((row) => row.frozenItems)}
+          freezer={freezer}
+          nextCook={nextCook}
+          pool={pool}
+          board={board}
+          stats={stats}
+          onToggle={onToggle}
+          onFrozenOnChange={onFrozenOnChange}
+        />
       ) : (
         <div className="week-sections">
-          {rows.map((row) => {
-            const items = pool === 'freezer' ? row.frozenItems : row.futureItems
-            const count = pool === 'freezer' ? row.frozenCount : row.futureCount
-            const amount = pool === 'freezer' ? row.frozenAmount : row.futureAmount
-            return (
-              <details key={row.group.id} className="fold">
-                <summary>
-                  <span className="prep-fold-line">
-                    <span className="prep-fold-title">{row.group.title}</span>
-                    <span className="prep-group-count">
-                      {count} {packWord(count)}
-                      {amount ? ` · ${amount}` : ''}
-                    </span>
+          {rows.map((row) => (
+            <details key={row.group.id} className="fold">
+              <summary>
+                <span className="prep-fold-line">
+                  <span className="prep-fold-title">{row.group.title}</span>
+                  <span className="prep-group-count">
+                    {row.futureCount} {packWord(row.futureCount)}
+                    {row.futureAmount ? ` · ${row.futureAmount}` : ''}
                   </span>
-                </summary>
-                <div className="fold-body">
-                  <GroupList
-                    items={items}
-                    freezer={freezer}
-                    nextCook={nextCook}
-                    pool={pool}
-                    board={board}
-                    stats={stats}
-                    onToggle={onToggle}
-                    onFrozenOnChange={onFrozenOnChange}
-                  />
-                </div>
-              </details>
-            )
-          })}
+                </span>
+              </summary>
+              <div className="fold-body">
+                <GroupList
+                  items={row.futureItems}
+                  freezer={freezer}
+                  nextCook={nextCook}
+                  pool={pool}
+                  board={board}
+                  stats={stats}
+                  onToggle={onToggle}
+                  onFrozenOnChange={onFrozenOnChange}
+                />
+              </div>
+            </details>
+          ))}
         </div>
       )}
     </section>
@@ -245,14 +298,16 @@ export function PrepTab() {
   const freezer = state.freezerStock
   const nextCook = nextCookDishIds(state.cookBoard, state.mealStats, freezer)
 
-  function toggle(id: string) {
+  function setPacked(id: string, packed: boolean) {
     patchState((prev) => {
       const stock = prev.freezerStock ?? {}
+      const inFreezer = isPrepInFreezer(stock, id)
+      if (packed === inFreezer) return prev
       return {
         ...prev,
-        freezerStock: isPrepInFreezer(stock, id)
-          ? takePrepFromFreezer(stock, id)
-          : putPrepInFreezer(stock, id, isoDate()),
+        freezerStock: packed
+          ? putPrepInFreezer(stock, id, isoDate())
+          : takePrepFromFreezer(stock, id),
       }
     })
   }
@@ -277,7 +332,7 @@ export function PrepTab() {
     nextCook,
     board: state.cookBoard,
     stats: state.mealStats,
-    onToggle: toggle,
+    onToggle: setPacked,
     onFrozenOnChange: setFrozenOn,
   }
 

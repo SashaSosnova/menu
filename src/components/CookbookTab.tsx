@@ -20,7 +20,7 @@ import { joinRecipeSteps, splitRecipeSteps, stripAutoPrepPackStep } from '../lib
 import { ChildEatsMark } from './ChildEatsMark'
 import { RecipeStepsList } from './RecipeStepsList'
 import { useEscapeKey } from '../hooks/useEscapeKey'
-import { cycleMains, menuRefIds } from '../data/menu'
+import { cycleMains, menuRefIds, menuRefLabel } from '../data/menu'
 
 type EditDraft = {
   name: string
@@ -336,10 +336,8 @@ function RecipeModal({
 
   const displayDish = getCookbookDish(dish.id, store) ?? dish
   const cycleRef = cycleMains.find((item) => menuRefIds(item).includes(dish.id))
-  const combinedName = cycleRef?.orDishIds?.length
-    ? menuRefIds(cycleRef)
-        .map((id) => getCookbookDish(id, store)?.name ?? getDish(id)?.name ?? id)
-        .join(' / ')
+  const combinedName = cycleRef
+    ? menuRefLabel(cycleRef, (id) => getCookbookDish(id, store)?.name ?? getDish(id)?.name)
     : displayDish.name
   const title = editing ? draft.name || displayDish.name : combinedName
   const yieldLine = recipe?.servings
@@ -495,11 +493,9 @@ function RecipeRow({
   const yieldLine = recipe?.servings
     ? formatPortionYieldLine(dish.id, recipe.servings)
     : ''
-  const cycleRef = cycleMains.find((item) => item.dishId === dish.id)
-  const name = cycleRef?.orDishIds?.length
-    ? menuRefIds(cycleRef)
-        .map((id) => getCookbookDish(id, store)?.name ?? getDish(id)?.name ?? id)
-        .join(' / ')
+  const cycleRef = cycleMains.find((item) => menuRefIds(item).includes(dish.id))
+  const name = cycleRef
+    ? menuRefLabel(cycleRef, (id) => getCookbookDish(id, store)?.name ?? getDish(id)?.name)
     : dish.name
 
   return (
@@ -530,7 +526,8 @@ export function CookbookTab() {
     const q = query.trim().toLowerCase()
     if (!q) return true
     if (dish.name.toLowerCase().includes(q)) return true
-    const ref = cycleMains.find((item) => item.dishId === dish.id)
+    const ref = cycleMains.find((item) => menuRefIds(item).includes(dish.id))
+    if (ref?.label?.toLowerCase().includes(q)) return true
     if (!ref?.orDishIds?.length) return false
     return menuRefIds(ref).some((id) =>
       (getCookbookDish(id, store)?.name ?? getDish(id)?.name ?? '').toLowerCase().includes(q),

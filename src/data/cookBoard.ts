@@ -10,7 +10,7 @@ import {
   slotStartIso,
   type MenuSlotId,
 } from './calendar'
-import { getWeekMenu, weekMenus, type MenuSlot } from './menu'
+import { cycleMains, getWeekMenu, menuRefIds, weekMenus, type MenuSlot } from './menu'
 import { getEffectiveSlot, type MenuOverrides } from './menuOverrides'
 import {
   dishHasOutcomeThisCycle,
@@ -75,6 +75,8 @@ export type CookBoard = {
   shopHave: Record<string, true>
   /** Одноразовые правки живых данных (не сбрасывать повторно). */
   patches?: string[]
+  /** Последняя дата готовки блюда (YYYY-MM-DD), не привязана к слоту календаря. */
+  lastCookedOn?: Record<string, string>
   /** Какой пакет заготовки забрали из морозилки при готовке блюда (ключ холодильника). */
   prepTaken?: PrepTaken
   rev?: number
@@ -104,6 +106,7 @@ export function emptyCookBoard(cycle: string = cycleId()): CookBoard {
     plannedSideByMain: {},
     shopHave: {},
     patches: [],
+    lastCookedOn: {},
     prepTaken: {},
     rev: COOK_BOARD_REV,
   }
@@ -128,6 +131,26 @@ function asShopHave(raw: unknown): Record<string, true> {
     if (value === true || value === 1 || value === 'true') out[key] = true
   }
   return out
+}
+
+function asIsoDateMap(raw: unknown): Record<string, string> {
+  if (!raw || typeof raw !== 'object') return {}
+  const out: Record<string, string> = {}
+  for (const [id, value] of Object.entries(raw as Record<string, unknown>)) {
+    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) out[id] = value
+  }
+  return out
+}
+
+function withLastCookedOn(
+  board: CookBoard,
+  dishId: string,
+  cookedOn: string,
+): Record<string, string> {
+  const lastCookedOn = { ...(board.lastCookedOn ?? {}) }
+  const prev = lastCookedOn[dishId]
+  if (!prev || cookedOn > prev) lastCookedOn[dishId] = cookedOn
+  return lastCookedOn
 }
 
 function isPlannableMain(dishId: string): boolean {
@@ -175,7 +198,10 @@ export function availableSideIdsForMain(board: CookBoard, mainId: string): strin
 }
 
 export function isDishPlanned(board: CookBoard, dishId: string): boolean {
-  return (board.plannedDishIds ?? []).includes(dishId)
+  const planned = board.plannedDishIds ?? []
+  if (planned.includes(dishId)) return true
+  const group = cycleMains.find((item) => menuRefIds(item).includes(dishId))
+  return Boolean(group && menuRefIds(group).some((id) => planned.includes(id)))
 }
 
 export function plannedSideForMain(
@@ -204,20 +230,21 @@ function clearPlannedSide(
 }
 
 export function toggleDishPlanned(board: CookBoard, dishId: string): CookBoard {
+  return setDishPlanned(board, dishId, !isDishPlanned(board, dishId))
+}
+
+export function setDishPlanned(
+  board: CookBoard,
+  dishId: string,
+  planned: boolean,
+): CookBoard {
   if (!isPlannableMain(dishId)) return board
-  const ids = board.plannedDishIds ?? []
+  const already = isDishPlanned(board, dishId)
+  if (planned === already) return board
+  if (!planned) return unplanDish(board, dishId)
+
+  const plannedDishIds = [...(board.plannedDishIds ?? []), dishId]
   const plannedSideByMain = { ...(board.plannedSideByMain ?? {}) }
-  if (ids.includes(dishId)) {
-    const plannedDishIds = ids.filter((id) => id !== dishId)
-    delete plannedSideByMain[dishId]
-    return {
-      ...board,
-      plannedDishIds,
-      plannedSideByMain,
-      shopHave: emptyShopIfNoPlan(plannedDishIds, board.shopHave),
-    }
-  }
-  const plannedDishIds = [...ids, dishId]
   if (isCompleteDish(dishId) && matchingSideIds(dishId).length === 0) {
     plannedSideByMain[dishId] = null
   }
@@ -383,6 +410,61 @@ export function applyFridgeLeftoverPatch(board: CookBoard): CookBoard {
   return { ...board, fridge, dishMarks, cooked, patches: nextPatches }
 }
 
+export const COOKED_ON_PATCH = '2026-08-cooked-dates-3'
+
+const COOKED_ON_DATES: Record<string, string> = {
+  chicken_tomato_cream: '2026-08-03',
+  chicken_legs_paprika: '2026-08-05',
+  bolognese: '2026-08-07',
+  trout: '2026-08-10',
+  chicken_cutlets: '2026-08-10',
+  wings_soy: '2026-08-12',
+  shrimp_pasta: '2026-08-14',
+  beef_stroganoff: '2026-08-14',
+  pollock: '2026-08-17',
+  thighs_sour_cream: '2026-08-17',
+  beef_meatballs: '2026-08-19',
+  chicken_stroganoff: '2026-08-21',
+  beef_pulled: '2026-08-24',
+  chicken_meatballs: '2026-08-24',
+  trout_spinach: '2026-08-27',
+  chicken_pasta_zucchini: '2026-08-27',
+}
+
+/** Даты готовок августа 2026 — как в сетке пн/ср/пт. */
+export function applyCookedOnPatch(board: CookBoard): CookBoard {
+  const patches = board.patches ?? []
+  if (patches.includes(COOKED_ON_PATCH)) return board
+
+  const lastCookedOn = { ...(board.lastCookedOn ?? {}) }
+  for (const [dishId, iso] of Object.entries(COOKED_ON_DATES)) {
+    lastCookedOn[dishId] = iso
+  }
+
+  const fridge = board.fridge.map((dish) => {
+    const iso = COOKED_ON_DATES[dish.dishId]
+    if (!iso || dish.cookedOn === iso) return dish
+    return { ...dish, cookedOn: iso }
+  })
+
+  const cooked = { ...board.cooked }
+  const leftoverBatchId = makeBatchId('2026-08', 4, 'mon-tue')
+  if (cooked[leftoverBatchId]) {
+    cooked[leftoverBatchId] = {
+      ...cooked[leftoverBatchId],
+      cookedOn: COOKED_ON_DATES.beef_pulled,
+    }
+  }
+
+  return {
+    ...board,
+    lastCookedOn,
+    fridge,
+    cooked,
+    patches: [...patches, COOKED_ON_PATCH],
+  }
+}
+
 export function slotPrimaryDishIds(slot: MenuSlot): string[] {
   const ids: string[] = []
   if (slot.complete) ids.push(slot.complete.dishId)
@@ -504,6 +586,7 @@ export function normalizeCookBoard(raw: unknown): CookBoard {
     plannedSideByMain: asPlannedSides(rec.plannedSideByMain, plannedDishIds),
     shopHave: asShopHave(rec.shopHave),
     patches: asStringIds(rec.patches),
+    lastCookedOn: asIsoDateMap(rec.lastCookedOn),
     prepTaken: parsePrepTaken(rec.prepTaken),
     rev: COOK_BOARD_REV,
   }
@@ -530,7 +613,7 @@ export function resolveCookBoard(
 ): CookBoard {
   let board = advanceCookBoard(normalizeCookBoard(raw), todayCycle)
   if (isBareCookBoard(board)) board = seedPastPlanCooks(board)
-  return applyFridgeLeftoverPatch(board)
+  return applyCookedOnPatch(applyFridgeLeftoverPatch(board))
 }
 
 function dishKeyMatches(key: string, dishId: string): boolean {
@@ -568,6 +651,7 @@ export function lastCookedOnForDish(
   const consider = (iso?: string) => {
     if (iso && (!latest || iso > latest)) latest = iso
   }
+  consider(board.lastCookedOn?.[dishId])
   for (const dish of board.fridge) {
     if (dish.dishId === dishId) consider(dish.cookedOn)
   }
@@ -690,7 +774,11 @@ function applyDishMark(
     cookedPortions,
     cookedWith,
   )
-  const nextBoard = { ...board, dishMarks, fridge }
+  const lastCookedOn =
+    nextMark === 'cooked' || nextMark === 'leftover'
+      ? withLastCookedOn(board, dishId, cookedOn)
+      : board.lastCookedOn
+  const nextBoard = { ...board, dishMarks, fridge, lastCookedOn }
   const cooked = { ...board.cooked }
   if (batchAllMarked(nextBoard, batchId, batchDishIds)) {
     if (!cooked[batchId]) cooked[batchId] = { cookedOn, eatDays: DEFAULT_EAT_DAYS }

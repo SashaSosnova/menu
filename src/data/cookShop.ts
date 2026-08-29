@@ -115,6 +115,31 @@ export function shopNeedsForDishIds(
   return out
 }
 
+export function plannedShopGroups(
+  board: CookBoard,
+  cookbook: CookbookStore,
+  scales: Record<string, number> = {},
+): { key: string; names: string[]; lines: ShopNeedLine[] }[] {
+  const groups: { key: string; names: string[]; lines: ShopNeedLine[] }[] = []
+  for (const mainId of board.plannedDishIds ?? []) {
+    const ids = [mainId]
+    const sideId = board.plannedSideByMain?.[mainId]
+    if (typeof sideId === 'string') ids.push(sideId)
+    const names: string[] = []
+    for (const id of ids) {
+      const name =
+        getCookbookDish(id, cookbook)?.name ?? getDish(id)?.name ?? id
+      if (!names.includes(name)) names.push(name)
+    }
+    groups.push({
+      key: mainId,
+      names,
+      lines: shopNeedsForDishIds(board, cookbook, ids, scales),
+    })
+  }
+  return groups
+}
+
 /** Ингредиенты запланированных блюд и гарниров. */
 export function plannedShopNeeds(
   board: CookBoard,
