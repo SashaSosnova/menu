@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react'
 import {
   menuRefIds,
   menuRefLabel,
-  cycleIndexOf,
   type MenuDishRef,
 } from '../data/menu'
 import { dishMeta, childEatsKind, isCompleteDish } from '../data/dishMeta'
@@ -34,7 +33,7 @@ import {
 } from '../data/cookBoard'
 import { plannedDishNames, plannedShopNeeds } from '../data/cookShop'
 import { applyPrepForDishCook, type PrepFreezer } from '../data/prep'
-import { entryHasFrozenPrep, nextCookDishIds } from '../data/cycleQueue'
+import { compareByOldestCooked, entryHasFrozenPrep, nextCookDishIds } from '../data/cycleQueue'
 import { type MenuRole } from '../data/menuOverrides'
 import { useMenuSync } from '../hooks/useMenuSync'
 import { useEscapeKey } from '../hooks/useEscapeKey'
@@ -409,9 +408,7 @@ function sortMains(
     const ar = rank(a)
     const br = rank(b)
     if (ar !== br) return ar - br
-    const ai = cycleIndexOf(a.item.dishId)
-    const bi = cycleIndexOf(b.item.dishId)
-    return (ai < 0 ? 999 : ai) - (bi < 0 ? 999 : bi)
+    return compareByOldestCooked(a.item, b.item, board, stats)
   })
 }
 

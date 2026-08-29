@@ -1,9 +1,9 @@
 /**
- * Следующие блюда цикла: сначала по порядку, и только если пакет ещё в морозилке.
+ * Следующие блюда: давно не готовили — раньше, и только если пакет ещё в морозилке.
  */
 
-import { dishQueueGroup, type CookBoard } from './cookBoard'
-import { cycleMains, menuRefIds, type MenuDishRef } from './menu'
+import { dishQueueGroup, lastCookedOnForDishes, type CookBoard } from './cookBoard'
+import { cycleIndexOf, cycleMains, menuRefIds, type MenuDishRef } from './menu'
 import { dishHasFrozenPrep, type PrepFreezer } from './prep'
 import type { MealStatsStore } from './mealStats'
 
@@ -12,6 +12,21 @@ export function entryHasFrozenPrep(
   item: MenuDishRef,
 ): boolean {
   return menuRefIds(item).some((id) => dishHasFrozenPrep(freezer, id))
+}
+
+/** Без даты — раньше всех; при равной дате — порядок цикла. */
+export function compareByOldestCooked(
+  a: MenuDishRef,
+  b: MenuDishRef,
+  board: CookBoard,
+  stats?: MealStatsStore,
+): number {
+  const ad = lastCookedOnForDishes(board, menuRefIds(a), stats) ?? ''
+  const bd = lastCookedOnForDishes(board, menuRefIds(b), stats) ?? ''
+  if (ad !== bd) return ad < bd ? -1 : 1
+  const ai = cycleIndexOf(a.dishId)
+  const bi = cycleIndexOf(b.dishId)
+  return (ai < 0 ? 999 : ai) - (bi < 0 ? 999 : bi)
 }
 
 function nextCookEntries(
@@ -32,7 +47,9 @@ function nextCookEntries(
             dishQueueGroup(board, item.dishId, stats) !== 'cooking' &&
             entryHasFrozenPrep(freezer, item),
         )
-  return pool.slice(0, count)
+  return [...pool]
+    .sort((a, b) => compareByOldestCooked(a, b, board, stats))
+    .slice(0, count)
 }
 
 export function nextCookDishIds(
