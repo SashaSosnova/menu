@@ -138,19 +138,3 @@ export function migrateMealStats(raw: MealStatsStore | LegacySlotStat): MealStat
   }
   return migrateCycleKeys(out)
 }
-
-/** @deprecated Используйте useMenuSync */
-export function loadMealStats(): MealStatsStore {
-  try {
-    const raw = localStorage.getItem(MEAL_STATS_KEY)
-    if (!raw) return {}
-    return migrateMealStats(JSON.parse(raw) as MealStatsStore)
-  } catch {
-    return {}
-  }
-}
-
-/** @deprecated Используйте useMenuSync */
-export function saveMealStats(_store: MealStatsStore): void {
-  // no-op
-}

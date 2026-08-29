@@ -1,12 +1,12 @@
 /**
- * Порции на семью из 3 человек: женщина · мужчина · ребёнок.
- * Рецепты гарниров и многие горячие — закладка сразу на 2 приёма (обед+ужин / два дня).
+ * Порции на два дня.
  *
- * Гарнир на 1 приём: 100 + 150 + 100 = 350 г → на 2 приёма = 700 г
- * Горячее на 1 приём: ~450 г → на 2 приёма = ~900 г
- *   (весь вес блюда: мясо/рыба + овощи в соусе + соусы, не только белок)
- * Цельное на 2 приёма: ~ горячее+гарнир = ~1600 г (мясо и картофель/крупа внутри)
+ * 4 порции — ребёнок это блюдо не ест (двое взрослых):
+ *   горячее 700 г, цельное 900 г
+ * 6 порций — ребёнок ест:
+ *   горячее 900 г, цельное 1200 г
  *
+ * Гарнир на 2 приёма: 100 + 150 + 100 = 350 г × 2 = 700 г
  * КБЖУ у блюд в меню — на 100 г.
  */
 
@@ -27,7 +27,6 @@ export type PersonPortion = {
   sideWithStewedG: number
   stewedVegG: number
   saladG: number
-  peasG: number
 }
 
 export const people: PersonPortion[] = [
@@ -42,7 +41,6 @@ export const people: PersonPortion[] = [
     sideWithStewedG: 75,
     stewedVegG: 120,
     saladG: 100,
-    peasG: 60,
   },
   {
     id: 'man',
@@ -55,7 +53,6 @@ export const people: PersonPortion[] = [
     sideWithStewedG: 110,
     stewedVegG: 180,
     saladG: 120,
-    peasG: 120,
   },
   {
     id: 'child',
@@ -68,11 +65,10 @@ export const people: PersonPortion[] = [
     sideWithStewedG: 75,
     stewedVegG: 140,
     saladG: 80,
-    peasG: 70,
   },
 ]
 
-function familySum(field: keyof Pick<PersonPortion, 'proteinG' | 'sideG' | 'sideWithStewedG' | 'stewedVegG' | 'saladG' | 'peasG'>): number {
+function familySum(field: keyof Pick<PersonPortion, 'proteinG' | 'sideG' | 'sideWithStewedG' | 'stewedVegG' | 'saladG'>): number {
   return people.reduce((s, p) => s + p[field] * p.count, 0)
 }
 
@@ -83,6 +79,5 @@ export const familyMeal = {
   sideWithStewedCookedG: familySum('sideWithStewedG'),
   stewedVegG: familySum('stewedVegG'),
   saladG: familySum('saladG'),
-  peasG: familySum('peasG'),
 }
 

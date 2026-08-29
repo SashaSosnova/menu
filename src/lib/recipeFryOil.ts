@@ -30,13 +30,7 @@ export function needsFryOil(steps: string): boolean {
 
 export function ensureFryOil(ingredients: string[], steps: string): string[] {
   if (!needsFryOil(steps)) return ingredients
-
-  const oilIdx = ingredients.findIndex((line) => /масло\s+раст/i.test(line))
-  if (oilIdx >= 0) {
-    const next = [...ingredients]
-    next[oilIdx] = OIL
-    return next
-  }
+  if (ingredients.some((line) => /масло\s+(раст|оливк)/i.test(line))) return ingredients
 
   const saltIdx = ingredients.findIndex((line) => /^соль\s/i.test(line))
   if (saltIdx >= 0) {

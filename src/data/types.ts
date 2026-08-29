@@ -28,6 +28,8 @@ export type Dish = {
   protein?: ProteinType
   /** Вкусные гарниры (id). Для complete не нужно. */
   sides?: string[]
+  /** Ребёнок ест это горячее. Гарниры не размечаем. */
+  childEats?: boolean
 }
 
 

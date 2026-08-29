@@ -1,10 +1,8 @@
 import { dishes, getDish } from './dishes'
 import { dishMeta } from './dishMeta'
+import { cycleMains } from './menu'
 import type { Dish, Recipe } from './types'
 import { withPrepPackStep } from '../lib/recipeSteps'
-
-/** Соусы день в день — не показываем в книге (сейчас не используются) */
-const SAUCE_IDS = new Set<string>()
 
 export type RecipeRating = 1 | 2 | 3 | 4 | 5
 
@@ -17,6 +15,7 @@ export const RATING_OPTIONS: { value: RecipeRating; label: string; short: string
 ]
 
 export type RecipeOverride = {
+  name?: string
   servings?: string
   ingredients?: string[]
   steps?: string
@@ -39,27 +38,6 @@ export type CookbookStore = {
 
 export const COOKBOOK_KEY = 'cookbook-v1'
 
-/** @deprecated Используйте MenuSyncProvider — оставлено для совместимости */
-export function loadCookbook(): CookbookStore {
-  try {
-    const raw = localStorage.getItem(COOKBOOK_KEY)
-    if (!raw) return { recipes: {}, ratings: {}, customDishes: [] }
-    const parsed = JSON.parse(raw) as CookbookStore
-    return {
-      recipes: parsed.recipes ?? {},
-      ratings: parsed.ratings ?? {},
-      customDishes: parsed.customDishes ?? [],
-    }
-  } catch {
-    return { recipes: {}, ratings: {}, customDishes: [] }
-  }
-}
-
-/** @deprecated Используйте MenuSyncProvider */
-export function saveCookbook(_store: CookbookStore): void {
-  // no-op — сохранение через appStore / облако
-}
-
 export function isCustomDish(id: string, store: CookbookStore): boolean {
   return store.customDishes?.some((d) => d.id === id) ?? false
 }
@@ -69,7 +47,10 @@ export function getCookbookDish(id: string, store: CookbookStore): Dish | undefi
   if (custom) {
     return { id: custom.id, name: custom.name, kind: custom.kind }
   }
-  return getDish(id)
+  const dish = getDish(id)
+  if (!dish) return undefined
+  const name = store.recipes[id]?.name?.trim()
+  return name ? { ...dish, name } : dish
 }
 
 export function createCustomDishId(): string {
@@ -95,15 +76,18 @@ export function getCookbookDishes(store: CookbookStore): {
   const sides: Dish[] = []
   const extras: Dish[] = []
 
+  const orSecondary = new Set(cycleMains.flatMap((item) => item.orDishIds ?? []))
+
   for (const id of Object.keys(dishes)) {
     const meta = dishMeta[id]
     if (!meta) continue
-    const dish = getDish(id)
+    if (orSecondary.has(id)) continue
+    const dish = getCookbookDish(id, store)
     if (!dish) continue
 
     if (meta.kind === 'component' || meta.kind === 'complete') {
       mains.push(dish)
-    } else if (meta.kind === 'side' && !SAUCE_IDS.has(id)) {
+    } else if (meta.kind === 'side') {
       sides.push(dish)
     } else if (meta.kind === 'extra') {
       extras.push(dish)
@@ -129,6 +113,19 @@ export function getEffectiveRecipe(
   dishId: string,
   store: CookbookStore,
 ): Recipe | undefined {
+  const recipe = getEditableRecipe(dishId, store)
+  if (!recipe) return undefined
+  return {
+    ...recipe,
+    steps: withPrepPackStep(dishId, recipe.steps),
+  }
+}
+
+/** Рецепт как в книге, без авто-шага про пакет из морозилки. */
+export function getEditableRecipe(
+  dishId: string,
+  store: CookbookStore,
+): Recipe | undefined {
   const base = getDish(dishId)?.recipe
   const override = store.recipes[dishId]
   if (!base && !override) return undefined
@@ -136,10 +133,7 @@ export function getEffectiveRecipe(
   return {
     servings: override?.servings ?? base?.servings ?? '',
     ingredients: override?.ingredients ?? base?.ingredients ?? [],
-    steps: withPrepPackStep(
-      dishId,
-      override?.steps ?? base?.steps ?? '',
-    ),
+    steps: override?.steps ?? base?.steps ?? '',
     storage: override?.storage ?? base?.storage,
     weeks: base?.weeks,
   }

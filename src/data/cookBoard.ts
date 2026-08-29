@@ -1,6 +1,5 @@
 /**
- * Живой слой поверх weekMenus: очередь готовок и холодильник.
- * Календарные пн/ср/пт — только происхождение набора в шаблоне, не дата.
+ * Живой слой: очередь готовок и холодильник поверх цикла блюд.
  * Остатки считаются по блюдам: говядина может остаться, курица — кончиться раньше.
  */
 
@@ -19,15 +18,22 @@ import {
   slotDishHasOutcome,
   type MealStatsStore,
 } from './mealStats'
+import {
+  builtInSideIds,
+  dishCookPortions,
+  dishMeta,
+  isCompleteDish,
+  matchingSideIds,
+} from './dishMeta'
+import { parsePrepTaken, type PrepTaken } from './prep'
 import { normalizePortionScale } from '../lib/portionScale'
-import { weekNumbers } from './weeks'
 
 export const DEFAULT_EAT_DAYS = 2
 export const DEFAULT_COOK_PORTIONS = 6
 export const SLOT_ORDER: MenuSlotId[] = ['mon-tue', 'wed-thu', 'fri-sat']
 
-export function cookPortionsFromScale(scale?: number): number {
-  return Math.max(1, Math.round(DEFAULT_COOK_PORTIONS * normalizePortionScale(scale)))
+export function cookPortionsFromScale(dishId: string, scale?: number): number {
+  return Math.max(1, Math.round(dishCookPortions(dishId) * normalizePortionScale(scale)))
 }
 
 export type CookedBatch = {
@@ -43,6 +49,8 @@ export type FridgeDish = {
   cookedPortions: number
   remaining: number
   eatDays?: number
+  /** Гарнир, который положили в холодильник вместе с этим горячим. */
+  cookedWith?: string
 }
 
 export type DishMark = 'cooked' | 'eaten' | 'leftover'
@@ -56,12 +64,19 @@ export type CookBoard = {
   fridge: FridgeDish[]
   cooked: Record<string, CookedBatch>
   dishMarks: Record<string, DishMark>
-  /** Блюда, которые собираемся готовить (завтра) — для списка «нужно купить». */
+  /** Горячее, выбранное для готовки. */
   plannedDishIds: string[]
+  /**
+   * Гарнир к запланированному горячему.
+   * string — id гарнира, null — без гарнира.
+   */
+  plannedSideByMain?: Record<string, string | null>
   /** Ингредиенты, которые уже есть (ключ — нормализованная строка). */
   shopHave: Record<string, true>
   /** Одноразовые правки живых данных (не сбрасывать повторно). */
   patches?: string[]
+  /** Какой пакет заготовки забрали из морозилки при готовке блюда (ключ холодильника). */
+  prepTaken?: PrepTaken
   rev?: number
 }
 
@@ -86,8 +101,10 @@ export function emptyCookBoard(cycle: string = cycleId()): CookBoard {
     cooked: {},
     dishMarks: {},
     plannedDishIds: [],
+    plannedSideByMain: {},
     shopHave: {},
     patches: [],
+    prepTaken: {},
     rev: COOK_BOARD_REV,
   }
 }
@@ -113,20 +130,144 @@ function asShopHave(raw: unknown): Record<string, true> {
   return out
 }
 
+function isPlannableMain(dishId: string): boolean {
+  return dishMeta[dishId]?.kind !== 'side'
+}
+
+function asPlannedMains(raw: unknown): string[] {
+  return asStringIds(raw).filter(isPlannableMain)
+}
+
+function asPlannedSides(
+  raw: unknown,
+  plannedMains: string[],
+): Record<string, string | null> {
+  if (!raw || typeof raw !== 'object') return {}
+  const allowed = new Set(plannedMains)
+  const out: Record<string, string | null> = {}
+  for (const [mainId, value] of Object.entries(raw as Record<string, unknown>)) {
+    if (!allowed.has(mainId)) continue
+    if (value === null) {
+      out[mainId] = null
+      continue
+    }
+    if (typeof value !== 'string' || !value) continue
+    if (!matchingSideIds(mainId).includes(value)) continue
+    out[mainId] = value
+  }
+  return out
+}
+
+/** Гарниры, уже занятые планом: выбранные пары + то, что внутри цельных. */
+export function takenSideIds(board: CookBoard, exceptMainId?: string): Set<string> {
+  const taken = new Set<string>()
+  for (const mainId of board.plannedDishIds ?? []) {
+    for (const id of builtInSideIds(mainId)) taken.add(id)
+    const chosen = board.plannedSideByMain?.[mainId]
+    if (typeof chosen === 'string' && mainId !== exceptMainId) taken.add(chosen)
+  }
+  return taken
+}
+
+export function availableSideIdsForMain(board: CookBoard, mainId: string): string[] {
+  const taken = takenSideIds(board, mainId)
+  return matchingSideIds(mainId).filter((id) => !taken.has(id))
+}
+
 export function isDishPlanned(board: CookBoard, dishId: string): boolean {
   return (board.plannedDishIds ?? []).includes(dishId)
 }
 
+export function plannedSideForMain(
+  board: CookBoard,
+  mainId: string,
+): string | null | undefined {
+  if (!isDishPlanned(board, mainId)) return undefined
+  return board.plannedSideByMain?.[mainId]
+}
+
+function emptyShopIfNoPlan(
+  plannedDishIds: string[],
+  shopHave: Record<string, true> | undefined,
+): Record<string, true> {
+  return plannedDishIds.length === 0 ? {} : (shopHave ?? {})
+}
+
+function clearPlannedSide(
+  map: Record<string, string | null>,
+  mainId: string,
+): Record<string, string | null> {
+  if (!(mainId in map)) return map
+  const next = { ...map }
+  delete next[mainId]
+  return next
+}
+
 export function toggleDishPlanned(board: CookBoard, dishId: string): CookBoard {
+  if (!isPlannableMain(dishId)) return board
   const ids = board.plannedDishIds ?? []
-  const plannedDishIds = ids.includes(dishId)
-    ? ids.filter((id) => id !== dishId)
-    : [...ids, dishId]
+  const plannedSideByMain = { ...(board.plannedSideByMain ?? {}) }
+  if (ids.includes(dishId)) {
+    const plannedDishIds = ids.filter((id) => id !== dishId)
+    delete plannedSideByMain[dishId]
+    return {
+      ...board,
+      plannedDishIds,
+      plannedSideByMain,
+      shopHave: emptyShopIfNoPlan(plannedDishIds, board.shopHave),
+    }
+  }
+  const plannedDishIds = [...ids, dishId]
+  if (isCompleteDish(dishId) && matchingSideIds(dishId).length === 0) {
+    plannedSideByMain[dishId] = null
+  }
   return {
     ...board,
     plannedDishIds,
-    shopHave: plannedDishIds.length === 0 ? {} : (board.shopHave ?? {}),
+    plannedSideByMain: stealBuiltInSides(plannedSideByMain, dishId),
   }
+}
+
+/** Если цельное уже «заняло» гарнир, снимаем его с других запланированных. */
+function stealBuiltInSides(
+  plannedSideByMain: Record<string, string | null>,
+  mainId: string,
+): Record<string, string | null> {
+  const implied = builtInSideIds(mainId)
+  if (implied.length === 0) return plannedSideByMain
+  const next = { ...plannedSideByMain }
+  for (const [other, side] of Object.entries(next)) {
+    if (other === mainId) continue
+    if (typeof side === 'string' && implied.includes(side)) delete next[other]
+  }
+  return next
+}
+
+export function setPlannedSide(
+  board: CookBoard,
+  mainId: string,
+  sideId: string | null,
+): CookBoard {
+  if (!isDishPlanned(board, mainId)) return board
+  if (typeof sideId === 'string' && !matchingSideIds(mainId).includes(sideId)) return board
+  const plannedSideByMain = { ...(board.plannedSideByMain ?? {}) }
+  const current = plannedSideByMain[mainId]
+  const already =
+    (typeof sideId === 'string' && current === sideId) ||
+    (sideId === null && mainId in plannedSideByMain && current === null)
+  if (already) {
+    delete plannedSideByMain[mainId]
+    return { ...board, plannedSideByMain }
+  }
+  if (typeof sideId === 'string') {
+    for (const [other, side] of Object.entries(plannedSideByMain)) {
+      if (other !== mainId && side === sideId) delete plannedSideByMain[other]
+    }
+    plannedSideByMain[mainId] = sideId
+  } else {
+    plannedSideByMain[mainId] = null
+  }
+  return { ...board, plannedSideByMain }
 }
 
 export function unplanDish(board: CookBoard, dishId: string): CookBoard {
@@ -136,13 +277,24 @@ export function unplanDish(board: CookBoard, dishId: string): CookBoard {
   return {
     ...board,
     plannedDishIds,
-    shopHave: plannedDishIds.length === 0 ? {} : (board.shopHave ?? {}),
+    plannedSideByMain: clearPlannedSide(board.plannedSideByMain ?? {}, dishId),
+    shopHave: emptyShopIfNoPlan(plannedDishIds, board.shopHave),
   }
 }
 
 export function markShopHave(board: CookBoard, key: string): CookBoard {
   if (!key || board.shopHave?.[key]) return board
   return { ...board, shopHave: { ...(board.shopHave ?? {}), [key]: true } }
+}
+
+export function toggleShopHave(board: CookBoard, key: string): CookBoard {
+  if (!key) return board
+  const shopHave = { ...(board.shopHave ?? {}) }
+  if (shopHave[key]) {
+    delete shopHave[key]
+    return { ...board, shopHave }
+  }
+  return { ...board, shopHave: { ...shopHave, [key]: true } }
 }
 
 export function makeBatchId(cycle: string, week: number, slotId: MenuSlotId): string {
@@ -165,14 +317,9 @@ export function parseBatchId(
 }
 
 export function templateBatchIds(cycle: string): string[] {
-  const ids: string[] = []
-  for (const week of weekNumbers) {
-    const menu = weekMenus.find((w) => w.week === week)
-    for (const slot of menu?.slots ?? SLOT_ORDER.map((id) => ({ id }))) {
-      ids.push(makeBatchId(cycle, week, slot.id))
-    }
-  }
-  return ids
+  return weekMenus.flatMap((menu) =>
+    menu.slots.map((slot) => makeBatchId(cycle, menu.week, slot.id)),
+  )
 }
 
 export function isBareCookBoard(board: CookBoard): boolean {
@@ -184,31 +331,9 @@ export function isBareCookBoard(board: CookBoard): boolean {
   )
 }
 
-/** Даты готовки из шаблона: пн / ср / пт слота. Прошедшие наборы помечаем съеденными. */
-export function seedPastPlanCooks(
-  board: CookBoard,
-  today: Date = new Date(),
-): CookBoard {
-  const start = cycleStartFromId(board.cycleId)
-  const todayIso = isoDate(today)
-  const cooked = { ...board.cooked }
-  const dishMarks = { ...(board.dishMarks ?? {}) }
-  let changed = false
-  for (const id of templateBatchIds(board.cycleId)) {
-    const parsed = parseBatchId(id)
-    if (!parsed || cooked[id]) continue
-    const cookIso = slotStartIso(parsed.week, parsed.slotId, start)
-    if (cookIso >= todayIso) continue
-    const slot = getWeekMenu(parsed.week).slots.find((s) => s.id === parsed.slotId)
-    if (!slot) continue
-    cooked[id] = { cookedOn: cookIso, eatDays: DEFAULT_EAT_DAYS }
-    for (const dishId of slotPrimaryDishIds(slot)) {
-      dishMarks[fridgeDishKey(id, dishId)] = 'eaten'
-    }
-    changed = true
-  }
-  if (!changed) return board
-  return { ...board, cooked, dishMarks }
+/** Даты готовки больше не сеем из календаря — цикл блюд не привязан к пн/ср/пт. */
+export function seedPastPlanCooks(board: CookBoard): CookBoard {
+  return board
 }
 
 export const FRIDGE_LEFTOVER_PATCH = '2026-08-w4-fridge-1'
@@ -266,14 +391,6 @@ export function slotPrimaryDishIds(slot: MenuSlot): string[] {
   return ids
 }
 
-export function slotDishIds(slot: MenuSlot): string[] {
-  const ids: string[] = []
-  if (slot.complete) ids.push(slot.complete.dishId, ...(slot.complete.orDishIds ?? []))
-  for (const m of slot.mains) ids.push(m.dishId, ...(m.orDishIds ?? []))
-  for (const s of slot.sides) ids.push(s.dishId, ...(s.orDishIds ?? []))
-  return ids
-}
-
 function dishIdsForBatch(batchId: string): string[] {
   const parsed = parseBatchId(batchId)
   if (!parsed) return []
@@ -308,6 +425,8 @@ function asFridgeDish(value: unknown): FridgeDish | null {
   if (remaining <= 0) return null
   const eatDays =
     typeof rec.eatDays === 'number' ? Math.max(1, rec.eatDays) : DEFAULT_EAT_DAYS
+  const cookedWith =
+    typeof rec.cookedWith === 'string' && rec.cookedWith ? rec.cookedWith : undefined
   return {
     key: rec.key,
     batchId: rec.batchId,
@@ -316,6 +435,7 @@ function asFridgeDish(value: unknown): FridgeDish | null {
     cookedPortions,
     remaining,
     eatDays,
+    ...(cookedWith ? { cookedWith } : {}),
   }
 }
 
@@ -374,14 +494,17 @@ export function normalizeCookBoard(raw: unknown): CookBoard {
         dish.remaining < dish.cookedPortions ? 'leftover' : 'cooked'
     }
   }
+  const plannedDishIds = asPlannedMains(rec.plannedDishIds)
   return {
     cycleId: cycle,
     fridge,
     cooked,
     dishMarks,
-    plannedDishIds: asStringIds(rec.plannedDishIds),
+    plannedDishIds,
+    plannedSideByMain: asPlannedSides(rec.plannedSideByMain, plannedDishIds),
     shopHave: asShopHave(rec.shopHave),
     patches: asStringIds(rec.patches),
+    prepTaken: parsePrepTaken(rec.prepTaken),
     rev: COOK_BOARD_REV,
   }
 }
@@ -408,19 +531,6 @@ export function resolveCookBoard(
   let board = advanceCookBoard(normalizeCookBoard(raw), todayCycle)
   if (isBareCookBoard(board)) board = seedPastPlanCooks(board)
   return applyFridgeLeftoverPatch(board)
-}
-
-export function getDishMark(board: CookBoard, batchId: string, dishId: string): DishMark | undefined {
-  return board.dishMarks?.[fridgeDishKey(batchId, dishId)]
-}
-
-export function displayDishMark(board: CookBoard, batchId: string, dishId: string): DishMark | undefined {
-  const key = fridgeDishKey(batchId, dishId)
-  const fridge = board.fridge.find((d) => d.key === key)
-  if (fridge && fridge.remaining > 0) {
-    return fridge.remaining < fridge.cookedPortions ? 'leftover' : 'cooked'
-  }
-  return board.dishMarks?.[key]
 }
 
 function dishKeyMatches(key: string, dishId: string): boolean {
@@ -467,7 +577,20 @@ export function lastCookedOnForDish(
     consider(board.cooked[batchId]?.cookedOn)
     consider(cookedOnFromBatchId(batchId))
   }
-  if (stats) consider(lastOutcomeCookedOn(stats, dishId, board.cycleId))
+  if (stats) consider(lastOutcomeCookedOn(stats, dishId))
+  return latest
+}
+
+export function lastCookedOnForDishes(
+  board: CookBoard,
+  dishIds: string[],
+  stats?: MealStatsStore,
+): string | undefined {
+  let latest: string | undefined
+  for (const id of dishIds) {
+    const iso = lastCookedOnForDish(board, id, stats)
+    if (iso && (!latest || iso > latest)) latest = iso
+  }
   return latest
 }
 
@@ -480,14 +603,6 @@ export function dishQueueGroup(
   if (mark === 'cooked' || mark === 'leftover') return 'cooking'
   if (mark === 'eaten') return 'done'
   return 'todo'
-}
-
-export function dishIsPrepared(
-  board: CookBoard,
-  dishId: string,
-  stats?: MealStatsStore,
-): boolean {
-  return dishQueueGroup(board, dishId, stats) === 'cooking'
 }
 
 export function batchIdForDish(
@@ -526,6 +641,7 @@ function syncFridgeDish(
   dishId: string,
   cookedOn: string,
   cookedPortions: number,
+  cookedWith?: string,
 ): FridgeDish[] {
   const key = fridgeDishKey(batchId, dishId)
   const prev = fridge.find((d) => d.key === key)
@@ -534,6 +650,7 @@ function syncFridgeDish(
   const portions = prev?.cookedPortions ?? cookedPortions
   const remaining = prev?.remaining ?? portions
   if (remaining <= 0) return without
+  const withSide = cookedWith ?? prev?.cookedWith
   return [
     ...without,
     {
@@ -544,6 +661,7 @@ function syncFridgeDish(
       cookedPortions: portions,
       remaining,
       eatDays: prev?.eatDays ?? DEFAULT_EAT_DAYS,
+      ...(withSide ? { cookedWith: withSide } : {}),
     },
   ]
 }
@@ -556,6 +674,7 @@ function applyDishMark(
   nextMark: DishMark | undefined,
   cookedOn: string,
   cookedPortions: number = DEFAULT_COOK_PORTIONS,
+  cookedWith?: string,
 ): CookBoard {
   const key = fridgeDishKey(batchId, dishId)
   const dishMarks = { ...(board.dishMarks ?? {}) }
@@ -569,6 +688,7 @@ function applyDishMark(
     dishId,
     cookedOn,
     cookedPortions,
+    cookedWith,
   )
   const nextBoard = { ...board, dishMarks, fridge }
   const cooked = { ...board.cooked }
@@ -577,7 +697,9 @@ function applyDishMark(
   } else {
     delete cooked[batchId]
   }
-  return { ...nextBoard, cooked }
+  const prepTaken = { ...(board.prepTaken ?? {}) }
+  if (nextMark !== 'cooked' && nextMark !== 'leftover') delete prepTaken[key]
+  return { ...nextBoard, cooked, prepTaken }
 }
 
 function forgetDishCook(
@@ -586,25 +708,49 @@ function forgetDishCook(
   batchId: string,
   batchDishIds: string[],
 ): CookBoard {
+  const key = fridgeDishKey(batchId, dishId)
   const dishMarks = { ...(board.dishMarks ?? {}) }
-  const affected = new Set<string>([batchId])
-  for (const key of Object.keys(dishMarks)) {
-    if (!dishKeyMatches(key, dishId)) continue
-    affected.add(key.slice(0, key.lastIndexOf('::')))
-    delete dishMarks[key]
-  }
-  const fridge = board.fridge.filter((d) => {
-    if (d.dishId !== dishId) return true
-    affected.add(d.batchId)
-    return false
-  })
+  delete dishMarks[key]
+  const fridge = board.fridge.filter((d) => d.key !== key)
   const nextBoard = { ...board, dishMarks, fridge }
   const cooked = { ...board.cooked }
-  for (const id of affected) {
-    const ids = id === batchId && batchDishIds.length > 0 ? batchDishIds : dishIdsForBatch(id)
-    if (!batchAllMarked(nextBoard, id, ids)) delete cooked[id]
-  }
+  const ids = batchDishIds.length > 0 ? batchDishIds : dishIdsForBatch(batchId)
+  if (!batchAllMarked(nextBoard, batchId, ids)) delete cooked[batchId]
   return { ...nextBoard, cooked }
+}
+
+function sidesCookedWithMain(
+  board: CookBoard,
+  dishId: string,
+  batchId: string,
+): string[] {
+  const remembered = board.fridge
+    .filter((d) => d.dishId === dishId && d.cookedWith)
+    .map((d) => d.cookedWith!)
+  if (remembered.length > 0) return [...new Set(remembered)]
+
+  const main = board.fridge.find((d) => d.dishId === dishId && d.batchId === batchId)
+  if (!main) return []
+  const matching = matchingSideIds(dishId)
+  const claimed = new Set(
+    board.fridge
+      .filter((d) => d.dishId !== dishId && d.cookedWith)
+      .map((d) => d.cookedWith!),
+  )
+  return [
+    ...new Set(
+      board.fridge
+        .filter(
+          (d) =>
+            d.batchId === batchId &&
+            d.dishId !== dishId &&
+            matching.includes(d.dishId) &&
+            d.cookedOn === main.cookedOn &&
+            !claimed.has(d.dishId),
+        )
+        .map((d) => d.dishId),
+    ),
+  ]
 }
 
 export function setDishPrepared(
@@ -616,12 +762,38 @@ export function setDishPrepared(
   cookedOn: string = isoDate(),
   cookedPortions: number = DEFAULT_COOK_PORTIONS,
 ): CookBoard {
-  if (!prepared) return forgetDishCook(board, dishId, batchId, batchDishIds)
+  if (!prepared) {
+    const sides = sidesCookedWithMain(board, dishId, batchId)
+    let next = forgetDishCook(board, dishId, batchId, batchDishIds)
+    for (const sideId of sides) {
+      next = forgetDishCook(next, sideId, batchId, batchDishIds)
+    }
+    return next
+  }
   if (dishQueueGroup(board, dishId) === 'cooking') return board
-  return unplanDish(
-    applyDishMark(board, batchId, dishId, batchDishIds, 'cooked', cookedOn, cookedPortions),
+  const sideId = board.plannedSideByMain?.[dishId]
+  let next = applyDishMark(
+    board,
+    batchId,
     dishId,
+    batchDishIds,
+    'cooked',
+    cookedOn,
+    cookedPortions,
+    typeof sideId === 'string' ? sideId : undefined,
   )
+  if (typeof sideId === 'string') {
+    next = applyDishMark(
+      next,
+      batchId,
+      sideId,
+      batchDishIds,
+      'cooked',
+      cookedOn,
+      dishCookPortions(sideId),
+    )
+  }
+  return unplanDish(next, dishId)
 }
 
 export function bumpFridgePortions(

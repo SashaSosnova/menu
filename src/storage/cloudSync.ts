@@ -1,4 +1,4 @@
-import { doc, getDoc, onSnapshot, setDoc, type Unsubscribe } from 'firebase/firestore'
+import { doc, onSnapshot, setDoc, type Unsubscribe } from 'firebase/firestore'
 import { onAuthStateChanged, signInAnonymously, signOut, type User } from 'firebase/auth'
 import { getFirebaseAuth, getFirebaseDb, isFirebaseConfigured } from '../firebase'
 import { isAnonymousSuppressed } from '../lib/authGate'
@@ -84,12 +84,6 @@ export async function upsertAppState(uid: string, state: MenuAppState): Promise<
     updatedAt: state.updatedAt || Date.now(),
   }) as Record<string, unknown>
   await setDoc(stateDocRef(uid), payload, { merge: true })
-}
-
-export async function fetchAppState(uid: string): Promise<MenuAppState | null> {
-  const snap = await getDoc(stateDocRef(uid))
-  if (!snap.exists()) return null
-  return snap.data() as MenuAppState
 }
 
 export function subscribeAppState(

@@ -9,6 +9,7 @@ import {
   registerWithEmail,
 } from '../lib/accountAuth'
 import { isFirebaseConfigured } from '../firebase'
+import { useEscapeKey } from '../hooks/useEscapeKey'
 
 type Props = {
   user: User | null
@@ -23,6 +24,7 @@ export function AccountPanel({ user, onClose }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [ok, setOk] = useState<string | null>(null)
   const emailRef = useRef<HTMLInputElement>(null)
+  useEscapeKey(onClose)
 
   if (!isFirebaseConfigured()) {
     return (
@@ -103,7 +105,7 @@ export function AccountPanel({ user, onClose }: Props) {
           <p className="muted">
             {linked
               ? 'Данные синхронизируются — можно открыть на другом телефоне с тем же email.'
-              : 'Создайте аккаунт или войдите, чтобы не потерять рецепты, оценки и галочки.'}
+              : 'Создайте аккаунт или войдите, чтобы не потерять рецепты, оценки и заготовки.'}
           </p>
 
           {linked ? (

@@ -12,8 +12,8 @@ type TabId = 'menu' | 'cookbook' | 'prep'
 
 const tabs: { id: TabId; label: string }[] = [
   { id: 'menu', label: 'Меню' },
-  { id: 'cookbook', label: 'Книга' },
   { id: 'prep', label: 'Заготовки' },
+  { id: 'cookbook', label: 'Книга' },
 ]
 
 function AppShell() {
@@ -34,7 +34,7 @@ function AppShell() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1 className="brand">Меню</h1>
+        <h1 className="brand">{tabs.find((t) => t.id === tab)?.label ?? 'Меню'}</h1>
         <button
           type="button"
           className="sync-btn"

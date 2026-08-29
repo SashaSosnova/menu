@@ -3,7 +3,7 @@
  * Ключ позиции: «неделя:слот:роль:индекс».
  */
 
-import { dishMeta } from './dishMeta'
+import { matchingSideIds } from './dishMeta'
 import {
   getWeekMenu,
   menuRefIds,
@@ -107,12 +107,6 @@ export function getEffectiveSlot(
   return menu.slots.find((s) => s.id === slotId) ?? getWeekMenu(week).slots.find((s) => s.id === slotId)!
 }
 
-function sideFitsMain(sideId: string, mainId: string): boolean {
-  const allowed = dishMeta[mainId]?.sides
-  if (!allowed?.length) return true
-  return allowed.includes(sideId)
-}
-
 export type PairFit = 'good'
 
 /** Как гарнир сочетается с выбранным горячим. */
@@ -123,6 +117,6 @@ export function pairFitForSide(
   if (main.complete) return null
   const mainIds = menuRefIds(main.item)
   const sideIds = menuRefIds(side.item)
-  const tasty = mainIds.some((mid) => sideIds.some((sid) => sideFitsMain(sid, mid)))
+  const tasty = mainIds.some((mid) => sideIds.some((sid) => matchingSideIds(mid).includes(sid)))
   return tasty ? 'good' : null
 }

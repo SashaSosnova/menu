@@ -5,11 +5,23 @@
 import { readFileSync, writeFileSync } from 'node:fs'
 import { dishes } from '../src/data/dishes.ts'
 import { extraDishes } from '../src/data/extraDishes.ts'
-import { cleanRecipeSteps } from '../src/lib/recipeSteps.ts'
+import { cleanRecipeSteps, splitRecipeSteps } from '../src/lib/recipeSteps.ts'
 
 const STEP_OVERRIDES: Record<string, string> = {}
 
-function patchDishSteps(content: string, id: string, steps: string): string | null {
+function formatStepsHelper(text: string): string {
+  const lines = text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+  if (lines.length === 0) return `steps: '',`
+  const body = lines
+    .map((line) => `'${line.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}',`)
+    .join('\n        ')
+  return `steps: steps(\n        ${body}\n      ),`
+}
+
+function patchDishSteps(content: string, id: string, nextSteps: string): string | null {
   const keyRe = new RegExp(`\\n  ${id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}: \\{`)
   const match = keyRe.exec(content)
   if (!match) return null
@@ -19,20 +31,15 @@ function patchDishSteps(content: string, id: string, steps: string): string | nu
   if (stepsIdx < 0 || stepsIdx > start + 12000) return null
 
   const afterSteps = content.slice(stepsIdx + 6)
+  const helper = afterSteps.match(/^\s*steps\(([\s\S]*?)\)\s*,/)
   const multiline = afterSteps.match(/^\s*\n\s*'((?:\\'|[^'])*)',/s)
   const inline = afterSteps.match(/^\s*'((?:\\'|[^'])*)',/s)
 
-  const escaped = steps.replace(/\\/g, '\\\\').replace(/'/g, "\\'")
-  const replacement = multiline
-    ? `steps:\n        '${escaped}',`
-    : inline
-      ? `steps: '${escaped}',`
-      : null
+  const replacement = formatStepsHelper(nextSteps)
+  const endMatch = helper ?? multiline ?? inline
+  if (!endMatch) return null
 
-  if (!replacement) return null
-
-  const endMatch = multiline ?? inline
-  const endLen = endMatch![0].length
+  const endLen = endMatch[0].length
   return content.slice(0, stepsIdx) + replacement + content.slice(stepsIdx + 6 + endLen)
 }
 
@@ -46,7 +53,12 @@ function patchFile(
   for (const [id, dish] of Object.entries(dishMap)) {
     const raw = dish.recipe?.steps
     if (!raw) continue
-    const cleaned = STEP_OVERRIDES[id] ?? cleanRecipeSteps(raw)
+    const cleaned =
+      STEP_OVERRIDES[id] ??
+      splitRecipeSteps(raw)
+        .map((line) => cleanRecipeSteps(line))
+        .filter(Boolean)
+        .join('\n')
     const next = patchDishSteps(content, id, cleaned)
     if (!next) {
       console.warn(`skip ${id}`)

@@ -1,211 +1,295 @@
-import { listCookQueue, slotDishIds } from '../data/cookBoard'
 import {
-  countPrepChecks,
+  frozenOnOf,
+  isPrepInFreezer,
+  packWord,
   prepCheckIds,
-  prepCookHint,
   prepGroups,
   prepMatchesNext,
+  putPrepInFreezer,
+  sumPrepAmounts,
+  takePrepFromFreezer,
+  type PrepFreezer,
+  type PrepItem,
 } from '../data/prep'
+import { nextCookDishIds } from '../data/cycleQueue'
+import { lastCookedOnForDishes, type CookBoard } from '../data/cookBoard'
+import { frozenOnCaption, isoDate, lastCookedCaption } from '../data/calendar'
 import { useMenuSync } from '../hooks/useMenuSync'
+import type { MealStatsStore } from '../data/mealStats'
 
-const STORAGE_KEY = 'checklist-prep-freezer-v2'
+function packUnits(item: PrepItem) {
+  if (item.packs) return item.packs
+  return [{ id: item.id, label: item.label, amount: item.amount, dishIds: item.dishIds }]
+}
 
 function PackLine({
   label,
   amount,
-  use,
-  how,
+  cookedLabel,
+  frozenOn,
   checked,
   isNext,
+  pool,
   onToggle,
+  onFrozenOnChange,
 }: {
   label: string
   amount: string
-  use?: string
-  how?: string
+  cookedLabel?: string
+  frozenOn?: string
   checked: boolean
   isNext?: boolean
+  pool: 'freezer' | 'future'
   onToggle: () => void
+  onFrozenOnChange?: (iso: string) => void
 }) {
   return (
-    <label
-      className={[
-        'prep-item',
-        checked ? 'is-checked' : '',
-        isNext ? 'is-next' : '',
-      ]
+    <div
+      className={['prep-item', pool === 'freezer' ? 'is-frozen' : '', isNext ? 'is-next' : '']
         .filter(Boolean)
         .join(' ')}
     >
-      <input type="checkbox" checked={checked} onChange={onToggle} />
-      <span className="prep-body">
-        <span className="prep-head">
-          <span className="prep-product">{label}</span>
-          <span className="prep-amount">{amount}</span>
+      <label className="prep-item-main">
+        <input type="checkbox" checked={checked} onChange={onToggle} />
+        <span className="prep-body">
+          <span className="prep-head">
+            <span className="prep-product">{label}</span>
+            <span className="prep-amount">{amount}</span>
+          </span>
+          {cookedLabel ? <span className="menu-last-cooked">{cookedLabel}</span> : null}
         </span>
-        {use && (
-          <span className={isNext ? 'prep-use is-next' : 'prep-use'}>{use}</span>
-        )}
-        {how && <span className="prep-how">{how}</span>}
-      </span>
-    </label>
+      </label>
+      {pool === 'freezer' && onFrozenOnChange ? (
+        <span className="prep-frozen-on">
+          <span>{frozenOnCaption(frozenOn)}</span>
+          <input
+            type="date"
+            value={frozenOn ?? ''}
+            max={isoDate()}
+            aria-label="Дата заготовки"
+            onChange={(event) => {
+              const value = event.target.value
+              if (value) onFrozenOnChange(value)
+            }}
+          />
+        </span>
+      ) : null}
+    </div>
   )
 }
 
-export function PrepTab() {
-  const { state, setChecklist } = useMenuSync()
-  const checked = state.checklists[STORAGE_KEY] ?? {}
-  const { total } = countPrepChecks()
-  const nextBatch = listCookQueue(
-    state.cookBoard,
-    state.menuOverrides,
-    state.mealStats,
-  ).find((b) => b.status === 'next')
-  const nextCook = nextBatch
-    ? {
-        week: nextBatch.week,
-        slotId: nextBatch.slotId,
-        dishIds: new Set(slotDishIds(nextBatch.slot)),
-      }
-    : null
+function GroupList({
+  items,
+  freezer,
+  nextCook,
+  pool,
+  board,
+  stats,
+  onToggle,
+  onFrozenOnChange,
+}: {
+  items: PrepItem[]
+  freezer: PrepFreezer
+  nextCook: Set<string>
+  pool: 'freezer' | 'future'
+  board: CookBoard
+  stats: MealStatsStore
+  onToggle: (id: string) => void
+  onFrozenOnChange: (id: string, iso: string) => void
+}) {
+  const packs = items.flatMap(packUnits)
 
-  function toggle(id: string) {
-    const next = { ...checked, [id]: !checked[id] }
-    setChecklist(STORAGE_KEY, next)
-  }
+  return (
+    <ul className="prep-list">
+      {packs.map((pack) => {
+        const isNext = prepMatchesNext(pack, nextCook)
+        const cookedLabel = pack.dishIds?.length
+          ? lastCookedCaption(lastCookedOnForDishes(board, pack.dishIds, stats))
+          : undefined
+        return (
+          <li key={pack.id}>
+            <PackLine
+              label={pack.label}
+              amount={pack.amount}
+              cookedLabel={cookedLabel}
+              frozenOn={frozenOnOf(freezer, pack.id)}
+              isNext={isNext}
+              pool={pool}
+              checked={isPrepInFreezer(freezer, pack.id)}
+              onToggle={() => onToggle(pack.id)}
+              onFrozenOnChange={(iso) => onFrozenOnChange(pack.id, iso)}
+            />
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
 
-  const done = prepGroups.reduce(
-    (n, g) =>
-      n +
-      g.items.reduce(
-        (m, item) =>
-          m + prepCheckIds(item).filter((id) => checked[id]).length,
-        0,
-      ),
-    0,
+function groupUnits(
+  items: PrepItem[],
+  freezer: PrepFreezer,
+  inFreezer: boolean,
+): PrepItem[] {
+  return items.flatMap((item) => {
+    if (item.packs) {
+      const packs = item.packs.filter(
+        (pack) => isPrepInFreezer(freezer, pack.id) === inFreezer,
+      )
+      if (packs.length === 0) return []
+      return [{ ...item, packs }]
+    }
+    return isPrepInFreezer(freezer, item.id) === inFreezer ? [item] : []
+  })
+}
+
+function PoolSection({
+  title,
+  total,
+  pools,
+  freezer,
+  nextCook,
+  board,
+  stats,
+  pool,
+  onToggle,
+  onFrozenOnChange,
+}: {
+  title: string
+  total: number
+  pools: ReturnType<typeof buildPools>
+  freezer: PrepFreezer
+  nextCook: Set<string>
+  board: CookBoard
+  stats: MealStatsStore
+  pool: 'freezer' | 'future'
+  onToggle: (id: string) => void
+  onFrozenOnChange: (id: string, iso: string) => void
+}) {
+  const rows = pools.filter((p) =>
+    pool === 'freezer' ? p.frozenCount > 0 : p.futureCount > 0,
   )
 
   return (
-    <section className="view">
-      <div className="view-heading">
-        <h2>Заготовки</h2>
-        <p className="muted">
-          Раз в месяц: разделать, замариновать, подписать пакет (название блюда),
-          в морозилку. Достаёте пакет, когда готовите этот набор — не по календарным
-          пн/ср/пт. Галочка на каждый пакет.
-        </p>
-        {nextBatch ? (
-          <p className="muted">Подсвечен пакет для следующей готовки</p>
-        ) : null}
-        <p className="prep-progress">
-          В заморозку: {done} из {total}
-        </p>
-        <p className="prep-labels-export">
-          <a className="link-btn" href={`${import.meta.env.BASE_URL}prep-labels.xlsx`} download>
-            Excel для NIIMBOT
-          </a>
-          <span className="muted"> · </span>
-          <a className="link-btn" href={`${import.meta.env.BASE_URL}prep-labels/index.html`} target="_blank" rel="noreferrer">
-            PNG-этикетки 50×30
-          </a>
-          <span className="muted prep-labels-hint">
-            {' '}
-            — импорт Excel в шаблон или печать PNG как картинок
-          </span>
-        </p>
-      </div>
-
-      <div className="week-sections">
-        {prepGroups.map((group, index) => {
-          const checkIds = group.items.flatMap(prepCheckIds)
-          const groupDone = checkIds.filter((id) => checked[id]).length
-          const groupTotal = checkIds.length
-
-          return (
-            <details key={group.id} className="fold" open={index < 2}>
-              <summary>
-                <span>
-                  {group.title}
-                  <span className="prep-group-count">
-                    {' '}
-                    {groupDone}/{groupTotal}
+    <section className="prep-pool">
+      <h3 className="cook-queue-heading">
+        {title}
+        <span className="prep-pool-count">
+          {total} {packWord(total)}
+        </span>
+      </h3>
+      {total === 0 ? (
+        <p className="fridge-empty">{pool === 'freezer' ? 'Пока пусто' : 'Всё в морозилке'}</p>
+      ) : (
+        <div className="week-sections">
+          {rows.map((row) => {
+            const items = pool === 'freezer' ? row.frozenItems : row.futureItems
+            const count = pool === 'freezer' ? row.frozenCount : row.futureCount
+            const amount = pool === 'freezer' ? row.frozenAmount : row.futureAmount
+            return (
+              <details key={row.group.id} className="fold">
+                <summary>
+                  <span className="prep-fold-line">
+                    <span className="prep-fold-title">{row.group.title}</span>
+                    <span className="prep-group-count">
+                      {count} {packWord(count)}
+                      {amount ? ` · ${amount}` : ''}
+                    </span>
                   </span>
-                </span>
-              </summary>
-              <div className="fold-body">
-                {group.intro && <p className="muted">{group.intro}</p>}
-                {group.marinade && (
-                  <p className="prep-marinade">
-                    <strong>Маринад:</strong> {group.marinade}
-                  </p>
-                )}
-                <ul className="prep-list">
-                  {group.items.map((item) => {
-                    if (item.packs) {
-                      const packDone = item.packs.filter((p) =>
-                        checked[p.id],
-                      ).length
-                      return (
-                        <li key={item.id} className="prep-block">
-                          <div className="prep-block-head">
-                            <span className="prep-product">{item.label}</span>
-                            <span className="prep-amount">
-                              {item.amount}
-                              <span className="prep-pack-count">
-                                {' '}
-                                · {packDone}/{item.packs.length}
-                              </span>
-                            </span>
-                          </div>
-                          {item.how && (
-                            <p className="prep-how muted">{item.how}</p>
-                          )}
-                          <ul className="prep-packs">
-                            {item.packs.map((pack) => {
-                              const isNext = prepMatchesNext(pack, nextCook)
-                              return (
-                                <li key={pack.id}>
-                                  <PackLine
-                                    label={pack.label}
-                                    amount={pack.amount}
-                                    use={prepCookHint(isNext)}
-                                    isNext={isNext}
-                                    checked={Boolean(checked[pack.id])}
-                                    onToggle={() => toggle(pack.id)}
-                                  />
-                                </li>
-                              )
-                            })}
-                          </ul>
-                        </li>
-                      )
-                    }
+                </summary>
+                <div className="fold-body">
+                  <GroupList
+                    items={items}
+                    freezer={freezer}
+                    nextCook={nextCook}
+                    pool={pool}
+                    board={board}
+                    stats={stats}
+                    onToggle={onToggle}
+                    onFrozenOnChange={onFrozenOnChange}
+                  />
+                </div>
+              </details>
+            )
+          })}
+        </div>
+      )}
+    </section>
+  )
+}
 
-                    const isNext = prepMatchesNext(item, nextCook)
-                    return (
-                      <li key={item.id}>
-                        <PackLine
-                          label={item.label}
-                          amount={item.amount}
-                          use={
-                            item.dishIds?.length || (item.week && item.slot)
-                              ? prepCookHint(isNext)
-                              : undefined
-                          }
-                          how={item.how}
-                          isNext={isNext}
-                          checked={Boolean(checked[item.id])}
-                          onToggle={() => toggle(item.id)}
-                        />
-                      </li>
-                    )
-                  })}
-                </ul>
-              </div>
-            </details>
-          )
-        })}
-      </div>
+function itemAmounts(item: PrepItem): string[] {
+  return packUnits(item).map((pack) => pack.amount)
+}
+
+function buildPools(freezer: PrepFreezer) {
+  return prepGroups.map((group) => {
+    const frozenItems = groupUnits(group.items, freezer, true)
+    const futureItems = groupUnits(group.items, freezer, false)
+    const frozenIds = frozenItems.flatMap(prepCheckIds)
+    const futureIds = futureItems.flatMap(prepCheckIds)
+    return {
+      group,
+      frozenItems,
+      futureItems,
+      frozenCount: frozenIds.length,
+      futureCount: futureIds.length,
+      frozenAmount: sumPrepAmounts(frozenItems.flatMap(itemAmounts)),
+      futureAmount: sumPrepAmounts(futureItems.flatMap(itemAmounts)),
+    }
+  })
+}
+
+export function PrepTab() {
+  const { state, patchState } = useMenuSync()
+  const freezer = state.freezerStock
+  const nextCook = nextCookDishIds(state.cookBoard, state.mealStats, freezer)
+
+  function toggle(id: string) {
+    patchState((prev) => {
+      const stock = prev.freezerStock ?? {}
+      return {
+        ...prev,
+        freezerStock: isPrepInFreezer(stock, id)
+          ? takePrepFromFreezer(stock, id)
+          : putPrepInFreezer(stock, id, isoDate()),
+      }
+    })
+  }
+
+  function setFrozenOn(id: string, frozenOn: string) {
+    patchState((prev) => {
+      const stock = prev.freezerStock ?? {}
+      if (!isPrepInFreezer(stock, id)) return prev
+      return {
+        ...prev,
+        freezerStock: putPrepInFreezer(stock, id, frozenOn),
+      }
+    })
+  }
+
+  const pools = buildPools(freezer)
+  const frozenTotal = pools.reduce((n, p) => n + p.frozenCount, 0)
+  const futureTotal = pools.reduce((n, p) => n + p.futureCount, 0)
+  const listProps = {
+    pools,
+    freezer,
+    nextCook,
+    board: state.cookBoard,
+    stats: state.mealStats,
+    onToggle: toggle,
+    onFrozenOnChange: setFrozenOn,
+  }
+
+  return (
+    <section className="view">
+      <PoolSection title="Морозилка" total={frozenTotal} pool="freezer" {...listProps} />
+      <PoolSection
+        title="Будущие заготовки"
+        total={futureTotal}
+        pool="future"
+        {...listProps}
+      />
     </section>
   )
 }

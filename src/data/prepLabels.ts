@@ -32,27 +32,28 @@ export const FREEZER_MONTHS_BY_ICON: Record<PrepLabelIconKey, number> = {
 
 const FORM_BY_ITEM_LABEL: Record<string, string> = {
   Соломка: 'соломка',
-  'Кубики ~2 см': 'кубики',
-  'Крупный кусок': 'крупный кусок',
   Фарш: 'фарш',
+  'Кубики ~2 см': 'кубики',
+  'Кубики 2–3 см': 'кубики',
+  'Крупный кусок': 'крупный кусок',
   Отбивные: 'отбивные',
   Форель: 'куски',
-  Креветки: 'целые',
-  Минтай: 'куски',
-  'Курица Ножки': 'ножки',
-  'Курица Крылья': 'крылья',
-  'Курица Бёдра сметана': 'бёдра',
 }
 
 function productForGroup(groupId: string, item: PrepItem): string {
   if (groupId === 'beef') return 'Говядина'
   if (
     groupId === 'chicken-fillet' ||
+    groupId === 'legs' ||
+    groupId === 'wings' ||
+    groupId === 'thighs' ||
+    groupId === 'liver' ||
     groupId === 'marinate-legs-wings' ||
     groupId === 'marinate-cream'
   ) {
     return 'Курица'
   }
+  if (groupId === 'shrimp') return 'Креветки'
   if (groupId === 'fish') {
     if (item.id === 'trout' || item.id.startsWith('trout')) return 'Форель'
     if (item.id === 'pollock') return 'Минтай'
@@ -69,7 +70,11 @@ function iconForProduct(product: string): PrepLabelIconKey {
 }
 
 function formForItem(item: PrepItem): string {
-  return FORM_BY_ITEM_LABEL[item.label] ?? item.label.toLowerCase()
+  const mapped = FORM_BY_ITEM_LABEL[item.label]
+  if (mapped) return mapped
+  const parts = item.label.split(/\s*[·.]\s+/)
+  if (parts.length >= 3) return parts[1]!.toLowerCase()
+  return item.label.toLowerCase()
 }
 
 function dishNames(dishIds?: string[]): string {

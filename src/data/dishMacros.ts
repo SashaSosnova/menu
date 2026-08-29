@@ -23,7 +23,3 @@ export function getDishMacros(id: string): Macros | undefined {
     carbs: entry.carbs,
   }
 }
-
-export function dishMacrosExportedAt(): string | undefined {
-  return data.exportedAt
-}

@@ -2,6 +2,37 @@ import { getPrepPackLabel } from '../data/prep'
 
 const DAY_ABBR = /\b(?:пн|вт|ср|чт|пт|сб|вс)\b/gi
 
+const STEP_SPLIT = /(?<=[.!?])\s+(?=[«"„(А-ЯЁA-Z0-9])/
+
+function tidyStep(part: string): string {
+  return part
+    .replace(/^\d+[.)]\s+/, '')
+    .replace(/[.]+$/, '')
+    .trim()
+}
+
+/** Шаги рецепта: из абзаца или из строк — список для нумерации. */
+export function splitRecipeSteps(text: string): string[] {
+  const trimmed = text.trim()
+  if (!trimmed) return []
+
+  if (/\r?\n/.test(trimmed)) {
+    return trimmed
+      .split(/\r?\n/)
+      .map(tidyStep)
+      .filter(Boolean)
+  }
+
+  return trimmed
+    .split(STEP_SPLIT)
+    .map(tidyStep)
+    .filter(Boolean)
+}
+
+export function joinRecipeSteps(steps: string[]): string {
+  return steps.map(tidyStep).filter(Boolean).join('\n')
+}
+
 /** Первый шаг: взять подписанный пакет из морозилки (если есть заготовка) */
 export function withPrepPackStep(dishId: string, steps: string): string {
   const label = getPrepPackLabel(dishId)
@@ -12,7 +43,19 @@ export function withPrepPackStep(dishId: string, steps: string): string {
   if (/Взять\s+пакет\s+из\s+морозилки/i.test(trimmed)) return steps
   if (trimmed.includes(`«${label}»`) && /морозил/i.test(trimmed)) return steps
 
+  if (/\r?\n/.test(trimmed)) return `${prefix}\n${trimmed}`
   return `${prefix} ${trimmed}`
+}
+
+/** Убираем авто-шаг про пакет, чтобы не задвоить при сохранении. */
+export function stripAutoPrepPackStep(dishId: string, steps: string): string {
+  const label = getPrepPackLabel(dishId)
+  const trimmed = steps.trim()
+  if (!label || !trimmed) return steps
+  const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return trimmed
+    .replace(new RegExp(`^Взять\\s+пакет\\s+из\\s+морозилки\\s+«${escaped}»\\.?\\s*`, 'i'), '')
+    .trim()
 }
 
 const DAY_NAMES =

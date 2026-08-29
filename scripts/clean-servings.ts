@@ -11,7 +11,7 @@ const SERVINGS_OVERRIDES: Record<string, string> = {
   chicken_cutlets: '6 порций · ~35 мин',
   trout: '900 г · 2 семейных приёма · ~15 мин',
   trout_spinach: '6 порций · ~25 мин',
-  pollock: '6 порций · ~35 мин',
+  pollock: '4 порции · 2 дня · цельное · ~900 г · ~35 мин',
 }
 
 function patchDishServings(content: string, id: string, servings: string): string | null {

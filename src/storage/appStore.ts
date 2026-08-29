@@ -1,32 +1,31 @@
-import type { CookbookStore } from '../data/cookbook'
-import { seedStats, migrateMealStats, type MealStatsStore } from '../data/mealStats'
+import { COOKBOOK_KEY, type CookbookStore } from '../data/cookbook'
+import { seedStats, migrateMealStats, MEAL_STATS_KEY, type MealStatsStore } from '../data/mealStats'
 import type { MenuOverrides } from '../data/menuOverrides'
 import type { PortionScales } from '../lib/portionScale'
 import { emptyCookBoard, resolveCookBoard, FRIDGE_LEFTOVER_PATCH, type CookBoard } from '../data/cookBoard'
+import { parsePrepFreezer, type PrepFreezer } from '../data/prep'
 
 export const APP_STATE_KEY = 'menu-app-state-v1'
+
+/** Старый ключ галочек морозилки — только для миграции. */
+const LEGACY_FREEZER_KEY = 'checklist-prep-freezer-v2'
 
 export type MenuAppState = {
   cookbook: CookbookStore
   mealStats: MealStatsStore
-  checklists: Record<string, Record<string, boolean>>
+  /** Пакеты в морозилке с датой заготовки (YYYY-MM-DD). */
+  freezerStock: PrepFreezer
   menuOverrides: MenuOverrides
   portionScales: PortionScales
   cookBoard: CookBoard
   updatedAt: number
 }
 
-const LEGACY_CHECKLIST_KEYS = [
-  'checklist-prep-freezer-v2',
-  'checklist-monthly-meat-v2',
-  'checklist-monthly-veg-v2',
-  'checklist-week-fresh-1',
-  'checklist-week-fresh-2',
-  'checklist-week-fresh-3',
-  'checklist-week-fresh-4',
-] as const
+type PersistedAppState = Partial<MenuAppState> & {
+  checklists?: Record<string, unknown>
+}
 
-export function emptyCookbook(): CookbookStore {
+function emptyCookbook(): CookbookStore {
   return { recipes: {}, ratings: {}, customDishes: [] }
 }
 
@@ -34,7 +33,7 @@ export function emptyAppState(): MenuAppState {
   return {
     cookbook: emptyCookbook(),
     mealStats: structuredClone(seedStats),
-    checklists: {},
+    freezerStock: {},
     menuOverrides: {},
     portionScales: {},
     cookBoard: resolveCookBoard(emptyCookBoard()),
@@ -51,24 +50,62 @@ function mergeSeedStats(stats: MealStatsStore): MealStatsStore {
   return next
 }
 
-function migrateLegacyChecklists(): Record<string, Record<string, boolean>> {
-  const out: Record<string, Record<string, boolean>> = {}
-  for (const key of LEGACY_CHECKLIST_KEYS) {
-    try {
-      const raw = localStorage.getItem(key)
-      if (raw) out[key] = JSON.parse(raw) as Record<string, boolean>
-    } catch {
-      // ignore
-    }
+function resolveFreezerStock(raw: PersistedAppState | null | undefined): {
+  freezerStock: PrepFreezer
+  migrated: boolean
+} {
+  if (raw && 'freezerStock' in raw && raw.freezerStock !== undefined) {
+    return { freezerStock: parsePrepFreezer(raw.freezerStock), migrated: false }
   }
-  return out
+  return {
+    freezerStock: parsePrepFreezer(raw?.checklists?.[LEGACY_FREEZER_KEY]),
+    migrated: true,
+  }
+}
+
+function readStandaloneFreezer(): unknown {
+  try {
+    const raw = localStorage.getItem(LEGACY_FREEZER_KEY)
+    if (raw) return JSON.parse(raw)
+  } catch {
+    // ignore
+  }
+  return undefined
+}
+
+function hydrateState(raw: PersistedAppState): { state: MenuAppState; dirty: boolean } {
+  const prev = raw.cookBoard
+  const cookBoard = resolveCookBoard(prev)
+  const seeded =
+    Object.keys(prev?.cooked ?? {}).length === 0 && Object.keys(cookBoard.cooked).length > 0
+  const patched =
+    !(prev?.patches ?? []).includes(FRIDGE_LEFTOVER_PATCH) &&
+    (cookBoard.patches ?? []).includes(FRIDGE_LEFTOVER_PATCH)
+  const { freezerStock, migrated } = resolveFreezerStock(raw)
+  const dirty = seeded || patched || migrated
+  return {
+    state: {
+      cookbook: {
+        recipes: raw.cookbook?.recipes ?? {},
+        ratings: raw.cookbook?.ratings ?? {},
+        customDishes: raw.cookbook?.customDishes ?? [],
+      },
+      mealStats: mergeSeedStats(raw.mealStats ?? {}),
+      freezerStock,
+      menuOverrides: raw.menuOverrides ?? {},
+      portionScales: raw.portionScales ?? {},
+      cookBoard,
+      updatedAt: dirty ? Date.now() : (raw.updatedAt ?? Date.now()),
+    },
+    dirty,
+  }
 }
 
 function migrateLegacyState(): MenuAppState {
   const state = emptyAppState()
 
   try {
-    const cookbookRaw = localStorage.getItem('cookbook-v1')
+    const cookbookRaw = localStorage.getItem(COOKBOOK_KEY)
     if (cookbookRaw) {
       const parsed = JSON.parse(cookbookRaw) as CookbookStore
       state.cookbook = {
@@ -82,7 +119,7 @@ function migrateLegacyState(): MenuAppState {
   }
 
   try {
-    const statsRaw = localStorage.getItem('meal-stats-v1')
+    const statsRaw = localStorage.getItem(MEAL_STATS_KEY)
     if (statsRaw) {
       state.mealStats = mergeSeedStats(JSON.parse(statsRaw) as MealStatsStore)
     }
@@ -90,7 +127,7 @@ function migrateLegacyState(): MenuAppState {
     // ignore
   }
 
-  state.checklists = migrateLegacyChecklists()
+  state.freezerStock = parsePrepFreezer(readStandaloneFreezer())
   state.updatedAt = Date.now()
   return state
 }
@@ -103,28 +140,9 @@ export function loadLocalAppState(): MenuAppState {
       saveLocalAppState(migrated)
       return migrated
     }
-    const parsed = JSON.parse(raw) as MenuAppState
-    const prev = parsed.cookBoard
-    const cookBoard = resolveCookBoard(prev)
-    const seeded =
-      Object.keys(prev?.cooked ?? {}).length === 0 && Object.keys(cookBoard.cooked).length > 0
-    const patched =
-      !(prev?.patches ?? []).includes(FRIDGE_LEFTOVER_PATCH) &&
-      (cookBoard.patches ?? []).includes(FRIDGE_LEFTOVER_PATCH)
-    const state: MenuAppState = {
-      cookbook: {
-        recipes: parsed.cookbook?.recipes ?? {},
-        ratings: parsed.cookbook?.ratings ?? {},
-        customDishes: parsed.cookbook?.customDishes ?? [],
-      },
-      mealStats: mergeSeedStats(parsed.mealStats ?? {}),
-      checklists: parsed.checklists ?? {},
-      menuOverrides: parsed.menuOverrides ?? {},
-      portionScales: parsed.portionScales ?? {},
-      cookBoard,
-      updatedAt: seeded || patched ? Date.now() : (parsed.updatedAt ?? Date.now()),
-    }
-    if (seeded || patched) saveLocalAppState(state)
+    const parsed = JSON.parse(raw) as PersistedAppState
+    const { state, dirty } = hydrateState(parsed)
+    if (dirty) saveLocalAppState(state)
     return state
   } catch {
     return migrateLegacyState()
@@ -135,26 +153,7 @@ export function saveLocalAppState(state: MenuAppState): void {
   localStorage.setItem(APP_STATE_KEY, JSON.stringify(state))
 }
 
-export function normalizeAppState(raw: Partial<MenuAppState> | null): MenuAppState {
+export function normalizeAppState(raw: PersistedAppState | null): MenuAppState {
   if (!raw) return emptyAppState()
-  const prev = raw.cookBoard
-  const cookBoard = resolveCookBoard(prev)
-  const seeded =
-    Object.keys(prev?.cooked ?? {}).length === 0 && Object.keys(cookBoard.cooked).length > 0
-  const patched =
-    !(prev?.patches ?? []).includes(FRIDGE_LEFTOVER_PATCH) &&
-    (cookBoard.patches ?? []).includes(FRIDGE_LEFTOVER_PATCH)
-  return {
-    cookbook: {
-      recipes: raw.cookbook?.recipes ?? {},
-      ratings: raw.cookbook?.ratings ?? {},
-      customDishes: raw.cookbook?.customDishes ?? [],
-    },
-    mealStats: mergeSeedStats(raw.mealStats ?? {}),
-    checklists: raw.checklists ?? {},
-    menuOverrides: raw.menuOverrides ?? {},
-    portionScales: raw.portionScales ?? {},
-    cookBoard,
-    updatedAt: seeded || patched ? Date.now() : (raw.updatedAt ?? Date.now()),
-  }
+  return hydrateState(raw).state
 }

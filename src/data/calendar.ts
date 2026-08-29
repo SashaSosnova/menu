@@ -138,3 +138,29 @@ export function freezerBestBefore(
   return `до ${dd}.${mm}.${yyyy}`
 }
 
+/** «сегодня», «вчера», «5 дн. назад», «29.08» или «29.08.2025». */
+export function formatLastCookedOn(iso: string, today: Date = new Date()): string {
+  const cooked = dateFromIso(iso)
+  const days = daysBetween(cooked, startOfDay(today))
+  if (days === 0) return 'сегодня'
+  if (days === 1) return 'вчера'
+  if (days >= 2 && days < 14) return `${days} дн. назад`
+  const dd = String(cooked.getDate()).padStart(2, '0')
+  const mm = String(cooked.getMonth() + 1).padStart(2, '0')
+  if (cooked.getFullYear() !== today.getFullYear()) {
+    return `${dd}.${mm}.${cooked.getFullYear()}`
+  }
+  return `${dd}.${mm}`
+}
+
+export function lastCookedCaption(iso?: string, today: Date = new Date()): string {
+  if (!iso) return 'ещё не готовили'
+  return `готовили ${formatLastCookedOn(iso, today)}`
+}
+
+/** «заморозили сегодня», «вчера», «N дн. назад» или дата. */
+export function frozenOnCaption(iso?: string, today: Date = new Date()): string {
+  if (!iso) return 'дата заморозки не записана'
+  return `заморозили ${formatLastCookedOn(iso, today)}`
+}
+

@@ -8,17 +8,19 @@ import {
   getEffectiveRecipe,
   hasRecipeOverride,
   isCustomDish,
-  RATING_OPTIONS,
-  ratingLabel,
   removeCustomDish,
   type CookbookStore,
   type CustomDish,
   type RecipeOverride,
-  type RecipeRating,
 } from '../data/cookbook'
 import type { Dish } from '../data/types'
 import { useMenuSync } from '../hooks/useMenuSync'
-import { formatServingsDisplay } from '../lib/recipeServings'
+import { formatPortionYieldLine } from '../lib/recipeServings'
+import { joinRecipeSteps, splitRecipeSteps, stripAutoPrepPackStep } from '../lib/recipeSteps'
+import { ChildEatsMark } from './ChildEatsMark'
+import { RecipeStepsList } from './RecipeStepsList'
+import { useEscapeKey } from '../hooks/useEscapeKey'
+import { cycleMains, menuRefIds } from '../data/menu'
 
 type EditDraft = {
   name: string
@@ -40,11 +42,14 @@ function sectionToKind(section: CookbookSection): CustomDish['kind'] {
 function draftFromDish(dish: Dish, store: CookbookStore): EditDraft {
   const recipe = getEffectiveRecipe(dish.id, store)
   const override = store.recipes[dish.id]
+  const servings = recipe?.servings
+    ? formatPortionYieldLine(dish.id, recipe.servings)
+    : ''
   return {
     name: dish.name,
-    servings: recipe?.servings ?? '',
+    servings,
     ingredientsText: (recipe?.ingredients ?? []).join('\n'),
-    steps: recipe?.steps ?? '',
+    steps: splitRecipeSteps(recipe?.steps ?? '').join('\n'),
     storage: recipe?.storage ?? '',
     note: override?.note ?? '',
   }
@@ -126,12 +131,12 @@ function RecipeFormFields({
         </label>
       ) : null}
       <label className="field">
-        <span className="field-label">Порции / время</span>
+        <span className="field-label">Порции</span>
         <input
           className="field-input"
           value={draft.servings}
           onChange={(e) => onChange({ ...draft, servings: e.target.value })}
-          placeholder="6 порций · ~40 мин"
+          placeholder="6 порций — 1200 г"
         />
       </label>
       <label className="field">
@@ -144,12 +149,13 @@ function RecipeFormFields({
         />
       </label>
       <label className="field">
-        <span className="field-label">Как готовить</span>
+        <span className="field-label">Как готовить — по одному шагу на строку</span>
         <textarea
           className="field-textarea"
-          rows={6}
+          rows={10}
           value={draft.steps}
           onChange={(e) => onChange({ ...draft, steps: e.target.value })}
+          placeholder={'Лук, морковь, сельдерей мелко\nОбжарить на масле 12–15 мин\nДобавить фарш'}
         />
       </label>
       <label className="field">
@@ -188,6 +194,7 @@ function AddRecipeModal({
 }) {
   const [section, setSection] = useState<CookbookSection>(defaultSection)
   const [draft, setDraft] = useState(emptyDraft)
+  useEscapeKey(onClose)
 
   function save() {
     const name = draft.name.trim()
@@ -198,7 +205,7 @@ function AddRecipeModal({
     const override: RecipeOverride = {
       servings: draft.servings.trim(),
       ingredients: parseIngredients(draft.ingredientsText),
-      steps: draft.steps.trim(),
+      steps: joinRecipeSteps(splitRecipeSteps(draft.steps)),
       storage: draft.storage.trim() || undefined,
       note: draft.note.trim() || undefined,
     }
@@ -261,43 +268,40 @@ function RecipeModal({
   store,
   onClose,
   onSave,
+  onOpenMate,
 }: {
   dish: Dish
   store: CookbookStore
   onClose: () => void
   onSave: (store: CookbookStore) => void
+  onOpenMate?: (id: string) => void
 }) {
   const custom = isCustomDish(dish.id, store)
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(() => draftFromDish(dish, store))
   const recipe = getEffectiveRecipe(dish.id, store)
-  const rating = store.ratings[dish.id]
   const isEdited = hasRecipeOverride(dish.id, store)
+  const mateIds = menuRefIds(
+    cycleMains.find((item) => menuRefIds(item).includes(dish.id)) ?? { dishId: dish.id },
+  ).filter((id) => id !== dish.id)
+  useEscapeKey(onClose)
 
   function patchStore(next: CookbookStore) {
     onSave(next)
   }
 
-  function setRating(value: RecipeRating) {
-    patchStore({
-      ...store,
-      ratings: { ...store.ratings, [dish.id]: value },
-    })
-  }
-
-  function clearRating() {
-    const { [dish.id]: _, ...rest } = store.ratings
-    patchStore({ ...store, ratings: rest })
-  }
-
   function saveEdits() {
-    const name = custom ? draft.name.trim() : dish.name
-    if (custom && !name) return
+    const name = draft.name.trim()
+    if (!name) return
 
+    const catalogName = getDish(dish.id)?.name
     const override: RecipeOverride = {
+      ...(custom || name === catalogName ? {} : { name }),
       servings: draft.servings.trim(),
       ingredients: parseIngredients(draft.ingredientsText),
-      steps: draft.steps.trim(),
+      steps: joinRecipeSteps(
+        splitRecipeSteps(stripAutoPrepPackStep(dish.id, draft.steps)),
+      ),
       storage: draft.storage.trim() || undefined,
       note: draft.note.trim() || undefined,
     }
@@ -320,18 +324,6 @@ function RecipeModal({
     setEditing(false)
   }
 
-  function resetRecipe() {
-    const { [dish.id]: _, ...restRecipes } = store.recipes
-    const override = store.recipes[dish.id]
-    const next: CookbookStore = { ...store, recipes: restRecipes }
-    if (override?.note) {
-      next.recipes[dish.id] = { note: override.note }
-    }
-    patchStore(next)
-    setDraft(draftFromDish(dish, next))
-    setEditing(false)
-  }
-
   function deleteRecipe() {
     patchStore(removeCustomDish(store, dish.id))
     onClose()
@@ -343,7 +335,16 @@ function RecipeModal({
   }
 
   const displayDish = getCookbookDish(dish.id, store) ?? dish
-  const title = custom && editing ? draft.name || displayDish.name : displayDish.name
+  const cycleRef = cycleMains.find((item) => menuRefIds(item).includes(dish.id))
+  const combinedName = cycleRef?.orDishIds?.length
+    ? menuRefIds(cycleRef)
+        .map((id) => getCookbookDish(id, store)?.name ?? getDish(id)?.name ?? id)
+        .join(' / ')
+    : displayDish.name
+  const title = editing ? draft.name || displayDish.name : combinedName
+  const yieldLine = recipe?.servings
+    ? formatPortionYieldLine(dish.id, recipe.servings)
+    : ''
 
   return (
     <div className="modal-backdrop" onClick={onClose} role="presentation">
@@ -355,7 +356,10 @@ function RecipeModal({
       >
         <div className="modal-header">
           <div>
-            <h2 id={`recipe-${dish.id}`}>{title}</h2>
+            <h2 id={`recipe-${dish.id}`} className="menu-recipe-title">
+              {title}
+              <ChildEatsMark dishId={dish.id} />
+            </h2>
             <p className="modal-macros muted">
               {custom ? 'свой рецепт · ' : null}
               {displayDish.kind === 'complete' ? 'полноценное · ' : null}
@@ -372,39 +376,12 @@ function RecipeModal({
           </button>
         </div>
 
-        <div className="rating-block">
-          <p className="rating-label">Как зашло</p>
-          <div className="rating-picker" role="group" aria-label="Оценка блюда">
-            {RATING_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                className={
-                  rating === opt.value ? 'rating-btn is-active' : 'rating-btn'
-                }
-                onClick={() => setRating(opt.value)}
-                title={opt.label}
-              >
-                <span className="rating-btn-num">{opt.short}</span>
-                <span className="rating-btn-text">{opt.label}</span>
-              </button>
-            ))}
-          </div>
-          {rating ? (
-            <button type="button" className="link-btn" onClick={clearRating}>
-              Убрать оценку
-            </button>
-          ) : null}
-        </div>
-
         <div className="modal-body">
           {!editing ? (
             <>
               {recipe ? (
                 <>
-                  {recipe.servings ? (
-                    <p className="muted">{formatServingsDisplay(dish.id, recipe.servings)}</p>
-                  ) : null}
+                  {yieldLine ? <p className="muted">{yieldLine}</p> : null}
                   {isEdited && !custom ? <p className="edited-tag">редактировано</p> : null}
                   {store.recipes[dish.id]?.note ? (
                     <>
@@ -425,7 +402,7 @@ function RecipeModal({
                   {recipe.steps ? (
                     <>
                       <h3>Как готовить</h3>
-                      <p className="steps">{recipe.steps}</p>
+                      <RecipeStepsList steps={recipe.steps} />
                     </>
                   ) : null}
                   {recipe.storage ? (
@@ -434,6 +411,28 @@ function RecipeModal({
                       <p>{recipe.storage}</p>
                     </>
                   ) : null}
+                  {mateIds.map((id) => {
+                    const mate = getCookbookDish(id, store) ?? getDish(id)
+                    const mateRecipe = getEffectiveRecipe(id, store)
+                    if (!mate || !mateRecipe) return null
+                    return (
+                      <div key={id} className="menu-recipe-variant">
+                        <h3>{mate.name}</h3>
+                        {mateRecipe.servings ? (
+                          <p className="muted">{formatPortionYieldLine(id, mateRecipe.servings)}</p>
+                        ) : null}
+                        {onOpenMate ? (
+                          <button
+                            type="button"
+                            className="link-btn"
+                            onClick={() => onOpenMate(id)}
+                          >
+                            Открыть этот вариант
+                          </button>
+                        ) : null}
+                      </div>
+                    )
+                  })}
                 </>
               ) : (
                 <p className="muted">Рецепт пока пуст — нажми «Редактировать», чтобы добавить.</p>
@@ -454,14 +453,14 @@ function RecipeModal({
               <RecipeFormFields
                 draft={draft}
                 onChange={setDraft}
-                showName={custom}
+                showName
               />
               <div className="modal-actions">
                 <button
                   type="button"
                   className="primary-btn"
                   onClick={saveEdits}
-                  disabled={custom && !draft.name.trim()}
+                  disabled={!draft.name.trim()}
                 >
                   Сохранить
                 </button>
@@ -471,10 +470,6 @@ function RecipeModal({
                 {custom ? (
                   <button type="button" className="ghost-btn danger" onClick={deleteRecipe}>
                     Удалить
-                  </button>
-                ) : isEdited || getDish(dish.id)?.recipe ? (
-                  <button type="button" className="ghost-btn danger" onClick={resetRecipe}>
-                    Сбросить рецепт
                   </button>
                 ) : null}
               </div>
@@ -495,22 +490,28 @@ function RecipeRow({
   store: CookbookStore
   onOpen: () => void
 }) {
-  const rating = store.ratings[dish.id]
   const custom = isCustomDish(dish.id, store)
+  const recipe = getEffectiveRecipe(dish.id, store)
+  const yieldLine = recipe?.servings
+    ? formatPortionYieldLine(dish.id, recipe.servings)
+    : ''
+  const cycleRef = cycleMains.find((item) => item.dishId === dish.id)
+  const name = cycleRef?.orDishIds?.length
+    ? menuRefIds(cycleRef)
+        .map((id) => getCookbookDish(id, store)?.name ?? getDish(id)?.name ?? id)
+        .join(' / ')
+    : dish.name
 
   return (
     <button type="button" className="recipe-row" onClick={onOpen}>
       <span className="recipe-row-main">
         <span className="recipe-card-title">
-          {dish.name}
+          {name}
           {custom ? <span className="custom-tag">своё</span> : null}
+          <ChildEatsMark dishId={dish.id} />
         </span>
       </span>
-      {rating ? (
-        <span className={`rating-pill rating-pill-${rating}`} title={ratingLabel(rating)}>
-          {ratingLabel(rating)}
-        </span>
-      ) : null}
+      {yieldLine ? <span className="recipe-row-yield">{yieldLine}</span> : null}
     </button>
   )
 }
@@ -520,7 +521,6 @@ export function CookbookTab() {
   const store = state.cookbook
   const [section, setSection] = useState<CookbookSection>('mains')
   const [query, setQuery] = useState('')
-  const [ratingFilter, setRatingFilter] = useState<RecipeRating | 'all' | 'none'>('all')
   const [openId, setOpenId] = useState<string | null>(null)
   const [adding, setAdding] = useState(false)
 
@@ -528,13 +528,13 @@ export function CookbookTab() {
 
   function matches(dish: Dish): boolean {
     const q = query.trim().toLowerCase()
-    if (q && !dish.name.toLowerCase().includes(q)) return false
-    const rating = store.ratings[dish.id]
-    if (ratingFilter === 'none' && rating) return false
-    if (ratingFilter !== 'all' && ratingFilter !== 'none' && rating !== ratingFilter) {
-      return false
-    }
-    return true
+    if (!q) return true
+    if (dish.name.toLowerCase().includes(q)) return true
+    const ref = cycleMains.find((item) => item.dishId === dish.id)
+    if (!ref?.orDishIds?.length) return false
+    return menuRefIds(ref).some((id) =>
+      (getCookbookDish(id, store)?.name ?? getDish(id)?.name ?? '').toLowerCase().includes(q),
+    )
   }
 
   const filteredMains = mains.filter(matches)
@@ -562,7 +562,7 @@ export function CookbookTab() {
         <p className="muted">
           {section === 'extras'
             ? 'Добавки к тарелке — рядом с основным гарниром и горячим, не вместо них.'
-            : 'Рецепты и оценки синхронизируются с облаком после входа.'}
+            : 'Рецепты синхронизируются с облаком после входа.'}
         </p>
       </div>
 
@@ -581,13 +581,15 @@ export function CookbookTab() {
         >
           Гарниры · {filteredSides.length}
         </button>
-        <button
-          type="button"
-          className={section === 'extras' ? 'sub-nav-item is-active' : 'sub-nav-item'}
-          onClick={() => setSection('extras')}
-        >
-          Дополнительно · {filteredExtras.length}
-        </button>
+        {extras.length > 0 ? (
+          <button
+            type="button"
+            className={section === 'extras' ? 'sub-nav-item is-active' : 'sub-nav-item'}
+            onClick={() => setSection('extras')}
+          >
+            Дополнительно · {filteredExtras.length}
+          </button>
+        ) : null}
       </nav>
 
       <div className="cookbook-toolbar block">
@@ -599,27 +601,6 @@ export function CookbookTab() {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Название блюда…"
           />
-        </label>
-        <label className="field field-inline">
-          <span className="field-label">Оценка</span>
-          <select
-            className="field-input"
-            value={String(ratingFilter)}
-            onChange={(e) => {
-              const v = e.target.value
-              setRatingFilter(
-                v === 'all' || v === 'none' ? v : (Number(v) as RecipeRating),
-              )
-            }}
-          >
-            <option value="all">Все</option>
-            <option value="none">Без оценки</option>
-            {RATING_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
         </label>
       </div>
 
@@ -655,10 +636,12 @@ export function CookbookTab() {
 
       {openDish ? (
         <RecipeModal
+          key={openDish.id}
           dish={openDish}
           store={store}
           onClose={() => setOpenId(null)}
           onSave={setCookbook}
+          onOpenMate={setOpenId}
         />
       ) : null}
     </section>

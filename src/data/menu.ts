@@ -1,6 +1,7 @@
 /**
- * Меню на 4 недели — источник правды для вкладки «Меню».
- * Рецепты и КБЖУ — в dishes.ts по dishId.
+ * Цикл горячего: готовим по порядку и сначала, без привязки к неделе и дню.
+ * Обычно два блюда за готовку — в списке рядом разные белки.
+ * Гарниры — общий пул, сочетания из dishMeta.
  */
 
 export type MenuDishRef = {
@@ -45,157 +46,64 @@ export type WeekMenu = {
   slots: MenuSlot[]
 }
 
+/** Горячее по кругу. Соседние позиции — разные белки (говядина / курица / рыба / креветки). */
+export const cycleMains: MenuDishRef[] = [
+  { dishId: 'navy_pasta' },
+  { dishId: 'chicken_tomato_cream' },
+  { dishId: 'goulash' },
+  { dishId: 'chicken_schnitzel' },
+  { dishId: 'bolognese' },
+  { dishId: 'chicken_cutlets' },
+  { dishId: 'beef_stroganoff' },
+  { dishId: 'chicken_legs_honey' },
+  { dishId: 'beef_meatballs' },
+  { dishId: 'wings_soy', orDishIds: ['wings_paprika'] },
+  { dishId: 'beef_potato_stew' },
+  { dishId: 'chicken_legs_paprika' },
+  { dishId: 'beef_pulled' },
+  { dishId: 'chicken_meatballs' },
+  { dishId: 'beef_roast_herb' },
+  { dishId: 'chicken_stroganoff' },
+  { dishId: 'trout' },
+  { dishId: 'thighs_sour_cream' },
+  { dishId: 'pollock' },
+  { dishId: 'chicken_pasta_zucchini' },
+  { dishId: 'trout_spinach' },
+  { dishId: 'chicken_liver_sour_cream' },
+  { dishId: 'shrimp_pasta' },
+  { dishId: 'chicken_grill' },
+]
+
+export const cycleSides: MenuDishRef[] = [
+  { dishId: 'pasta' },
+  { dishId: 'mash' },
+  { dishId: 'buckwheat_veg' },
+  { dishId: 'rice_veg' },
+  { dishId: 'bulgur_veg' },
+  { dishId: 'boiled_potato' },
+  { dishId: 'fried_potato' },
+  { dishId: 'roast_veg' },
+  { dishId: 'broccoli_steam' },
+  { dishId: 'cauliflower' },
+  { dishId: 'veg_salad' },
+]
+
+export function cycleIndexOf(dishId: string): number {
+  return cycleMains.findIndex((item) => menuRefIds(item).includes(dishId))
+}
+
+/** Совместимость с очередью готовки: один набор на весь цикл. */
 export const weekMenus: WeekMenu[] = [
   {
     week: 1,
-    summary: 'Мясо×2 · курица×3 · креветки. Болоньезе + золотой рис с креветками (Хайнань).',
+    summary: 'Цикл горячего, гарниры отдельно.',
     slots: [
       {
         id: 'mon-tue',
-        title: 'ПН+ВТ',
-        covers: 'пн–вт',
-        note: 'Мясо + курица. Гречка и брокколи.',
-        mains: [
-          { dishId: 'beef_pepper' },
-          { dishId: 'chicken_tomato_cream' },
-        ],
-        sides: [{ dishId: 'buckwheat_veg' }, { dishId: 'broccoli_steam' }],
-      },
-      {
-        id: 'wed-thu',
-        title: 'СР+ЧТ',
-        covers: 'ср–чт',
-        note: 'Курица + курица → пюре + овощи запечённые.',
-        mains: [
-          { dishId: 'chicken_schnitzel' },
-          { dishId: 'chicken_legs_honey', orDishIds: ['chicken_legs_paprika'] },
-        ],
-        sides: [{ dishId: 'mash' }, { dishId: 'roast_veg' }],
-      },
-      {
-        id: 'fri-sat',
-        title: 'ПТ+СБ',
-        covers: 'пт–сб',
-        note: 'Болоньезе уникальное: только паста. Цельное — золотой рис с креветками (не паста).',
-        complete: { dishId: 'shrimp_rice_hainan' },
-        mains: [{ dishId: 'bolognese' }],
-        sides: [{ dishId: 'pasta' }],
-      },
-    ],
-  },
-  {
-    week: 2,
-    summary: 'Мясо×2 · курица×2 · рыба · креветки. Курица: котлеты + крылья. Цельное — паста с креветками.',
-    slots: [
-      {
-        id: 'mon-tue',
-        title: 'ПН+ВТ',
-        covers: 'пн–вт',
-        note: 'Рыба + курица. Форель в аэрогриле + котлеты.',
-        mains: [
-          { dishId: 'trout' },
-          { dishId: 'chicken_cutlets' },
-        ],
-        sides: [{ dishId: 'mash' }, { dishId: 'cauliflower' }],
-      },
-      {
-        id: 'wed-thu',
-        title: 'СР+ЧТ',
-        covers: 'ср–чт',
-        note: 'Фиксированные пары: гуляш→рис, крылья→запечённые овощи.',
-        mains: [
-          { dishId: 'goulash' },
-          { dishId: 'wings_soy', orDishIds: ['wings_paprika'] },
-        ],
-        sides: [{ dishId: 'rice_veg' }, { dishId: 'roast_veg' }],
-        pairs: [
-          ['goulash', 'rice_veg'],
-          ['wings_soy', 'roast_veg'],
-          ['wings_paprika', 'roast_veg'],
-        ],
-      },
-      {
-        id: 'fri-sat',
-        title: 'ПТ+СБ',
-        covers: 'пт–сб',
-        note: 'Полноценное = паста с креветками. К бефстроганову — булгур.',
-        complete: { dishId: 'shrimp_pasta' },
-        mains: [{ dishId: 'beef_stroganoff' }],
-        sides: [{ dishId: 'bulgur_veg' }],
-      },
-    ],
-  },
-  {
-    week: 3,
-    summary: 'Мясо×2 · курица×3 · рыба. Курица: бёдра + ножки + строганов.',
-    slots: [
-      {
-        id: 'mon-tue',
-        title: 'ПН+ВТ',
-        covers: 'пн–вт',
-        note: 'Рыба + курица. Минтай + бёдра · паста + овощи запечённые.',
-        mains: [
-          { dishId: 'pollock' },
-          { dishId: 'thighs_sour_cream' },
-        ],
-        sides: [{ dishId: 'pasta' }, { dishId: 'roast_veg' }],
-      },
-      {
-        id: 'wed-thu',
-        title: 'СР+ЧТ',
-        covers: 'ср–чт',
-        note: 'Говяжьи тефтели + ножки · булгур + картофель отварной.',
-        mains: [
-          { dishId: 'beef_meatballs' },
-          { dishId: 'chicken_legs_honey', orDishIds: ['chicken_legs_paprika'] },
-        ],
-        sides: [{ dishId: 'bulgur_veg' }, { dishId: 'boiled_potato' }],
-      },
-      {
-        id: 'fri-sat',
-        title: 'ПТ+СБ',
-        covers: 'пт–сб',
-        note: 'Полноценное = мясо с картофелем. К куриному строганову — салат.',
-        complete: { dishId: 'beef_potato_stew' },
-        mains: [{ dishId: 'chicken_stroganoff' }],
-        sides: [{ dishId: 'veg_salad' }],
-      },
-    ],
-  },
-  {
-    week: 4,
-    summary: 'Мясо×3 · курица×2 · рыба. Курица: тефтели + паста с грибами.',
-    slots: [
-      {
-        id: 'mon-tue',
-        title: 'ПН+ВТ',
-        covers: 'пн–вт',
-        note: 'Мясо + куриные тефтели. Гречка + пюре.',
-        mains: [
-          { dishId: 'beef_pulled' },
-          { dishId: 'chicken_meatballs' },
-        ],
-        sides: [{ dishId: 'buckwheat_veg' }, { dishId: 'mash' }],
-      },
-      {
-        id: 'wed-thu',
-        title: 'СР+ЧТ',
-        covers: 'ср–чт',
-        note: 'Гуляш + форель со шпинатом · рис + цветная.',
-        mains: [
-          { dishId: 'goulash' },
-          { dishId: 'trout_spinach' },
-        ],
-        sides: [{ dishId: 'rice_veg' }, { dishId: 'cauliflower' }],
-      },
-      {
-        id: 'fri-sat',
-        title: 'ПТ+СБ',
-        covers: 'пт–сб',
-        note: 'Полноценное = паста с курицей и грибами.',
-        complete: { dishId: 'chicken_pasta_mushroom' },
-        mains: [{ dishId: 'beef_roast_herb' }],
-        sides: [{ dishId: 'veg_salad' }],
+        title: 'Цикл',
+        covers: '',
+        mains: cycleMains,
+        sides: cycleSides,
       },
     ],
   },

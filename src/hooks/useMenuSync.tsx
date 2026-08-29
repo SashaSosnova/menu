@@ -14,6 +14,7 @@ import { isAnonymousSuppressed, watchAuth } from '../lib/accountAuth'
 import type { CookbookStore } from '../data/cookbook'
 import type { CookBoard } from '../data/cookBoard'
 import { resolveCookBoard } from '../data/cookBoard'
+import { parsePrepFreezer } from '../data/prep'
 import {
   loadLocalAppState,
   normalizeAppState,
@@ -30,7 +31,6 @@ type MenuSyncContextValue = {
   state: MenuAppState
   setCookbook: (cookbook: CookbookStore) => void
   setCookBoard: (cookBoard: CookBoard | ((prev: CookBoard) => CookBoard)) => void
-  setChecklist: (storageKey: string, checked: Record<string, boolean>) => void
   patchState: (updater: (prev: MenuAppState) => MenuAppState) => void
 }
 
@@ -39,7 +39,11 @@ const MenuSyncContext = createContext<MenuSyncContextValue | null>(null)
 const CLOUD_DEBOUNCE_MS = 600
 
 function withBoard(state: MenuAppState): MenuAppState {
-  return { ...state, cookBoard: resolveCookBoard(state.cookBoard) }
+  return {
+    ...state,
+    cookBoard: resolveCookBoard(state.cookBoard),
+    freezerStock: parsePrepFreezer(state.freezerStock),
+  }
 }
 
 export function MenuSyncProvider({ children }: { children: ReactNode }) {
@@ -58,11 +62,10 @@ export function MenuSyncProvider({ children }: { children: ReactNode }) {
   const persist = useCallback(
     (updater: (prev: MenuAppState) => MenuAppState) => {
       setState((prev) => {
-        const next = {
-          ...updater(prev),
+        const next = withBoard({
+          ...updater(withBoard(prev)),
           updatedAt: Date.now(),
-        }
-        next.cookBoard = resolveCookBoard(next.cookBoard)
+        })
         saveLocalAppState(next)
         latestState.current = next
 
@@ -191,16 +194,6 @@ export function MenuSyncProvider({ children }: { children: ReactNode }) {
     [persist],
   )
 
-  const setChecklist = useCallback(
-    (storageKey: string, checked: Record<string, boolean>) => {
-      persist((prev) => ({
-        ...prev,
-        checklists: { ...prev.checklists, [storageKey]: checked },
-      }))
-    },
-    [persist],
-  )
-
   const value = useMemo<MenuSyncContextValue>(
     () => ({
       ready,
@@ -210,20 +203,9 @@ export function MenuSyncProvider({ children }: { children: ReactNode }) {
       state: withBoard(state),
       setCookbook,
       setCookBoard,
-      setChecklist,
       patchState: persist,
     }),
-    [
-      ready,
-      user,
-      cloudError,
-      uid,
-      state,
-      setCookbook,
-      setCookBoard,
-      setChecklist,
-      persist,
-    ],
+    [ready, user, cloudError, uid, state, setCookbook, setCookBoard, persist],
   )
 
   return <MenuSyncContext.Provider value={value}>{children}</MenuSyncContext.Provider>
