@@ -438,7 +438,7 @@ export function applyCookedOnPatch(board: CookBoard): CookBoard {
 
   const lastCookedOn = { ...(board.lastCookedOn ?? {}) }
   for (const [dishId, iso] of Object.entries(COOKED_ON_DATES)) {
-    lastCookedOn[dishId] = iso
+    if (!lastCookedOn[dishId]) lastCookedOn[dishId] = iso
   }
 
   const fridge = board.fridge.map((dish) => {
@@ -600,11 +600,10 @@ export function cycleHasPendingOrFridge(board: CookBoard): boolean {
   return board.fridge.length > 0 || pendingBatchIds(board).length > 0
 }
 
-/** Не сбрасываем хвост при смене месяца, пока очередь или холодильник живы. */
+/** Цикл в id обновляем, холодильник, даты и план не сбрасываем. */
 export function advanceCookBoard(board: CookBoard, todayCycle: string = cycleId()): CookBoard {
   if (board.cycleId === todayCycle) return board
-  if (cycleHasPendingOrFridge(board)) return board
-  return emptyCookBoard(todayCycle)
+  return { ...board, cycleId: todayCycle }
 }
 
 export function resolveCookBoard(

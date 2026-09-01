@@ -37,8 +37,33 @@ export function emptyAppState(): MenuAppState {
     menuOverrides: {},
     portionScales: {},
     cookBoard: resolveCookBoard(emptyCookBoard()),
-    updatedAt: Date.now(),
+    updatedAt: 0,
   }
+}
+
+/** Пустой кэш устройства — без заготовок, плана и правок. Не должен перебивать облако. */
+export function isPlaceholderState(state: MenuAppState): boolean {
+  if ((state.cookBoard.plannedDishIds ?? []).length > 0) return false
+  if ((state.cookBoard.fridge ?? []).length > 0) return false
+  if (Object.keys(state.freezerStock ?? {}).length > 0) return false
+  if (Object.keys(state.cookBoard.shopHave ?? {}).length > 0) return false
+  if (Object.keys(state.cookbook.recipes ?? {}).length > 0) return false
+  if (Object.keys(state.cookbook.ratings ?? {}).length > 0) return false
+  if ((state.cookbook.customDishes ?? []).length > 0) return false
+  return true
+}
+
+function asUpdatedAt(value: unknown): number {
+  if (typeof value === 'number' && Number.isFinite(value) && value >= 0) return value
+  if (value && typeof value === 'object') {
+    const rec = value as { toMillis?: () => number; seconds?: number }
+    if (typeof rec.toMillis === 'function') {
+      const ms = rec.toMillis()
+      return Number.isFinite(ms) ? ms : 0
+    }
+    if (typeof rec.seconds === 'number') return rec.seconds * 1000
+  }
+  return 0
 }
 
 function mergeSeedStats(stats: MealStatsStore): MealStatsStore {
@@ -94,7 +119,7 @@ function hydrateState(raw: PersistedAppState): { state: MenuAppState; dirty: boo
       menuOverrides: raw.menuOverrides ?? {},
       portionScales: raw.portionScales ?? {},
       cookBoard,
-      updatedAt: dirty ? Date.now() : (raw.updatedAt ?? Date.now()),
+      updatedAt: dirty ? Date.now() : asUpdatedAt(raw.updatedAt),
     },
     dirty,
   }
@@ -154,5 +179,21 @@ export function saveLocalAppState(state: MenuAppState): void {
 
 export function normalizeAppState(raw: PersistedAppState | null): MenuAppState {
   if (!raw) return emptyAppState()
-  return hydrateState(raw).state
+  const { state } = hydrateState(raw)
+  return { ...state, updatedAt: asUpdatedAt(raw.updatedAt) }
+}
+
+/** Пустое облако не должно затирать живые данные с устройства. */
+export function shouldApplyCloud(
+  local: MenuAppState,
+  cloud: MenuAppState | null,
+  switched: boolean,
+): boolean {
+  if (!cloud) return false
+  const cloudEmpty = isPlaceholderState(cloud)
+  const localEmpty = isPlaceholderState(local)
+  if (cloudEmpty && !localEmpty) return false
+  if (localEmpty && !cloudEmpty) return true
+  if (switched && !cloudEmpty) return true
+  return cloud.updatedAt >= local.updatedAt
 }

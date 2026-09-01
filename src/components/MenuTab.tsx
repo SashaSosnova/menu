@@ -4,7 +4,7 @@ import {
   menuRefLabel,
   type MenuDishRef,
 } from '../data/menu'
-import { compareByOldestCooked, nextCookDishIds } from '../data/cycleQueue'
+import { compareByOldestCooked, nextCookDishIds, recommendCookPlan } from '../data/cycleQueue'
 import { dishMeta, childEatsKind, isCompleteDish } from '../data/dishMeta'
 import { getDish } from '../data/dishes'
 import { formatMacros } from '../lib/macros'
@@ -277,7 +277,6 @@ function DishRow({
               <span className="menu-recipe-link-name">
                 {dishLabel(item)}
                 {complete ? <span className="menu-replaced-tag">цельное</span> : null}
-                {isNext ? <span className="menu-replaced-tag">следующие</span> : null}
                 <ChildEatsMark dishId={item.dishId} />
               </span>
               <span className="menu-last-cooked">{lastCookedCaption(lastCooked)}</span>
@@ -483,12 +482,18 @@ function MainDishItem({
   )
 }
 
+function mainForRef(mains: QueueDish[], item: MenuDishRef): QueueDish | undefined {
+  const ids = new Set(menuRefIds(item))
+  return mains.find((dish) => menuRefIds(dish.item).some((id) => ids.has(id)))
+}
+
 function CookList({
   queue,
   board,
   stats,
   cookbook,
   nextIds,
+  recommendedItems = [],
   scales,
   onBoardChange,
   onDishPrepared,
@@ -499,6 +504,7 @@ function CookList({
   stats: MealStatsStore
   cookbook: CookbookStore
   nextIds: Set<string>
+  recommendedItems: MenuDishRef[]
   scales: Record<string, number>
   onBoardChange: (board: CookBoard | ((prev: CookBoard) => CookBoard)) => void
   onDishPrepared: (dish: QueueDish, nextPrepared: boolean, dishIds: string[]) => void
@@ -517,7 +523,13 @@ function CookList({
     .map((id) => mains.find((dish) => menuRefIds(dish.item).includes(id)) ?? byId.get(id))
     .filter((dish): dish is QueueDish => Boolean(dish))
     .filter((dish, i, arr) => arr.findIndex((d) => dish.item.dishId === d.item.dishId) === i)
-  const catalog = mains.filter((dish) => !isPlannedRow(dish))
+  const recommended = recommendedItems
+    .map((item) => mainForRef(mains, item))
+    .filter((dish): dish is QueueDish => Boolean(dish))
+  const recommendedKeys = new Set(recommended.map((dish) => dish.item.dishId))
+  const catalog = mains.filter(
+    (dish) => !isPlannedRow(dish) && !recommendedKeys.has(dish.item.dishId),
+  )
 
   const rowProps = {
     queue,
@@ -532,6 +544,22 @@ function CookList({
 
   return (
     <>
+      {recommended.length > 0 ? (
+        <section className="recommended-cook">
+          <h3 className="cook-queue-heading">Рекомендуемый план готовки</h3>
+          <ul className="menu-slot-dishes">
+            {recommended.map((dish) => (
+              <MainDishItem
+                key={dish.item.dishId}
+                dish={dish}
+                showNextTag
+                {...rowProps}
+              />
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
       {upcoming.length > 0 ? (
         <section className="upcoming-cook">
           <h3 className="cook-queue-heading">Ближайшая готовка</h3>
@@ -562,7 +590,7 @@ function CookList({
             <MainDishItem
               key={dish.item.dishId}
               dish={dish}
-              showNextTag
+              showNextTag={false}
               {...rowProps}
             />
           ))}
@@ -683,6 +711,10 @@ export function MenuTab() {
   const board = state.cookBoard
   const stats = state.mealStats
   const freezer = state.freezerStock
+  const recommendedItems = useMemo(
+    () => recommendCookPlan(board, stats, freezer),
+    [board, stats, freezer],
+  )
   const nextIds = useMemo(
     () => nextCookDishIds(board, stats, freezer),
     [board, stats, freezer],
@@ -707,6 +739,7 @@ export function MenuTab() {
           stats={stats}
           cookbook={state.cookbook}
           nextIds={nextIds}
+          recommendedItems={recommendedItems}
           scales={state.portionScales ?? {}}
           onBoardChange={setCookBoard}
           onDishPrepared={(dish, nextPrepared, dishIds) => {

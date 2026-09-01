@@ -19,6 +19,7 @@ import {
   loadLocalAppState,
   normalizeAppState,
   saveLocalAppState,
+  shouldApplyCloud,
   type MenuAppState,
 } from '../storage/appStore'
 import { ensureAuth, subscribeAppState, upsertAppState } from '../storage/cloudSync'
@@ -32,6 +33,7 @@ type MenuSyncContextValue = {
   setCookbook: (cookbook: CookbookStore) => void
   setCookBoard: (cookBoard: CookBoard | ((prev: CookBoard) => CookBoard)) => void
   patchState: (updater: (prev: MenuAppState) => MenuAppState) => void
+  pushLocalToCloud: () => Promise<void>
 }
 
 const MenuSyncContext = createContext<MenuSyncContextValue | null>(null)
@@ -69,7 +71,7 @@ export function MenuSyncProvider({ children }: { children: ReactNode }) {
         saveLocalAppState(next)
         latestState.current = next
 
-        if (uid) {
+        if (uid && cloudHydrated.current) {
           if (pushTimer.current) window.clearTimeout(pushTimer.current)
           pushTimer.current = window.setTimeout(() => {
             void upsertAppState(uid, latestState.current).catch((err) => {
@@ -93,6 +95,12 @@ export function MenuSyncProvider({ children }: { children: ReactNode }) {
     let unsubState: (() => void) | undefined
     let cancelled = false
 
+    const applyCloud = (cloud: MenuAppState) => {
+      setState(cloud)
+      latestState.current = cloud
+      saveLocalAppState(cloud)
+    }
+
     const attachUser = (authUser: User) => {
       const switched =
         prevUidRef.current != null && prevUidRef.current !== authUser.uid
@@ -101,11 +109,11 @@ export function MenuSyncProvider({ children }: { children: ReactNode }) {
       setUid(authUser.uid)
       setCloudError(null)
       cloudHydrated.current = false
+      setReady(false)
 
-      if (switched) {
-        const local = loadLocalAppState()
-        setState(local)
-        latestState.current = local
+      if (pushTimer.current) {
+        window.clearTimeout(pushTimer.current)
+        pushTimer.current = null
       }
 
       unsubState?.()
@@ -116,35 +124,31 @@ export function MenuSyncProvider({ children }: { children: ReactNode }) {
           const local = latestState.current
           const cloud = cloudRaw ? normalizeAppState(cloudRaw) : null
 
-          if (!cloud) {
-            if (!cloudHydrated.current) {
-              cloudHydrated.current = true
+          if (!cloudHydrated.current) {
+            cloudHydrated.current = true
+            if (shouldApplyCloud(local, cloud, switched)) {
+              applyCloud(cloud!)
+            } else {
               void upsertAppState(authUser.uid, local).catch((err) => {
-                setCloudError(err instanceof Error ? err.message : 'Ошибка загрузки')
+                setCloudError(err instanceof Error ? err.message : 'Ошибка сохранения')
               })
             }
+            setReady(true)
             return
           }
 
-          if (!cloudHydrated.current) {
-            cloudHydrated.current = true
-            if (local.updatedAt > cloud.updatedAt) {
-              void upsertAppState(authUser.uid, local)
-              return
-            }
-          }
-
-          if (cloud.updatedAt >= local.updatedAt) {
-            setState(cloud)
-            latestState.current = cloud
-            saveLocalAppState(cloud)
+          if (shouldApplyCloud(latestState.current, cloud, false)) {
+            applyCloud(cloud!)
           }
         },
         onError: (err) => {
           setCloudError(err instanceof Error ? err.message : 'Ошибка синхронизации')
+          if (!cloudHydrated.current) {
+            cloudHydrated.current = true
+            setReady(true)
+          }
         },
       })
-      setReady(true)
     }
 
     const unsubAuth = watchAuth((authUser) => {
@@ -194,6 +198,19 @@ export function MenuSyncProvider({ children }: { children: ReactNode }) {
     [persist],
   )
 
+  const pushLocalToCloud = useCallback(async () => {
+    if (!uid) throw new Error('Сначала войдите в аккаунт')
+    const next = withBoard({
+      ...latestState.current,
+      updatedAt: Date.now(),
+    })
+    saveLocalAppState(next)
+    latestState.current = next
+    setState(next)
+    cloudHydrated.current = true
+    await upsertAppState(uid, next)
+  }, [uid])
+
   const value = useMemo<MenuSyncContextValue>(
     () => ({
       ready,
@@ -204,8 +221,9 @@ export function MenuSyncProvider({ children }: { children: ReactNode }) {
       setCookbook,
       setCookBoard,
       patchState: persist,
+      pushLocalToCloud,
     }),
-    [ready, user, cloudError, uid, state, setCookbook, setCookBoard, persist],
+    [ready, user, cloudError, uid, state, setCookbook, setCookBoard, persist, pushLocalToCloud],
   )
 
   return <MenuSyncContext.Provider value={value}>{children}</MenuSyncContext.Provider>

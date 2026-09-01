@@ -790,8 +790,24 @@
   cursor: default;
 }
 
-.upcoming-cook .cook-queue-heading {
+.upcoming-cook .cook-queue-heading,
+.recommended-cook .cook-queue-heading {
   margin-top: 0;
+}
+
+.recommended-cook {
+  margin: 0;
+  padding: 0.55rem 0.65rem 0.7rem;
+  border-radius: 0.55rem;
+  background: #eef4ef;
+}
+
+.recommended-cook .menu-slot-dishes {
+  margin-top: 0.45rem;
+}
+
+.recommended-cook .menu-dish-row--main .menu-dish-card.is-next {
+  background: #fffdf8;
 }
 
 .buy-block {

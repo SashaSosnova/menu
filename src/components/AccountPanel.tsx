@@ -9,7 +9,9 @@ import {
   registerWithEmail,
 } from '../lib/accountAuth'
 import { isFirebaseConfigured } from '../firebase'
+import { isPlaceholderState } from '../storage/appStore'
 import { useEscapeKey } from '../hooks/useEscapeKey'
+import { useMenuSync } from '../hooks/useMenuSync'
 
 type Props = {
   user: User | null
@@ -17,9 +19,12 @@ type Props = {
 }
 
 export function AccountPanel({ user, onClose }: Props) {
+  const { state, pushLocalToCloud } = useMenuSync()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [mode, setMode] = useState<'register' | 'login'>('register')
+  const [mode, setMode] = useState<'register' | 'login'>(
+    isLinkedAccount(user) ? 'register' : 'login',
+  )
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [ok, setOk] = useState<string | null>(null)
@@ -67,6 +72,24 @@ export function AccountPanel({ user, onClose }: Props) {
     }
   }
 
+  async function pushFromDevice() {
+    if (isPlaceholderState(state)) {
+      setError('На этом устройстве нечего выгружать. Откройте телефон, где ещё видны холодильник и заготовки.')
+      return
+    }
+    setBusy(true)
+    setError(null)
+    setOk(null)
+    try {
+      await pushLocalToCloud()
+      setOk('Данные с этого устройства записаны в облако')
+    } catch (err) {
+      setError(mapAuthError(err))
+    } finally {
+      setBusy(false)
+    }
+  }
+
   async function logout() {
     setBusy(true)
     setError(null)
@@ -104,12 +127,20 @@ export function AccountPanel({ user, onClose }: Props) {
         <div className="modal-body">
           <p className="muted">
             {linked
-              ? 'Данные синхронизируются — можно открыть на другом телефоне с тем же email.'
-              : 'Создайте аккаунт или войдите, чтобы не потерять рецепты, оценки и заготовки.'}
+              ? 'Данные синхронизируются. Если на другом экране пусто — запишите облако с устройства, где ещё видны холодильник и заготовки.'
+              : 'Это устройство пока гость — данные другого телефона в облаке. Войдите с тем же email.'}
           </p>
 
           {linked ? (
             <div className="modal-actions">
+              <button
+                type="button"
+                className="primary-btn"
+                disabled={busy || isPlaceholderState(state)}
+                onClick={() => void pushFromDevice()}
+              >
+                Записать это устройство в облако
+              </button>
               <button type="button" className="ghost-btn" disabled={busy} onClick={() => void logout()}>
                 Выйти
               </button>
