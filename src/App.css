@@ -73,6 +73,20 @@
   text-align: center;
 }
 
+.restore-banner {
+  margin: 0;
+  padding: 0.7rem 1rem;
+  background: #eef4ef;
+  color: #2f4a3a;
+  display: grid;
+  gap: 0.45rem;
+  justify-items: start;
+}
+
+.restore-banner p {
+  margin: 0;
+}
+
 .app-loading {
   text-align: center;
   padding: 2rem 1rem;

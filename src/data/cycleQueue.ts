@@ -1,19 +1,19 @@
 /**
  * Очередь горячего и рекомендуемый план готовки.
- * Каталог сортируется по давности; план — по заготовке, давности и разнообразию белков.
+ * Каталог — по давности; план — разные белки, рыба в чт/пт, заготовка, давность.
  */
 
-import { isoDate, dateFromIso } from './calendar'
-import { lastCookedOnForDishes, type CookBoard } from './cookBoard'
-import { dishMeta } from './dishMeta'
-import { cycleIndexOf, cycleMains, menuRefIds, type MenuDishRef } from './menu'
+import { addDays, isoDate, dateFromIso } from './calendar'
+import { lastCookedOnForDishes, takenSideIds, type CookBoard } from './cookBoard'
+import { builtInSideIds, dishMeta, matchingSideIds } from './dishMeta'
+import { cycleIndexOf, cycleMains, cycleSides, menuRefIds, type MenuDishRef } from './menu'
 import { dishHasFrozenPrep, type PrepFreezer } from './prep'
 import type { MealStatsStore } from './mealStats'
 import type { ProteinType } from './types'
 
 const MS_DAY = 24 * 60 * 60 * 1000
-const WEEK_DAYS = 7
 const COOK_PAIR = 2
+const NEVER_COOKED_DAYS = 10_000
 
 type ProteinFamily = 'beef' | 'chicken' | 'seafood' | 'veg'
 
@@ -22,11 +22,6 @@ type RecommendContext = {
   stats: MealStatsStore | undefined
   freezer: PrepFreezer | undefined
   todayIso: string
-  lastFamilies: ProteinFamily[]
-  weekFamilyCounts: Partial<Record<ProteinFamily, number>>
-  fridgeFamilies: Set<ProteinFamily>
-  pickedFamilies: Set<ProteinFamily>
-  needSeafood: boolean
 }
 
 export function entryHasFrozenPrep(
@@ -83,10 +78,6 @@ function entryFamily(item: MenuDishRef): ProteinFamily | undefined {
   return proteinFamily(entryProtein(item))
 }
 
-function familyOfDishId(dishId: string): ProteinFamily | undefined {
-  return proteinFamily(dishMeta[dishId]?.protein)
-}
-
 function isMainLeftover(dishId: string): boolean {
   const kind = dishMeta[dishId]?.kind
   return kind !== 'side' && kind !== 'extra'
@@ -105,28 +96,44 @@ function isInFridge(board: CookBoard, item: MenuDishRef): boolean {
   return menuRefIds(item).some((id) => fridge.has(id))
 }
 
-function fridgeFamiliesOf(board: CookBoard): Set<ProteinFamily> {
-  const families = new Set<ProteinFamily>()
-  for (const dish of board.fridge) {
-    if (dish.remaining <= 0 || !isMainLeftover(dish.dishId)) continue
-    const family = familyOfDishId(dish.dishId)
-    if (family) families.add(family)
-  }
-  return families
+function mondayOfWeek(todayIso: string): string {
+  const today = dateFromIso(todayIso)
+  const day = today.getDay()
+  const back = day === 0 ? 6 : day - 1
+  return isoDate(addDays(today, -back))
 }
 
-type CookEvent = { date: string; family: ProteinFamily }
+function isThursdayOrFriday(todayIso: string): boolean {
+  const day = dateFromIso(todayIso).getDay()
+  return day === 4 || day === 5
+}
 
-function mainCookHistory(board: CookBoard, stats: MealStatsStore | undefined): CookEvent[] {
-  const events: CookEvent[] = []
+function isFishItem(item: MenuDishRef): boolean {
+  return entryProtein(item) === 'fish'
+}
+
+function weekHasFish(
+  board: CookBoard,
+  stats: MealStatsStore | undefined,
+  todayIso: string,
+): boolean {
+  const weekStart = mondayOfWeek(todayIso)
   for (const item of cycleMains) {
-    const date = lastCookedOnForDishes(board, menuRefIds(item), stats)
-    const family = entryFamily(item)
-    if (!date || !family) continue
-    events.push({ date, family })
+    if (entryProtein(item) !== 'fish') continue
+    const cookedOn = lastCookedOnForDishes(board, menuRefIds(item), stats)
+    if (cookedOn && cookedOn >= weekStart && cookedOn <= todayIso) return true
   }
-  events.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))
-  return events
+  for (const dish of board.fridge) {
+    if (dish.remaining <= 0 || !isMainLeftover(dish.dishId)) continue
+    if (dishMeta[dish.dishId]?.protein === 'fish') return true
+  }
+  return false
+}
+
+function recencyDays(item: MenuDishRef, ctx: RecommendContext): number {
+  const cookedOn = lastCookedOnForDishes(ctx.board, menuRefIds(item), ctx.stats)
+  if (!cookedOn) return NEVER_COOKED_DAYS
+  return Math.max(daysSince(cookedOn, ctx.todayIso), 0)
 }
 
 function cycleIndex(item: MenuDishRef): number {
@@ -134,51 +141,115 @@ function cycleIndex(item: MenuDishRef): number {
   return index < 0 ? 999 : index
 }
 
-function scoreEntry(item: MenuDishRef, ctx: RecommendContext): number {
-  const protein = entryProtein(item)
-  const family = proteinFamily(protein)
-  const cookedOn = lastCookedOnForDishes(ctx.board, menuRefIds(item), ctx.stats)
-  const days = cookedOn ? daysSince(cookedOn, ctx.todayIso) : null
-
-  let score = 0
-  if (entryHasFrozenPrep(ctx.freezer, item)) score += 400
-  score += days === null ? 500 : Math.min(Math.max(days, 0), 180)
-
-  if (family && ctx.pickedFamilies.has(family)) score -= 700
-  if (family && ctx.lastFamilies[0] === family) score -= 160
-  if (family && ctx.lastFamilies[0] === family && ctx.lastFamilies[1] === family) score -= 120
-  if (family && ctx.fridgeFamilies.has(family)) score -= 110
-  if (family) score -= (ctx.weekFamilyCounts[family] ?? 0) * 45
-  if (ctx.needSeafood && family === 'seafood') {
-    score += 180
-    if (protein === 'fish') score += 40
-  }
-  return score
+function withoutFamilies(
+  pool: MenuDishRef[],
+  families: Set<ProteinFamily>,
+): MenuDishRef[] {
+  if (families.size === 0) return pool
+  return pool.filter((item) => {
+    const family = entryFamily(item)
+    return !family || !families.has(family)
+  })
 }
 
-function pickBest(candidates: MenuDishRef[], ctx: RecommendContext): MenuDishRef | undefined {
+function withFrozenPrep(
+  pool: MenuDishRef[],
+  freezer: PrepFreezer | undefined,
+): MenuDishRef[] {
+  const ready = pool.filter((item) => entryHasFrozenPrep(freezer, item))
+  return ready.length > 0 ? ready : pool
+}
+
+function withFish(pool: MenuDishRef[]): MenuDishRef[] {
+  const fish = pool.filter(isFishItem)
+  if (fish.length > 0) return fish
+  const seafood = pool.filter((item) => entryFamily(item) === 'seafood')
+  return seafood.length > 0 ? seafood : pool
+}
+
+function pickBest(
+  candidates: MenuDishRef[],
+  ctx: RecommendContext,
+  opts?: { excludeFamilies?: Set<ProteinFamily>; takeFish?: boolean },
+): MenuDishRef | undefined {
+  let pool = candidates
+  const mixed = withoutFamilies(pool, opts?.excludeFamilies ?? new Set())
+  if (mixed.length > 0) pool = mixed
+  if (opts?.takeFish) pool = withFish(pool)
+  pool = withFrozenPrep(pool, ctx.freezer)
+
   let best: MenuDishRef | undefined
-  let bestScore = -Infinity
+  let bestDays = -1
   let bestIndex = 999
-  for (const item of candidates) {
-    const score = scoreEntry(item, ctx)
+  for (const item of pool) {
+    const days = recencyDays(item, ctx)
     const index = cycleIndex(item)
-    if (
-      !best ||
-      score > bestScore ||
-      (score === bestScore && index < bestIndex)
-    ) {
+    if (!best || days > bestDays || (days === bestDays && index < bestIndex)) {
       best = item
-      bestScore = score
+      bestDays = days
       bestIndex = index
     }
   }
   return best
 }
 
+function sideCycleIndex(sideId: string): number {
+  const index = cycleSides.findIndex((item) => item.dishId === sideId)
+  return index < 0 ? 999 : index
+}
+
+function pickOldestSideId(
+  board: CookBoard,
+  stats: MealStatsStore | undefined,
+  sideIds: string[],
+): string | undefined {
+  let best: string | undefined
+  let bestDate = '9999-99-99'
+  let bestIndex = 999
+  for (const id of sideIds) {
+    const date = lastCookedOnForDishes(board, [id], stats) ?? ''
+    const index = sideCycleIndex(id)
+    if (
+      !best ||
+      date < bestDate ||
+      (date === bestDate && index < bestIndex)
+    ) {
+      best = id
+      bestDate = date
+      bestIndex = index
+    }
+  }
+  return best
+}
+
+export type CookPlanItem = {
+  item: MenuDishRef
+  sideId?: string
+}
+
+function withSuggestedSides(
+  board: CookBoard,
+  stats: MealStatsStore | undefined,
+  mains: MenuDishRef[],
+): CookPlanItem[] {
+  const taken = takenSideIds(board)
+  for (const item of mains) {
+    for (const id of menuRefIds(item)) {
+      for (const sideId of builtInSideIds(id)) taken.add(sideId)
+    }
+  }
+  return mains.map((item) => {
+    const matching = matchingSideIds(item.dishId).filter((id) => !taken.has(id))
+    const sideId = pickOldestSideId(board, stats, matching)
+    if (sideId) taken.add(sideId)
+    return sideId ? { item, sideId } : { item }
+  })
+}
+
 /**
- * Два ближайших блюда: есть заготовка, давно не готовили,
- * и белок не повторяет недавнее меню (говядина/курица подряд, рыба на неделе).
+ * Два блюда: разные белки → рыба в чт/пт если её не было на неделе →
+ * заготовка → чем дольше не готовили, тем лучше.
+ * К каждому — подходящий гарнир, который готовили давнее всего.
  * Уже запланированные не предлагаем — добиваем пару до двух.
  */
 export function recommendCookPlan(
@@ -187,7 +258,7 @@ export function recommendCookPlan(
   freezer?: PrepFreezer,
   count = COOK_PAIR,
   todayIso = isoDate(),
-): MenuDishRef[] {
+): CookPlanItem[] {
   const planned = plannedCycleEntries(board)
   const want = Math.max(0, count - planned.length)
   if (want === 0) return []
@@ -195,45 +266,36 @@ export function recommendCookPlan(
   const candidates = cycleMains.filter(
     (item) => !isPlannedItem(board, item) && !isInFridge(board, item),
   )
-  const history = mainCookHistory(board, stats)
-  const lastFamilies = history.slice(0, 3).map((event) => event.family)
-  const weekFamilyCounts: Partial<Record<ProteinFamily, number>> = {}
-  for (const event of history) {
-    if (daysSince(event.date, todayIso) > WEEK_DAYS) continue
-    weekFamilyCounts[event.family] = (weekFamilyCounts[event.family] ?? 0) + 1
-  }
-  const fridgeFamilies = fridgeFamiliesOf(board)
+  const needFish =
+    isThursdayOrFriday(todayIso) &&
+    !weekHasFish(board, stats, todayIso) &&
+    !planned.some(isFishItem)
+
   const pickedFamilies = new Set<ProteinFamily>()
   for (const item of planned) {
     const family = entryFamily(item)
     if (family) pickedFamilies.add(family)
   }
 
-  const remaining = [...candidates]
+  let remaining = withoutFamilies(candidates, pickedFamilies)
   const picked: MenuDishRef[] = []
   while (picked.length < want && remaining.length > 0) {
-    const needSeafood =
-      (weekFamilyCounts.seafood ?? 0) === 0 &&
-      !fridgeFamilies.has('seafood') &&
-      !pickedFamilies.has('seafood')
-    const best = pickBest(remaining, {
-      board,
-      stats,
-      freezer,
-      todayIso,
-      lastFamilies,
-      weekFamilyCounts,
-      fridgeFamilies,
-      pickedFamilies,
-      needSeafood,
+    const lastSlot = picked.length === want - 1
+    const takeFish = needFish && lastSlot && !picked.some(isFishItem)
+    const best = pickBest(remaining, { board, stats, freezer, todayIso }, {
+      excludeFamilies: pickedFamilies,
+      takeFish,
     })
     if (!best) break
     picked.push(best)
-    remaining.splice(remaining.indexOf(best), 1)
     const family = entryFamily(best)
     if (family) pickedFamilies.add(family)
+    remaining = withoutFamilies(
+      remaining.filter((item) => item !== best),
+      pickedFamilies,
+    )
   }
-  return picked
+  return withSuggestedSides(board, stats, picked)
 }
 
 /** Блюда ближайшей готовки: план пользователя, иначе рекомендуемая пара. */
@@ -246,9 +308,12 @@ export function nextCookDishIds(
   const ids = new Set<string>()
   for (const item of plannedCycleEntries(board)) {
     for (const id of menuRefIds(item)) ids.add(id)
+    const sideId = board.plannedSideByMain?.[item.dishId]
+    if (typeof sideId === 'string') ids.add(sideId)
   }
-  for (const item of recommendCookPlan(board, stats, freezer, count)) {
-    for (const id of menuRefIds(item)) ids.add(id)
+  for (const plan of recommendCookPlan(board, stats, freezer, count)) {
+    for (const id of menuRefIds(plan.item)) ids.add(id)
+    if (plan.sideId) ids.add(plan.sideId)
   }
   return ids
 }

@@ -16,6 +16,8 @@ import type { CookBoard } from '../data/cookBoard'
 import { resolveCookBoard } from '../data/cookBoard'
 import { parsePrepFreezer } from '../data/prep'
 import {
+  importAppState,
+  isPlaceholderState,
   loadLocalAppState,
   normalizeAppState,
   saveLocalAppState,
@@ -34,11 +36,14 @@ type MenuSyncContextValue = {
   setCookBoard: (cookBoard: CookBoard | ((prev: CookBoard) => CookBoard)) => void
   patchState: (updater: (prev: MenuAppState) => MenuAppState) => void
   pushLocalToCloud: () => Promise<void>
+  importLocalBackup: (raw: unknown) => Promise<void>
+  restoreFoundBackup: () => Promise<boolean>
 }
 
 const MenuSyncContext = createContext<MenuSyncContextValue | null>(null)
 
 const CLOUD_DEBOUNCE_MS = 600
+const RECOVERED_BACKUP_URL = `${import.meta.env.BASE_URL}recovered-menu-state.json`
 
 function withBoard(state: MenuAppState): MenuAppState {
   return {
@@ -198,6 +203,42 @@ export function MenuSyncProvider({ children }: { children: ReactNode }) {
     [persist],
   )
 
+  const applyImported = useCallback(
+    async (raw: unknown) => {
+      if (!uid) throw new Error('Сначала войдите в аккаунт')
+      const next = withBoard(importAppState(raw))
+      if (isPlaceholderState(next)) {
+        throw new Error('В файле нет заготовок и плана')
+      }
+      saveLocalAppState(next)
+      latestState.current = next
+      setState(next)
+      cloudHydrated.current = true
+      await upsertAppState(uid, next)
+    },
+    [uid],
+  )
+
+  const restoreFoundBackup = useCallback(async () => {
+    const res = await fetch(RECOVERED_BACKUP_URL)
+    if (!res.ok) return false
+    await applyImported(await res.json())
+    return true
+  }, [applyImported])
+
+  const restoreTried = useRef(false)
+  useEffect(() => {
+    if (!import.meta.env.DEV || restoreTried.current) return
+    if (!ready || !uid || !user || user.isAnonymous) return
+    if (!isPlaceholderState(state)) return
+    restoreTried.current = true
+    void restoreFoundBackup().then((ok) => {
+      if (!ok) restoreTried.current = false
+    }).catch(() => {
+      restoreTried.current = false
+    })
+  }, [ready, uid, user, state, restoreFoundBackup])
+
   const pushLocalToCloud = useCallback(async () => {
     if (!uid) throw new Error('Сначала войдите в аккаунт')
     const next = withBoard({
@@ -222,8 +263,10 @@ export function MenuSyncProvider({ children }: { children: ReactNode }) {
       setCookBoard,
       patchState: persist,
       pushLocalToCloud,
+      importLocalBackup: applyImported,
+      restoreFoundBackup,
     }),
-    [ready, user, cloudError, uid, state, setCookbook, setCookBoard, persist, pushLocalToCloud],
+    [ready, user, cloudError, uid, state, setCookbook, setCookBoard, persist, pushLocalToCloud, applyImported, restoreFoundBackup],
   )
 
   return <MenuSyncContext.Provider value={value}>{children}</MenuSyncContext.Provider>

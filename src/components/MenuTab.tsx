@@ -4,7 +4,7 @@ import {
   menuRefLabel,
   type MenuDishRef,
 } from '../data/menu'
-import { compareByOldestCooked, nextCookDishIds, recommendCookPlan } from '../data/cycleQueue'
+import { compareByOldestCooked, nextCookDishIds, recommendCookPlan, type CookPlanItem } from '../data/cycleQueue'
 import { dishMeta, childEatsKind, isCompleteDish } from '../data/dishMeta'
 import { getDish } from '../data/dishes'
 import { formatMacros } from '../lib/macros'
@@ -242,6 +242,7 @@ function DishRow({
   onPickSide,
   onOpenRecipe,
   onOpenSide,
+  preview = false,
 }: {
   item: MenuDishRef
   mark?: DishMark
@@ -256,12 +257,14 @@ function DishRow({
   onPickSide: (sideId: string | null) => void
   onOpenRecipe: () => void
   onOpenSide: (item: MenuDishRef) => void
+  preview?: boolean
 }) {
   const nextClass = isNext ? ' is-next' : ''
   const plannedClass = planned ? ' is-planned' : ''
   const cooked = mark === 'cooked' || mark === 'leftover'
   const childKind = childEatsKind(item.dishId)
   const childClass = childKind ? ` is-child-${childKind}` : ''
+  const showSides = Boolean(planned || preview)
 
   return (
     <li className="menu-dish-row menu-dish-row--main">
@@ -312,10 +315,10 @@ function DishRow({
             </button>
           ))}
         </div>
-        {planned && complete && availableSides.length === 0 ? (
+        {showSides && complete && availableSides.length === 0 ? (
           <p className="plan-sides-note">Цельное — отдельный гарнир не нужен</p>
         ) : null}
-        {planned && (!complete || availableSides.length > 0) ? (
+        {showSides && (!complete || availableSides.length > 0) ? (
           <div className="plan-sides">
             <h4>Гарнир</h4>
             <ul className="menu-slot-dishes plan-sides-list">
@@ -334,7 +337,7 @@ function DishRow({
                   onOpenRecipe={() => onOpenSide({ dishId: side.id })}
                 />
               ))}
-              {typeof plannedSide !== 'string' ? (
+              {planned && typeof plannedSide !== 'string' ? (
                 <SideOptionRow
                   name="Без гарнира"
                   picked={plannedSide === null}
@@ -427,6 +430,8 @@ function MainDishItem({
   cookbook,
   nextIds,
   showNextTag,
+  suggestedSide,
+  preview = false,
   onBoardChange,
   onDishPrepared,
   onOpenRecipe,
@@ -438,6 +443,8 @@ function MainDishItem({
   cookbook: CookbookStore
   nextIds: Set<string>
   showNextTag: boolean
+  suggestedSide?: string
+  preview?: boolean
   onBoardChange: (board: CookBoard | ((prev: CookBoard) => CookBoard)) => void
   onDishPrepared: (dish: QueueDish, nextPrepared: boolean, dishIds: string[]) => void
   onOpenRecipe: (item: MenuDishRef) => void
@@ -449,13 +456,20 @@ function MainDishItem({
   const dishIds = slotPrimaryDishIds(markBatch.slot)
   const planned = isDishPlanned(board, item.dishId)
   const complete = Boolean(dish.complete)
-  const availableSides = planned
-    ? availableSideIdsForMain(board, item.dishId).map((id) => ({
-        id,
-        name: sideLabel(id, cookbook),
-        lastCooked: lastCookedOnForDishes(board, [id], stats),
-      }))
-    : []
+  const sideId = planned ? plannedSideForMain(board, item.dishId) : suggestedSide
+  const availableSides =
+    planned || preview
+      ? (typeof sideId === 'string'
+          ? [sideId]
+          : planned
+            ? availableSideIdsForMain(board, item.dishId)
+            : []
+        ).map((id) => ({
+          id,
+          name: sideLabel(id, cookbook),
+          lastCooked: lastCookedOnForDishes(board, [id], stats),
+        }))
+      : []
 
   return (
     <DishRow
@@ -463,7 +477,8 @@ function MainDishItem({
       complete={complete}
       mark={mark}
       planned={planned}
-      plannedSide={planned ? plannedSideForMain(board, item.dishId) : undefined}
+      preview={preview}
+      plannedSide={sideId}
       availableSides={availableSides}
       isNext={showNextTag && menuRefIds(item).some((id) => nextIds.has(id))}
       lastCooked={lastCookedOnForDishes(board, menuRefIds(item), stats)}
@@ -471,10 +486,21 @@ function MainDishItem({
         onDishPrepared(dish, nextPrepared, dishIds)
       }}
       onTogglePlanned={() => {
-        onBoardChange((current) => setDishPlanned(current, item.dishId, !planned))
+        onBoardChange((current) => {
+          const next = setDishPlanned(current, item.dishId, !planned)
+          if (!planned && suggestedSide) {
+            return setPlannedSide(next, item.dishId, suggestedSide)
+          }
+          return next
+        })
       }}
-      onPickSide={(sideId) => {
-        onBoardChange((current) => setPlannedSide(current, item.dishId, sideId))
+      onPickSide={(pickedSide) => {
+        onBoardChange((current) => {
+          if (planned) return setPlannedSide(current, item.dishId, pickedSide)
+          if (typeof pickedSide !== 'string') return current
+          const next = setDishPlanned(current, item.dishId, true)
+          return setPlannedSide(next, item.dishId, pickedSide)
+        })
       }}
       onOpenRecipe={() => onOpenRecipe(item)}
       onOpenSide={onOpenRecipe}
@@ -504,7 +530,7 @@ function CookList({
   stats: MealStatsStore
   cookbook: CookbookStore
   nextIds: Set<string>
-  recommendedItems: MenuDishRef[]
+  recommendedItems: CookPlanItem[]
   scales: Record<string, number>
   onBoardChange: (board: CookBoard | ((prev: CookBoard) => CookBoard)) => void
   onDishPrepared: (dish: QueueDish, nextPrepared: boolean, dishIds: string[]) => void
@@ -524,9 +550,12 @@ function CookList({
     .filter((dish): dish is QueueDish => Boolean(dish))
     .filter((dish, i, arr) => arr.findIndex((d) => dish.item.dishId === d.item.dishId) === i)
   const recommended = recommendedItems
-    .map((item) => mainForRef(mains, item))
-    .filter((dish): dish is QueueDish => Boolean(dish))
-  const recommendedKeys = new Set(recommended.map((dish) => dish.item.dishId))
+    .map((plan) => {
+      const dish = mainForRef(mains, plan.item)
+      return dish ? { dish, sideId: plan.sideId } : undefined
+    })
+    .filter((row): row is { dish: QueueDish; sideId?: string } => Boolean(row))
+  const recommendedKeys = new Set(recommended.map((row) => row.dish.item.dishId))
   const catalog = mains.filter(
     (dish) => !isPlannedRow(dish) && !recommendedKeys.has(dish.item.dishId),
   )
@@ -548,11 +577,13 @@ function CookList({
         <section className="recommended-cook">
           <h3 className="cook-queue-heading">Рекомендуемый план готовки</h3>
           <ul className="menu-slot-dishes">
-            {recommended.map((dish) => (
+            {recommended.map((row) => (
               <MainDishItem
-                key={dish.item.dishId}
-                dish={dish}
+                key={row.dish.item.dishId}
+                dish={row.dish}
                 showNextTag
+                preview
+                suggestedSide={row.sideId}
                 {...rowProps}
               />
             ))}

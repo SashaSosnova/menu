@@ -183,6 +183,11 @@ export function normalizeAppState(raw: PersistedAppState | null): MenuAppState {
   return { ...state, updatedAt: asUpdatedAt(raw.updatedAt) }
 }
 
+export function importAppState(raw: unknown): MenuAppState {
+  const state = normalizeAppState((raw ?? null) as PersistedAppState | null)
+  return { ...state, updatedAt: Date.now() }
+}
+
 /** Пустое облако не должно затирать живые данные с устройства. */
 export function shouldApplyCloud(
   local: MenuAppState,

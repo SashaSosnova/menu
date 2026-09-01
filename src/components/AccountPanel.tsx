@@ -19,7 +19,7 @@ type Props = {
 }
 
 export function AccountPanel({ user, onClose }: Props) {
-  const { state, pushLocalToCloud } = useMenuSync()
+  const { state, pushLocalToCloud, importLocalBackup } = useMenuSync()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [mode, setMode] = useState<'register' | 'login'>(
@@ -29,6 +29,7 @@ export function AccountPanel({ user, onClose }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [ok, setOk] = useState<string | null>(null)
   const emailRef = useRef<HTMLInputElement>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
   useEscapeKey(onClose)
 
   if (!isFirebaseConfigured()) {
@@ -104,6 +105,21 @@ export function AccountPanel({ user, onClose }: Props) {
     }
   }
 
+  async function importFile(file: File) {
+    setBusy(true)
+    setError(null)
+    setOk(null)
+    try {
+      const raw = JSON.parse(await file.text()) as unknown
+      await importLocalBackup(raw)
+      setOk('Копия загружена и записана в облако')
+    } catch (err) {
+      setError(mapAuthError(err))
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
     <div className="modal-backdrop" onClick={onClose} role="presentation">
       <div
@@ -141,6 +157,25 @@ export function AccountPanel({ user, onClose }: Props) {
               >
                 Записать это устройство в облако
               </button>
+              <button
+                type="button"
+                className="ghost-btn"
+                disabled={busy}
+                onClick={() => fileRef.current?.click()}
+              >
+                Загрузить копию JSON
+              </button>
+              <input
+                ref={fileRef}
+                type="file"
+                accept="application/json"
+                hidden
+                onChange={(event) => {
+                  const file = event.target.files?.[0]
+                  event.target.value = ''
+                  if (file) void importFile(file)
+                }}
+              />
               <button type="button" className="ghost-btn" disabled={busy} onClick={() => void logout()}>
                 Выйти
               </button>

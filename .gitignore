@@ -14,6 +14,8 @@ dist-ssr
 .env
 .env.*
 !.env.example
+recovered-menu-state.json
+.recover-leveldb/
 
 # Editor directories and files
 .vscode/*
