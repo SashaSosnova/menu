@@ -549,12 +549,10 @@ function CookList({
     .map((id) => mains.find((dish) => menuRefIds(dish.item).includes(id)) ?? byId.get(id))
     .filter((dish): dish is QueueDish => Boolean(dish))
     .filter((dish, i, arr) => arr.findIndex((d) => dish.item.dishId === d.item.dishId) === i)
-  const recommended = recommendedItems
-    .map((plan) => {
-      const dish = mainForRef(mains, plan.item)
-      return dish ? { dish, sideId: plan.sideId } : undefined
-    })
-    .filter((row): row is { dish: QueueDish; sideId?: string } => Boolean(row))
+  const recommended = recommendedItems.flatMap((plan) => {
+    const dish = mainForRef(mains, plan.item)
+    return dish ? [{ dish, sideId: plan.sideId }] : []
+  })
   const recommendedKeys = new Set(recommended.map((row) => row.dish.item.dishId))
   const catalog = mains.filter(
     (dish) => !isPlannedRow(dish) && !recommendedKeys.has(dish.item.dishId),
