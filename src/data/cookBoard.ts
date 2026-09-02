@@ -279,13 +279,8 @@ export function setPlannedSide(
   if (typeof sideId === 'string' && !matchingSideIds(mainId).includes(sideId)) return board
   const plannedSideByMain = { ...(board.plannedSideByMain ?? {}) }
   const current = plannedSideByMain[mainId]
-  const already =
-    (typeof sideId === 'string' && current === sideId) ||
-    (sideId === null && mainId in plannedSideByMain && current === null)
-  if (already) {
-    delete plannedSideByMain[mainId]
-    return { ...board, plannedSideByMain }
-  }
+  if (typeof sideId === 'string' && current === sideId) return board
+  if (sideId === null && mainId in plannedSideByMain && current === null) return board
   if (typeof sideId === 'string') {
     for (const [other, side] of Object.entries(plannedSideByMain)) {
       if (other !== mainId && side === sideId) delete plannedSideByMain[other]
@@ -647,18 +642,14 @@ export function lastCookedOnForDish(
   stats?: MealStatsStore,
 ): string | undefined {
   let latest: string | undefined
+  const today = isoDate()
   const consider = (iso?: string) => {
-    if (iso && (!latest || iso > latest)) latest = iso
+    if (!iso || iso > today) return
+    if (!latest || iso > latest) latest = iso
   }
   consider(board.lastCookedOn?.[dishId])
   for (const dish of board.fridge) {
     if (dish.dishId === dishId) consider(dish.cookedOn)
-  }
-  for (const [key, mark] of Object.entries(board.dishMarks ?? {})) {
-    if (!mark || !dishKeyMatches(key, dishId)) continue
-    const batchId = key.slice(0, key.lastIndexOf('::'))
-    consider(board.cooked[batchId]?.cookedOn)
-    consider(cookedOnFromBatchId(batchId))
   }
   if (stats) consider(lastOutcomeCookedOn(stats, dishId))
   return latest
@@ -796,10 +787,15 @@ function forgetDishCook(
   batchDishIds: string[],
 ): CookBoard {
   const key = fridgeDishKey(batchId, dishId)
+  const cookedOn = board.fridge.find((d) => d.key === key)?.cookedOn
   const dishMarks = { ...(board.dishMarks ?? {}) }
   delete dishMarks[key]
   const fridge = board.fridge.filter((d) => d.key !== key)
-  const nextBoard = { ...board, dishMarks, fridge }
+  const lastCookedOn = { ...(board.lastCookedOn ?? {}) }
+  if (cookedOn && lastCookedOn[dishId] === cookedOn) delete lastCookedOn[dishId]
+  const prepTaken = { ...(board.prepTaken ?? {}) }
+  delete prepTaken[key]
+  const nextBoard = { ...board, dishMarks, fridge, lastCookedOn, prepTaken }
   const cooked = { ...board.cooked }
   const ids = batchDishIds.length > 0 ? batchDishIds : dishIdsForBatch(batchId)
   if (!batchAllMarked(nextBoard, batchId, ids)) delete cooked[batchId]
@@ -881,6 +877,73 @@ export function setDishPrepared(
     )
   }
   return unplanDish(next, dishId)
+}
+
+/** Убрать блюдо из холодильника и не считать эту готовку. */
+export function discardFridgeDish(board: CookBoard, key: string): CookBoard {
+  const dish = board.fridge.find((d) => d.key === key)
+  if (!dish) return board
+  return forgetDishCook(board, dish.dishId, dish.batchId, dishIdsForBatch(dish.batchId))
+}
+
+/** Положить к остаткам другой гарнир — без записи лишней готовки горячего. */
+export function addFridgeSide(board: CookBoard, mainKey: string, sideId: string): CookBoard {
+  return setFridgeSide(board, mainKey, sideId)
+}
+
+/** Заменить гарнир у остатка горячего или убрать его (chip «Без гарнира»). */
+export function setFridgeSide(
+  board: CookBoard,
+  mainKey: string,
+  sideId: string | null,
+): CookBoard {
+  const main = board.fridge.find((d) => d.key === mainKey)
+  if (!main || dishMeta[main.dishId]?.kind === 'side') return board
+  const matching = matchingSideIds(main.dishId)
+  if (matching.length === 0) return board
+  if (typeof sideId === 'string' && !matching.includes(sideId)) return board
+
+  let next = board
+  for (const row of board.fridge) {
+    if (row.batchId !== main.batchId) continue
+    if (!matching.includes(row.dishId)) continue
+    if (typeof sideId === 'string' && row.dishId === sideId) continue
+    next = discardFridgeDish(next, row.key)
+  }
+
+  if (typeof sideId !== 'string') {
+    return {
+      ...next,
+      fridge: next.fridge.map((d) =>
+        d.key === mainKey ? { ...d, cookedWith: undefined } : d,
+      ),
+    }
+  }
+
+  if (next.fridge.some((d) => d.dishId === sideId && d.remaining > 0)) {
+    return {
+      ...next,
+      fridge: next.fridge.map((d) =>
+        d.key === mainKey ? { ...d, cookedWith: sideId } : d,
+      ),
+    }
+  }
+
+  const marked = applyDishMark(
+    next,
+    main.batchId,
+    sideId,
+    dishIdsForBatch(main.batchId),
+    'cooked',
+    main.cookedOn,
+    dishCookPortions(sideId),
+  )
+  return {
+    ...marked,
+    fridge: marked.fridge.map((d) =>
+      d.key === mainKey ? { ...d, cookedWith: sideId } : d,
+    ),
+  }
 }
 
 export function bumpFridgePortions(

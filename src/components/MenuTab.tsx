@@ -5,7 +5,7 @@ import {
   type MenuDishRef,
 } from '../data/menu'
 import { compareByOldestCooked, nextCookDishIds, recommendCookPlan, type CookPlanItem } from '../data/cycleQueue'
-import { dishMeta, childEatsKind, isCompleteDish } from '../data/dishMeta'
+import { dishMeta, childEatsKind, isCompleteDish, matchingSideIds } from '../data/dishMeta'
 import { getDish } from '../data/dishes'
 import { formatMacros } from '../lib/macros'
 import { getCookbookDish, getEffectiveRecipe, type CookbookStore } from '../data/cookbook'
@@ -24,6 +24,8 @@ import {
   listCookQueue,
   toggleShopHave,
   plannedSideForMain,
+  discardFridgeDish,
+  setFridgeSide,
   setDishPrepared,
   setDishPlanned,
   setPlannedSide,
@@ -31,6 +33,7 @@ import {
   type CookBatchView,
   type CookBoard,
   type DishMark,
+  type FridgeDish,
 } from '../data/cookBoard'
 import { plannedShopGroups } from '../data/cookShop'
 import { applyPrepForDishCook } from '../data/prep'
@@ -168,63 +171,65 @@ type SideOption = {
   lastCooked?: string
 }
 
-function SideOptionRow({
-  name,
-  lastCooked,
-  picked,
+function sideChipLabel(
+  plannedSide: string | null | undefined,
+  availableSides: SideOption[],
+): string {
+  if (typeof plannedSide !== 'string') return 'Без гарнира'
+  return availableSides.find((side) => side.id === plannedSide)?.name ?? plannedSide
+}
+
+function SidePickerList({
+  options,
+  selectedId,
   onPick,
-  onOpenRecipe,
+  onOpenSide,
 }: {
-  name: string
-  lastCooked?: string
-  picked: boolean
-  onPick: () => void
-  onOpenRecipe?: () => void
+  options: SideOption[]
+  selectedId?: string | null
+  onPick: (sideId: string | null) => void
+  onOpenSide?: (sideId: string) => void
 }) {
-  const pickedClass = picked ? ' is-picked' : ''
   return (
-    <li className="menu-dish-row menu-dish-row--side">
-      <div className={`menu-dish-card${pickedClass}`}>
-        <div className="menu-dish-card-head">
+    <ul className="side-picker">
+      {options.map((side) => (
+        <li key={side.id}>
           <button
             type="button"
-            className="menu-recipe-link menu-recipe-link--side"
-            onClick={onOpenRecipe ?? onPick}
+            className={
+              selectedId === side.id ? 'side-picker-btn is-picked' : 'side-picker-btn'
+            }
+            onClick={() => onPick(side.id)}
           >
-            <span className="menu-recipe-link-text">
-              <span className="menu-recipe-link-name">{name}</span>
-              {onOpenRecipe ? (
-                <span className="menu-last-cooked">{lastCookedCaption(lastCooked)}</span>
-              ) : null}
-            </span>
+            <span className="side-picker-name">{side.name}</span>
+            <span className="menu-last-cooked">{lastCookedCaption(side.lastCooked)}</span>
           </button>
-          {onOpenRecipe ? (
+          {onOpenSide ? (
             <button
               type="button"
               className="menu-recipe-open"
-              onClick={onOpenRecipe}
-              aria-label={`Рецепт: ${name}`}
+              onClick={() => onOpenSide(side.id)}
+              aria-label={`Рецепт: ${side.name}`}
             >
               ›
             </button>
           ) : null}
-        </div>
-        <div className="outcome-chips" role="group" aria-label={`${name}: выбор`}>
-          <button
-            type="button"
-            className={picked ? 'outcome-chip is-active' : 'outcome-chip'}
-            aria-pressed={picked}
-            onClick={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
-              onPick()
-            }}
-          >
-            {picked ? 'Выбрано' : 'Выбрать'}
-          </button>
-        </div>
-      </div>
-    </li>
+        </li>
+      ))}
+      <li>
+        <button
+          type="button"
+          className={
+            selectedId == null || selectedId === ''
+              ? 'side-picker-btn is-picked'
+              : 'side-picker-btn'
+          }
+          onClick={() => onPick(null)}
+        >
+          <span className="side-picker-name">Без гарнира</span>
+        </button>
+      </li>
+    </ul>
   )
 }
 
@@ -259,12 +264,17 @@ function DishRow({
   onOpenSide: (item: MenuDishRef) => void
   preview?: boolean
 }) {
+  const [sideOpen, setSideOpen] = useState(false)
   const nextClass = isNext ? ' is-next' : ''
   const plannedClass = planned ? ' is-planned' : ''
   const cooked = mark === 'cooked' || mark === 'leftover'
   const childKind = childEatsKind(item.dishId)
   const childClass = childKind ? ` is-child-${childKind}` : ''
-  const showSides = Boolean(planned || preview)
+  const canHaveSide = availableSides.length > 0
+  const showSideChip = Boolean((planned || preview) && canHaveSide)
+  const showCompleteNote = Boolean((planned || preview) && complete && !canHaveSide)
+  const sideLabelText = sideChipLabel(plannedSide, availableSides)
+  const sidePicked = typeof plannedSide === 'string'
 
   return (
     <li className="menu-dish-row menu-dish-row--main">
@@ -314,38 +324,35 @@ function DishRow({
               {opt.label}
             </button>
           ))}
+          {showSideChip ? (
+            <button
+              type="button"
+              className={sidePicked ? 'outcome-chip is-side is-active' : 'outcome-chip is-side'}
+              aria-expanded={sideOpen}
+              aria-label={sidePicked ? `Гарнир: ${sideLabelText}` : 'Без гарнира'}
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                setSideOpen((open) => !open)
+              }}
+            >
+              {sideLabelText}
+            </button>
+          ) : null}
         </div>
-        {showSides && complete && availableSides.length === 0 ? (
+        {showCompleteNote ? (
           <p className="plan-sides-note">Цельное — отдельный гарнир не нужен</p>
         ) : null}
-        {showSides && (!complete || availableSides.length > 0) ? (
-          <div className="plan-sides">
-            <h4>Гарнир</h4>
-            <ul className="menu-slot-dishes plan-sides-list">
-              {(typeof plannedSide === 'string'
-                ? availableSides.filter((side) => side.id === plannedSide)
-                : plannedSide === null
-                  ? []
-                  : availableSides
-              ).map((side) => (
-                <SideOptionRow
-                  key={side.id}
-                  name={side.name}
-                  lastCooked={side.lastCooked}
-                  picked={plannedSide === side.id}
-                  onPick={() => onPickSide(side.id)}
-                  onOpenRecipe={() => onOpenSide({ dishId: side.id })}
-                />
-              ))}
-              {planned && typeof plannedSide !== 'string' ? (
-                <SideOptionRow
-                  name="Без гарнира"
-                  picked={plannedSide === null}
-                  onPick={() => onPickSide(null)}
-                />
-              ) : null}
-            </ul>
-          </div>
+        {showSideChip && sideOpen ? (
+          <SidePickerList
+            options={availableSides}
+            selectedId={plannedSide}
+            onPick={(sideId) => {
+              onPickSide(sideId)
+              setSideOpen(false)
+            }}
+            onOpenSide={(sideId) => onOpenSide({ dishId: sideId })}
+          />
         ) : null}
       </div>
     </li>
@@ -457,19 +464,16 @@ function MainDishItem({
   const planned = isDishPlanned(board, item.dishId)
   const complete = Boolean(dish.complete)
   const sideId = planned ? plannedSideForMain(board, item.dishId) : suggestedSide
-  const availableSides =
-    planned || preview
-      ? (typeof sideId === 'string'
-          ? [sideId]
-          : planned
-            ? availableSideIdsForMain(board, item.dishId)
-            : []
-        ).map((id) => ({
-          id,
-          name: sideLabel(id, cookbook),
-          lastCooked: lastCookedOnForDishes(board, [id], stats),
-        }))
-      : []
+  const availableSides = (() => {
+    if (!planned && !preview) return []
+    const ids = availableSideIdsForMain(board, item.dishId)
+    if (typeof sideId === 'string' && !ids.includes(sideId)) ids.unshift(sideId)
+    return ids.map((id) => ({
+      id,
+      name: sideLabel(id, cookbook),
+      lastCooked: lastCookedOnForDishes(board, [id], stats),
+    }))
+  })()
 
   return (
     <DishRow
@@ -496,9 +500,9 @@ function MainDishItem({
       }}
       onPickSide={(pickedSide) => {
         onBoardChange((current) => {
-          if (planned) return setPlannedSide(current, item.dishId, pickedSide)
-          if (typeof pickedSide !== 'string') return current
-          const next = setDishPlanned(current, item.dishId, true)
+          const next = planned
+            ? current
+            : setDishPlanned(current, item.dishId, true)
           return setPlannedSide(next, item.dishId, pickedSide)
         })
       }}
@@ -629,16 +633,101 @@ function CookList({
   )
 }
 
+function FridgeRow({
+  dish,
+  dishName,
+  selectedSide,
+  availableSides,
+  onBoardChange,
+  onDiscard,
+  onPickSide,
+}: {
+  dish: FridgeDish
+  dishName: string
+  selectedSide?: string
+  availableSides: SideOption[]
+  onBoardChange: (board: CookBoard | ((prev: CookBoard) => CookBoard)) => void
+  onDiscard: (key: string) => void
+  onPickSide: (sideId: string | null) => void
+}) {
+  const [sideOpen, setSideOpen] = useState(false)
+  const canHaveSide = availableSides.length > 0
+  const sideLabelText = sideChipLabel(selectedSide, availableSides)
+  const sidePicked = typeof selectedSide === 'string'
+
+  return (
+    <li className="fridge-row">
+      <div className="fridge-row-main">
+        <div className="fridge-row-text">
+          <strong>{dishName}</strong>
+          <span className="menu-last-cooked">{lastCookedCaption(dish.cookedOn)}</span>
+        </div>
+        <div className="fridge-step">
+          <button
+            type="button"
+            className="fridge-step-btn"
+            aria-label="Списать порцию"
+            onClick={() => onBoardChange((current) => bumpFridgePortions(current, dish.key, -1))}
+          >
+            −
+          </button>
+          <span className="fridge-portions">{dish.remaining} пор.</span>
+          <button
+            type="button"
+            className="fridge-step-btn"
+            aria-label="Вернуть порцию"
+            disabled={dish.remaining >= dish.cookedPortions}
+            onClick={() => onBoardChange((current) => bumpFridgePortions(current, dish.key, 1))}
+          >
+            +
+          </button>
+          <button type="button" className="fridge-discard" onClick={() => onDiscard(dish.key)}>
+            Убрать
+          </button>
+        </div>
+      </div>
+      {canHaveSide ? (
+        <div className="outcome-chips" role="group" aria-label={`${dishName}: гарнир`}>
+          <button
+            type="button"
+            className={sidePicked ? 'outcome-chip is-side is-active' : 'outcome-chip is-side'}
+            aria-expanded={sideOpen}
+            aria-label={sidePicked ? `Гарнир: ${sideLabelText}` : 'Без гарнира'}
+            onClick={() => setSideOpen((open) => !open)}
+          >
+            {sideLabelText}
+          </button>
+        </div>
+      ) : null}
+      {canHaveSide && sideOpen ? (
+        <SidePickerList
+          options={availableSides}
+          selectedId={selectedSide}
+          onPick={(sideId) => {
+            onPickSide(sideId)
+            setSideOpen(false)
+          }}
+        />
+      ) : null}
+    </li>
+  )
+}
+
 function FridgeBlock({
   board,
   cookbook,
   onBoardChange,
+  onDiscard,
+  onSetSide,
 }: {
   board: CookBoard
   cookbook: CookbookStore
   onBoardChange: (board: CookBoard | ((prev: CookBoard) => CookBoard)) => void
+  onDiscard: (key: string) => void
+  onSetSide: (mainKey: string, sideId: string | null) => void
 }) {
   const fridge = board.fridge
+  const fridgeIds = new Set(fridge.filter((d) => d.remaining > 0).map((d) => d.dishId))
 
   return (
     <section className="fridge-block">
@@ -647,40 +736,34 @@ function FridgeBlock({
         <p className="fridge-empty">Пусто</p>
       ) : (
         <ul className="fridge-list">
-        {fridge.map((dish) => (
-          <li key={dish.key} className="fridge-row">
-            <div className="fridge-row-text">
-              <strong>
-                {getCookbookDish(dish.dishId, cookbook)?.name ??
+          {fridge.map((dish) => {
+            const isSide = dishMeta[dish.dishId]?.kind === 'side'
+            const matching = isSide ? [] : matchingSideIds(dish.dishId)
+            const selectedSide =
+              typeof dish.cookedWith === 'string' && matching.includes(dish.cookedWith)
+                ? dish.cookedWith
+                : matching.find((id) => fridgeIds.has(id))
+            return (
+              <FridgeRow
+                key={dish.key}
+                dish={dish}
+                dishName={
+                  getCookbookDish(dish.dishId, cookbook)?.name ??
                   getDish(dish.dishId)?.name ??
-                  dish.dishId}
-              </strong>
-              <span className="menu-last-cooked">{lastCookedCaption(dish.cookedOn)}</span>
-            </div>
-            <div className="fridge-step">
-              <button
-                type="button"
-                className="fridge-step-btn"
-                aria-label="Списать порцию"
-                onClick={() => onBoardChange((current) => bumpFridgePortions(current, dish.key, -1))}
-              >
-                −
-              </button>
-              <span className="fridge-portions">{dish.remaining} пор.</span>
-              <button
-                type="button"
-                className="fridge-step-btn"
-                aria-label="Вернуть порцию"
-                disabled={dish.remaining >= dish.cookedPortions}
-                onClick={() =>
-                  onBoardChange((current) => bumpFridgePortions(current, dish.key, 1))
+                  dish.dishId
                 }
-              >
-                +
-              </button>
-            </div>
-          </li>
-        ))}
+                selectedSide={selectedSide}
+                availableSides={matching.map((id) => ({
+                  id,
+                  name: sideLabel(id, cookbook),
+                  lastCooked: board.lastCookedOn?.[id],
+                }))}
+                onBoardChange={onBoardChange}
+                onDiscard={onDiscard}
+                onPickSide={(sideId) => onSetSide(dish.key, sideId)}
+              />
+            )
+          })}
         </ul>
       )}
     </section>
@@ -759,6 +842,30 @@ export function MenuTab() {
         board={board}
         cookbook={state.cookbook}
         onBoardChange={setCookBoard}
+        onDiscard={(key) => {
+          patchState((prev) => {
+            const dish = prev.cookBoard.fridge.find((row) => row.key === key)
+            if (!dish) return prev
+            const restored = applyPrepForDishCook(
+              prev.freezerStock,
+              prev.cookBoard.prepTaken ?? {},
+              key,
+              dish.dishId,
+              false,
+            )
+            return {
+              ...prev,
+              cookBoard: discardFridgeDish(
+                { ...prev.cookBoard, prepTaken: restored.taken },
+                key,
+              ),
+              freezerStock: restored.freezer,
+            }
+          })
+        }}
+        onSetSide={(mainKey, sideId) => {
+          setCookBoard((current) => setFridgeSide(current, mainKey, sideId))
+        }}
       />
 
       <div className="cook-plan">

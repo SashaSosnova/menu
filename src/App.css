@@ -619,28 +619,6 @@
   background: #dceee3;
 }
 
-.plan-sides {
-  display: grid;
-  gap: 0.35rem;
-  padding: 0.45rem 0.45rem 0.55rem;
-  background: #f8f4ec;
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
-}
-
-.plan-sides h4 {
-  margin: 0;
-  font-size: 0.78rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #7a5c32;
-}
-
-.plan-sides-list {
-  display: grid;
-  gap: 0.3rem;
-}
-
 .menu-dish-row--side .menu-dish-card.is-picked {
   border-color: #7a5c32;
   box-shadow: inset 3px 0 0 #7a5c32;
@@ -649,6 +627,49 @@
 .menu-dish-row--side .menu-dish-card.is-picked .menu-dish-card-head,
 .menu-dish-row--side .menu-dish-card.is-picked .menu-recipe-link {
   background: #f3e6d2;
+}
+
+.side-picker {
+  display: grid;
+  gap: 0.28rem;
+  margin: 0;
+  padding: 0.4rem 0.45rem 0.5rem;
+  list-style: none;
+  background: #f8f4ec;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.side-picker li {
+  display: flex;
+  gap: 0.25rem;
+  align-items: stretch;
+}
+
+.side-picker-btn {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  align-items: baseline;
+  border: 1px solid #ddd6cb;
+  border-radius: 0.45rem;
+  background: #fffdf8;
+  color: inherit;
+  font: inherit;
+  font-size: 0.82rem;
+  padding: 0.35rem 0.5rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.side-picker-btn.is-picked {
+  border-color: #7a5c32;
+  box-shadow: inset 3px 0 0 #7a5c32;
+  background: #f3e6d2;
+}
+
+.side-picker-name {
+  font-weight: 600;
 }
 
 .plan-sides-note {
@@ -748,14 +769,19 @@
 }
 
 .fridge-row {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.65rem 0.7rem;
+  border-radius: 0.55rem;
+  background: #fffdf8;
+}
+
+.fridge-row-main {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 0.55rem 0.75rem;
-  padding: 0.65rem 0.7rem;
-  border-radius: 0.55rem;
-  background: #fffdf8;
 }
 
 .fridge-row-text {
@@ -802,6 +828,35 @@
 .fridge-step-btn:disabled {
   opacity: 0.35;
   cursor: default;
+}
+
+.fridge-discard {
+  margin-left: 0.15rem;
+  border: 0;
+  background: none;
+  color: #8a5a52;
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+  padding: 0.2rem 0.35rem;
+}
+
+.fridge-discard:hover {
+  color: #6b3d36;
+  text-decoration: underline;
+}
+
+.fridge-row .outcome-chips {
+  padding: 0 0 0.1rem;
+  background: transparent;
+  border-top: 0;
+}
+
+.fridge-row .side-picker {
+  margin: 0.15rem 0 0;
+  padding: 0.35rem;
+  border-radius: 0.45rem;
+  border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .upcoming-cook .cook-queue-heading,
@@ -1330,6 +1385,19 @@
 .outcome-chip.is-active {
   border-color: #2f4a3a;
   background: #2f4a3a;
+  color: #fffdf8;
+}
+
+.outcome-chip.is-side {
+  max-width: 100%;
+  color: #7a5c32;
+  border-color: #d4c4a8;
+  background: #faf6ef;
+}
+
+.outcome-chip.is-side.is-active {
+  border-color: #7a5c32;
+  background: #7a5c32;
   color: #fffdf8;
 }
 
