@@ -556,22 +556,12 @@
 }
 
 .prep-item-main {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 0.7rem;
-  align-items: start;
-  cursor: pointer;
+  min-width: 0;
 }
 
 .prep-item.is-next {
   background: #eef4ef;
   box-shadow: inset 0 0 0 1px #2f4a3a;
-}
-
-.prep-item-main input {
-  margin-top: 0.2rem;
-  width: 1.1rem;
-  height: 1.1rem;
 }
 
 .prep-body {
@@ -747,9 +737,69 @@
   display: grid;
   gap: 0.55rem;
   margin: 0.55rem 0 0;
-  padding: 0.35rem 0.4rem 0.15rem 0;
+  padding: 0;
   list-style: none;
-  overflow: visible;
+}
+
+.swipe-actions {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.55rem;
+}
+
+.menu-dish-row .swipe-actions {
+  border-radius: 0.65rem;
+}
+
+.prep-list .swipe-actions {
+  border-radius: 0.65rem;
+}
+
+.swipe-actions-btn {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 6.5rem;
+  border: 0;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0 0.4rem;
+}
+
+.swipe-actions-btn.is-left {
+  left: 0;
+}
+
+.swipe-actions-btn.is-right {
+  right: 0;
+}
+
+.swipe-actions-btn.is-danger {
+  background: #a34b43;
+  color: #fffdf8;
+}
+
+.swipe-actions-btn.is-ok {
+  background: #2f4a3a;
+  color: #fffdf8;
+}
+
+.swipe-actions-btn.is-plan {
+  background: #7a5c32;
+  color: #fffdf8;
+}
+
+.swipe-actions-front {
+  position: relative;
+  z-index: 1;
+  touch-action: pan-y;
+}
+
+.menu-dish-row .swipe-actions-front,
+.fridge-list .swipe-actions-front {
+  background: #fffdf8;
 }
 
 .fridge-block {
@@ -770,16 +820,13 @@
 }
 
 .fridge-row {
-  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: start;
   column-gap: 0.35rem;
   row-gap: 0.25rem;
-  padding: 0.5rem 0.55rem 0.5rem 0.6rem;
-  border-radius: 0.55rem;
+  padding: 0.5rem 0.6rem;
   background: #fffdf8;
-  overflow: visible;
 }
 
 .fridge-row-dish {
@@ -814,7 +861,6 @@
   align-items: center;
   align-self: center;
   gap: 0.15rem;
-  margin-right: 0.85rem;
 }
 
 .fridge-portions {
@@ -843,36 +889,6 @@
 .fridge-step-btn:disabled {
   opacity: 0.35;
   cursor: default;
-}
-
-.fridge-discard {
-  position: absolute;
-  top: -0.45rem;
-  right: -0.45rem;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.45rem;
-  height: 1.45rem;
-  margin: 0;
-  border: 1px solid #ddd6cb;
-  border-radius: 999px;
-  background: #fffdf8;
-  color: #9a8f86;
-  font: inherit;
-  font-size: 1.05rem;
-  font-weight: 500;
-  line-height: 1;
-  cursor: pointer;
-  padding: 0;
-  box-shadow: 0 1px 2px rgba(44, 41, 36, 0.08);
-}
-
-.fridge-discard:hover {
-  color: #6b3d36;
-  background: #f3e8e6;
-  text-decoration: none;
 }
 
 .fridge-row .side-picker {

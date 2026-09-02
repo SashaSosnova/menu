@@ -14,7 +14,6 @@ import {
   batchIdForDish,
   bumpFridgePortions,
   cookPortionsFromScale,
-  DISH_MARK_OPTIONS,
   displayDishMarkForDish,
   dishQueueGroup,
   fridgeDishKey,
@@ -45,6 +44,7 @@ import { scaleIngredientLine } from '../lib/portionScale'
 import { formatPortionYieldLine } from '../lib/recipeServings'
 import { ChildEatsMark } from './ChildEatsMark'
 import { RecipeStepsList } from './RecipeStepsList'
+import { SwipeActions } from './SwipeActions'
 
 function dishLabel(item: MenuDishRef): string {
   return menuRefLabel(item, (id) => getDish(id)?.name)
@@ -277,80 +277,78 @@ function DishRow({
 
   return (
     <li className="menu-dish-row menu-dish-row--main">
-      <div className={`menu-dish-card${plannedClass}${nextClass}${childClass}`}>
-        <div className="menu-dish-card-head">
-          <button
-            type="button"
-            className="menu-recipe-link menu-recipe-link--main"
-            aria-pressed={Boolean(planned)}
-            onClick={onTogglePlanned}
-          >
-            <span className="menu-recipe-link-text">
-              <span className="menu-recipe-link-name">
-                {dishLabel(item)}
-                {complete ? <span className="menu-replaced-tag">цельное</span> : null}
-                <ChildEatsMark dishId={item.dishId} />
+      <SwipeActions
+        left={{
+          label: planned ? 'Из плана' : 'В план',
+          tone: 'plan',
+          onClick: onTogglePlanned,
+        }}
+        right={{
+          label: cooked ? 'Не готово' : 'Готово',
+          tone: 'ok',
+          onClick: () => onToggleCooked(!cooked),
+        }}
+      >
+        <div className={`menu-dish-card${plannedClass}${nextClass}${childClass}`}>
+          <div className="menu-dish-card-head">
+            <button
+              type="button"
+              className="menu-recipe-link menu-recipe-link--main"
+              aria-pressed={Boolean(planned)}
+              onClick={onTogglePlanned}
+            >
+              <span className="menu-recipe-link-text">
+                <span className="menu-recipe-link-name">
+                  {dishLabel(item)}
+                  {complete ? <span className="menu-replaced-tag">цельное</span> : null}
+                  <ChildEatsMark dishId={item.dishId} />
+                </span>
               </span>
-            </span>
-          </button>
-          <button
-            type="button"
-            className="menu-recipe-open"
-            onClick={onOpenRecipe}
-            aria-label={`Рецепт: ${dishLabel(item)}`}
+            </button>
+            <button
+              type="button"
+              className="menu-recipe-open"
+              onClick={onOpenRecipe}
+              aria-label={`Рецепт: ${dishLabel(item)}`}
+            >
+              ›
+            </button>
+          </div>
+          <div
+            className="outcome-chips"
+            role="group"
+            aria-label={`${dishLabel(item)}: статус`}
           >
-            ›
-          </button>
-        </div>
-        <div
-          className="outcome-chips"
-          role="group"
-          aria-label={`${dishLabel(item)}: статус`}
-        >
-          <span className="menu-last-cooked">{lastCookedCaption(lastCooked)}</span>
-          {DISH_MARK_OPTIONS.map((opt) => (
-            <button
-              key={opt.id}
-              type="button"
-              className={cooked ? 'outcome-chip is-active' : 'outcome-chip'}
-              aria-pressed={cooked}
-              onClick={(e) => {
-                e.preventDefault()
-                e.stopPropagation()
-                onToggleCooked(!cooked)
+            <span className="menu-last-cooked">{lastCookedCaption(lastCooked)}</span>
+            {showSideChip ? (
+              <button
+                type="button"
+                className={sidePicked ? 'outcome-chip is-side is-active' : 'outcome-chip is-side'}
+                aria-expanded={sideOpen}
+                aria-label={sidePicked ? `Гарнир: ${sideLabelText}` : 'Без гарнира'}
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  setSideOpen((open) => !open)
+                }}
+              >
+                {sideLabelText}
+              </button>
+            ) : null}
+          </div>
+          {showSideChip && sideOpen ? (
+            <SidePickerList
+              options={availableSides}
+              selectedId={plannedSide}
+              onPick={(sideId) => {
+                onPickSide(sideId)
+                setSideOpen(false)
               }}
-            >
-              {opt.label}
-            </button>
-          ))}
-          {showSideChip ? (
-            <button
-              type="button"
-              className={sidePicked ? 'outcome-chip is-side is-active' : 'outcome-chip is-side'}
-              aria-expanded={sideOpen}
-              aria-label={sidePicked ? `Гарнир: ${sideLabelText}` : 'Без гарнира'}
-              onClick={(e) => {
-                e.preventDefault()
-                e.stopPropagation()
-                setSideOpen((open) => !open)
-              }}
-            >
-              {sideLabelText}
-            </button>
+              onOpenSide={(sideId) => onOpenSide({ dishId: sideId })}
+            />
           ) : null}
         </div>
-        {showSideChip && sideOpen ? (
-          <SidePickerList
-            options={availableSides}
-            selectedId={plannedSide}
-            onPick={(sideId) => {
-              onPickSide(sideId)
-              setSideOpen(false)
-            }}
-            onOpenSide={(sideId) => onOpenSide({ dishId: sideId })}
-          />
-        ) : null}
-      </div>
+      </SwipeActions>
     </li>
   )
 }
@@ -653,60 +651,62 @@ function FridgeRow({
   const age = fridgeAgeCaption(dish.cookedOn)
 
   return (
-    <li className="fridge-row">
-      <div className="fridge-row-dish">
-        <strong className="fridge-row-name">{dishName}</strong>
-        {age ? <span className="fridge-row-age">{age}</span> : null}
-        {canHaveSide ? (
-          <button
-            type="button"
-            className={sidePicked ? 'outcome-chip is-side is-active' : 'outcome-chip is-side'}
-            aria-expanded={sideOpen}
-            aria-label={sidePicked ? `Гарнир: ${sideLabelText}` : 'Без гарнира'}
-            onClick={() => setSideOpen((open) => !open)}
-          >
-            {sideLabelText}
-          </button>
-        ) : null}
-      </div>
-      <div className="fridge-step">
-        <button
-          type="button"
-          className="fridge-step-btn"
-          aria-label="Списать порцию"
-          onClick={() => onBoardChange((current) => bumpFridgePortions(current, dish.key, -1))}
-        >
-          −
-        </button>
-        <span className="fridge-portions">{dish.remaining} пор.</span>
-        <button
-          type="button"
-          className="fridge-step-btn"
-          aria-label="Вернуть порцию"
-          disabled={dish.remaining >= dish.cookedPortions}
-          onClick={() => onBoardChange((current) => bumpFridgePortions(current, dish.key, 1))}
-        >
-          +
-        </button>
-      </div>
-      <button
-        type="button"
-        className="fridge-discard"
-        aria-label="Убрать"
-        onClick={() => onDiscard(dish.key)}
+    <li>
+      <SwipeActions
+        right={{
+          label: 'Удалить',
+          tone: 'danger',
+          onClick: () => onDiscard(dish.key),
+        }}
       >
-        ×
-      </button>
-      {canHaveSide && sideOpen ? (
-        <SidePickerList
-          options={availableSides}
-          selectedId={selectedSide}
-          onPick={(sideId) => {
-            onPickSide(sideId)
-            setSideOpen(false)
-          }}
-        />
-      ) : null}
+        <div className="fridge-row">
+          <div className="fridge-row-dish">
+            <strong className="fridge-row-name">{dishName}</strong>
+            {age ? <span className="fridge-row-age">{age}</span> : null}
+            {canHaveSide ? (
+              <button
+                type="button"
+                className={sidePicked ? 'outcome-chip is-side is-active' : 'outcome-chip is-side'}
+                aria-expanded={sideOpen}
+                aria-label={sidePicked ? `Гарнир: ${sideLabelText}` : 'Без гарнира'}
+                onClick={() => setSideOpen((open) => !open)}
+              >
+                {sideLabelText}
+              </button>
+            ) : null}
+          </div>
+          <div className="fridge-step">
+            <button
+              type="button"
+              className="fridge-step-btn"
+              aria-label="Списать порцию"
+              onClick={() => onBoardChange((current) => bumpFridgePortions(current, dish.key, -1))}
+            >
+              −
+            </button>
+            <span className="fridge-portions">{dish.remaining} пор.</span>
+            <button
+              type="button"
+              className="fridge-step-btn"
+              aria-label="Вернуть порцию"
+              disabled={dish.remaining >= dish.cookedPortions}
+              onClick={() => onBoardChange((current) => bumpFridgePortions(current, dish.key, 1))}
+            >
+              +
+            </button>
+          </div>
+          {canHaveSide && sideOpen ? (
+            <SidePickerList
+              options={availableSides}
+              selectedId={selectedSide}
+              onPick={(sideId) => {
+                onPickSide(sideId)
+                setSideOpen(false)
+              }}
+            />
+          ) : null}
+        </div>
+      </SwipeActions>
     </li>
   )
 }

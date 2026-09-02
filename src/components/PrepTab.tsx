@@ -17,6 +17,7 @@ import { lastCookedOnForDishes, type CookBoard } from '../data/cookBoard'
 import { frozenOnCaption, isoDate, lastCookedCaption } from '../data/calendar'
 import { useMenuSync } from '../hooks/useMenuSync'
 import type { MealStatsStore } from '../data/mealStats'
+import { SwipeActions } from './SwipeActions'
 
 function FrozenOnEdit({
   frozenOn,
@@ -82,7 +83,6 @@ function PackLine({
   amount,
   cookedLabel,
   frozenOn,
-  checked,
   isNext,
   pool,
   onToggle,
@@ -92,36 +92,38 @@ function PackLine({
   amount: string
   cookedLabel?: string
   frozenOn?: string
-  checked: boolean
   isNext?: boolean
   pool: 'freezer' | 'future'
   onToggle: (packed: boolean) => void
   onFrozenOnChange?: (iso: string) => void
 }) {
   return (
-    <div
-      className={['prep-item', pool === 'freezer' ? 'is-frozen' : '', isNext ? 'is-next' : '']
-        .filter(Boolean)
-        .join(' ')}
+    <SwipeActions
+      right={
+        pool === 'freezer'
+          ? { label: 'Снять', tone: 'danger', onClick: () => onToggle(false) }
+          : { label: 'В морозилку', tone: 'ok', onClick: () => onToggle(true) }
+      }
     >
-      <label className="prep-item-main">
-        <input
-          type="checkbox"
-          checked={checked}
-          onChange={(event) => onToggle(event.target.checked)}
-        />
-        <span className="prep-body">
-          <span className="prep-head">
-            <span className="prep-product">{label}</span>
-            <span className="prep-amount">{amount}</span>
+      <div
+        className={['prep-item', pool === 'freezer' ? 'is-frozen' : '', isNext ? 'is-next' : '']
+          .filter(Boolean)
+          .join(' ')}
+      >
+        <div className="prep-item-main">
+          <span className="prep-body">
+            <span className="prep-head">
+              <span className="prep-product">{label}</span>
+              <span className="prep-amount">{amount}</span>
+            </span>
+            {cookedLabel ? <span className="menu-last-cooked">{cookedLabel}</span> : null}
           </span>
-          {cookedLabel ? <span className="menu-last-cooked">{cookedLabel}</span> : null}
-        </span>
-      </label>
-      {pool === 'freezer' && onFrozenOnChange ? (
-        <FrozenOnEdit frozenOn={frozenOn} onChange={onFrozenOnChange} />
-      ) : null}
-    </div>
+        </div>
+        {pool === 'freezer' && onFrozenOnChange ? (
+          <FrozenOnEdit frozenOn={frozenOn} onChange={onFrozenOnChange} />
+        ) : null}
+      </div>
+    </SwipeActions>
   )
 }
 
@@ -162,7 +164,6 @@ function GroupList({
               frozenOn={frozenOnOf(freezer, pack.id)}
               isNext={isNext}
               pool={pool}
-              checked={isPrepInFreezer(freezer, pack.id)}
               onToggle={(packed) => onToggle(pack.id, packed)}
               onFrozenOnChange={(iso) => onFrozenOnChange(pack.id, iso)}
             />
