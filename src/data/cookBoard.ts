@@ -406,14 +406,18 @@ export function applyFridgeLeftoverPatch(board: CookBoard): CookBoard {
 }
 
 export const COOKED_ON_PATCH = '2026-08-cooked-dates-3'
+export const COOKED_ON_FILL_PATCH = '2026-09-fill-missing-cooked-on-1'
+export const LEGS_WINGS_COOKED_ON_PATCH = '2026-09-legs-wings-aug-30'
 
 const COOKED_ON_DATES: Record<string, string> = {
   chicken_tomato_cream: '2026-08-03',
-  chicken_legs_paprika: '2026-08-05',
+  chicken_legs_honey: '2026-08-30',
+  chicken_legs_paprika: '2026-08-30',
   bolognese: '2026-08-07',
   trout: '2026-08-10',
   chicken_cutlets: '2026-08-10',
-  wings_soy: '2026-08-12',
+  wings_soy: '2026-08-30',
+  wings_paprika: '2026-08-30',
   shrimp_pasta: '2026-08-14',
   beef_stroganoff: '2026-08-14',
   pollock: '2026-08-17',
@@ -457,6 +461,59 @@ export function applyCookedOnPatch(board: CookBoard): CookBoard {
     fridge,
     cooked,
     patches: [...patches, COOKED_ON_PATCH],
+  }
+}
+
+/** Вернуть августовские даты, если случайное «Готово» стёрло сид. */
+export function applyMissingCookedOnFill(board: CookBoard): CookBoard {
+  const patches = board.patches ?? []
+  if (patches.includes(COOKED_ON_FILL_PATCH)) return board
+  const today = isoDate()
+  const inFridge = new Set(
+    board.fridge.filter((d) => d.remaining > 0).map((d) => d.dishId),
+  )
+  const lastCookedOn = { ...(board.lastCookedOn ?? {}) }
+  for (const [dishId, iso] of Object.entries(COOKED_ON_DATES)) {
+    if (!lastCookedOn[dishId]) lastCookedOn[dishId] = iso
+  }
+  for (const [dishId, iso] of Object.entries(lastCookedOn)) {
+    if (inFridge.has(dishId)) continue
+    if (iso !== today && iso <= today) continue
+    const seeded = COOKED_ON_DATES[dishId]
+    if (seeded) lastCookedOn[dishId] = seeded
+    else delete lastCookedOn[dishId]
+  }
+  return {
+    ...board,
+    lastCookedOn,
+    patches: [...patches, COOKED_ON_FILL_PATCH],
+  }
+}
+
+const LEGS_WINGS_COOKED_ON = '2026-08-30'
+const LEGS_WINGS_DISH_IDS = [
+  'chicken_legs_honey',
+  'chicken_legs_paprika',
+  'wings_soy',
+  'wings_paprika',
+] as const
+
+/** Ножки и крылья готовили 30 августа — не из слота календаря и не из случайного «Готово». */
+export function applyLegsWingsCookedOnPatch(board: CookBoard): CookBoard {
+  const patches = board.patches ?? []
+  if (patches.includes(LEGS_WINGS_COOKED_ON_PATCH)) return board
+  const lastCookedOn = { ...(board.lastCookedOn ?? {}) }
+  for (const dishId of LEGS_WINGS_DISH_IDS) lastCookedOn[dishId] = LEGS_WINGS_COOKED_ON
+  const fridge = board.fridge.map((dish) =>
+    (LEGS_WINGS_DISH_IDS as readonly string[]).includes(dish.dishId)
+      ? { ...dish, cookedOn: LEGS_WINGS_COOKED_ON }
+      : dish,
+  )
+  return {
+    ...board,
+    lastCookedOn,
+    fridge,
+    patches: [...patches, LEGS_WINGS_COOKED_ON_PATCH],
   }
 }
 
@@ -607,7 +664,9 @@ export function resolveCookBoard(
 ): CookBoard {
   let board = advanceCookBoard(normalizeCookBoard(raw), todayCycle)
   if (isBareCookBoard(board)) board = seedPastPlanCooks(board)
-  return applyCookedOnPatch(applyFridgeLeftoverPatch(board))
+  return applyLegsWingsCookedOnPatch(
+    applyMissingCookedOnFill(applyCookedOnPatch(applyFridgeLeftoverPatch(board))),
+  )
 }
 
 function dishKeyMatches(key: string, dishId: string): boolean {
@@ -792,7 +851,11 @@ function forgetDishCook(
   delete dishMarks[key]
   const fridge = board.fridge.filter((d) => d.key !== key)
   const lastCookedOn = { ...(board.lastCookedOn ?? {}) }
-  if (cookedOn && lastCookedOn[dishId] === cookedOn) delete lastCookedOn[dishId]
+  if (cookedOn && lastCookedOn[dishId] === cookedOn) {
+    const seeded = COOKED_ON_DATES[dishId]
+    if (seeded && seeded < cookedOn) lastCookedOn[dishId] = seeded
+    else delete lastCookedOn[dishId]
+  }
   const prepTaken = { ...(board.prepTaken ?? {}) }
   delete prepTaken[key]
   const nextBoard = { ...board, dishMarks, fridge, lastCookedOn, prepTaken }

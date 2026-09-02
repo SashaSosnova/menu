@@ -9,7 +9,7 @@ import { dishMeta, childEatsKind, isCompleteDish, matchingSideIds } from '../dat
 import { getDish } from '../data/dishes'
 import { formatMacros } from '../lib/macros'
 import { getCookbookDish, getEffectiveRecipe, type CookbookStore } from '../data/cookbook'
-import { isoDate, lastCookedCaption } from '../data/calendar'
+import { fridgeAgeCaption, isoDate, lastCookedCaption } from '../data/calendar'
 import {
   batchIdForDish,
   bumpFridgePortions,
@@ -272,7 +272,6 @@ function DishRow({
   const childClass = childKind ? ` is-child-${childKind}` : ''
   const canHaveSide = availableSides.length > 0
   const showSideChip = Boolean((planned || preview) && canHaveSide)
-  const showCompleteNote = Boolean((planned || preview) && complete && !canHaveSide)
   const sideLabelText = sideChipLabel(plannedSide, availableSides)
   const sidePicked = typeof plannedSide === 'string'
 
@@ -292,7 +291,6 @@ function DishRow({
                 {complete ? <span className="menu-replaced-tag">цельное</span> : null}
                 <ChildEatsMark dishId={item.dishId} />
               </span>
-              <span className="menu-last-cooked">{lastCookedCaption(lastCooked)}</span>
             </span>
           </button>
           <button
@@ -309,6 +307,7 @@ function DishRow({
           role="group"
           aria-label={`${dishLabel(item)}: статус`}
         >
+          <span className="menu-last-cooked">{lastCookedCaption(lastCooked)}</span>
           {DISH_MARK_OPTIONS.map((opt) => (
             <button
               key={opt.id}
@@ -340,9 +339,6 @@ function DishRow({
             </button>
           ) : null}
         </div>
-        {showCompleteNote ? (
-          <p className="plan-sides-note">Цельное — отдельный гарнир не нужен</p>
-        ) : null}
         {showSideChip && sideOpen ? (
           <SidePickerList
             options={availableSides}
@@ -654,40 +650,14 @@ function FridgeRow({
   const canHaveSide = availableSides.length > 0
   const sideLabelText = sideChipLabel(selectedSide, availableSides)
   const sidePicked = typeof selectedSide === 'string'
+  const age = fridgeAgeCaption(dish.cookedOn)
 
   return (
     <li className="fridge-row">
-      <div className="fridge-row-main">
-        <div className="fridge-row-text">
-          <strong>{dishName}</strong>
-          <span className="menu-last-cooked">{lastCookedCaption(dish.cookedOn)}</span>
-        </div>
-        <div className="fridge-step">
-          <button
-            type="button"
-            className="fridge-step-btn"
-            aria-label="Списать порцию"
-            onClick={() => onBoardChange((current) => bumpFridgePortions(current, dish.key, -1))}
-          >
-            −
-          </button>
-          <span className="fridge-portions">{dish.remaining} пор.</span>
-          <button
-            type="button"
-            className="fridge-step-btn"
-            aria-label="Вернуть порцию"
-            disabled={dish.remaining >= dish.cookedPortions}
-            onClick={() => onBoardChange((current) => bumpFridgePortions(current, dish.key, 1))}
-          >
-            +
-          </button>
-          <button type="button" className="fridge-discard" onClick={() => onDiscard(dish.key)}>
-            Убрать
-          </button>
-        </div>
-      </div>
-      {canHaveSide ? (
-        <div className="outcome-chips" role="group" aria-label={`${dishName}: гарнир`}>
+      <div className="fridge-row-dish">
+        <strong className="fridge-row-name">{dishName}</strong>
+        {age ? <span className="fridge-row-age">{age}</span> : null}
+        {canHaveSide ? (
           <button
             type="button"
             className={sidePicked ? 'outcome-chip is-side is-active' : 'outcome-chip is-side'}
@@ -697,8 +667,36 @@ function FridgeRow({
           >
             {sideLabelText}
           </button>
-        </div>
-      ) : null}
+        ) : null}
+      </div>
+      <div className="fridge-step">
+        <button
+          type="button"
+          className="fridge-step-btn"
+          aria-label="Списать порцию"
+          onClick={() => onBoardChange((current) => bumpFridgePortions(current, dish.key, -1))}
+        >
+          −
+        </button>
+        <span className="fridge-portions">{dish.remaining} пор.</span>
+        <button
+          type="button"
+          className="fridge-step-btn"
+          aria-label="Вернуть порцию"
+          disabled={dish.remaining >= dish.cookedPortions}
+          onClick={() => onBoardChange((current) => bumpFridgePortions(current, dish.key, 1))}
+        >
+          +
+        </button>
+      </div>
+      <button
+        type="button"
+        className="fridge-discard"
+        aria-label="Убрать"
+        onClick={() => onDiscard(dish.key)}
+      >
+        ×
+      </button>
       {canHaveSide && sideOpen ? (
         <SidePickerList
           options={availableSides}

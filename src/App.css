@@ -747,8 +747,9 @@
   display: grid;
   gap: 0.55rem;
   margin: 0.55rem 0 0;
-  padding: 0;
+  padding: 0.35rem 0.4rem 0.15rem 0;
   list-style: none;
+  overflow: visible;
 }
 
 .fridge-block {
@@ -769,57 +770,71 @@
 }
 
 .fridge-row {
+  position: relative;
   display: grid;
-  gap: 0.45rem;
-  padding: 0.65rem 0.7rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  column-gap: 0.35rem;
+  row-gap: 0.25rem;
+  padding: 0.5rem 0.55rem 0.5rem 0.6rem;
   border-radius: 0.55rem;
   background: #fffdf8;
+  overflow: visible;
 }
 
-.fridge-row-main {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.55rem 0.75rem;
-}
-
-.fridge-row-text {
+.fridge-row-dish {
   display: grid;
-  gap: 0.1rem;
+  justify-items: start;
+  gap: 0.2rem;
   min-width: 0;
 }
 
-.fridge-row-text strong {
-  font-size: 0.95rem;
+.fridge-row-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1.25;
   color: #2f4a3a;
+}
+
+.fridge-row-age {
+  font-size: 0.72rem;
+  font-weight: 500;
+  line-height: 1.25;
+  color: #8a847a;
+}
+
+.fridge-row-dish .outcome-chip.is-side {
+  max-width: 100%;
 }
 
 .fridge-step {
   display: flex;
   flex-shrink: 0;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 0.3rem;
+  align-self: center;
+  gap: 0.15rem;
+  margin-right: 0.85rem;
 }
 
 .fridge-portions {
-  min-width: 3.4rem;
+  min-width: 2.6rem;
   text-align: center;
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   font-weight: 700;
+  line-height: 1.2;
   color: #2f4a3a;
 }
 
 .fridge-step-btn {
-  width: 1.85rem;
-  height: 1.85rem;
+  width: 1.65rem;
+  height: 1.65rem;
   border: 1px solid #ddd6cb;
   border-radius: 999px;
   background: #fff;
   color: #2f4a3a;
   font: inherit;
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 700;
   line-height: 1;
   cursor: pointer;
@@ -831,29 +846,38 @@
 }
 
 .fridge-discard {
-  margin-left: 0.15rem;
-  border: 0;
-  background: none;
-  color: #8a5a52;
+  position: absolute;
+  top: -0.45rem;
+  right: -0.45rem;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.45rem;
+  height: 1.45rem;
+  margin: 0;
+  border: 1px solid #ddd6cb;
+  border-radius: 999px;
+  background: #fffdf8;
+  color: #9a8f86;
   font: inherit;
-  font-size: 0.78rem;
+  font-size: 1.05rem;
+  font-weight: 500;
+  line-height: 1;
   cursor: pointer;
-  padding: 0.2rem 0.35rem;
+  padding: 0;
+  box-shadow: 0 1px 2px rgba(44, 41, 36, 0.08);
 }
 
 .fridge-discard:hover {
   color: #6b3d36;
-  text-decoration: underline;
-}
-
-.fridge-row .outcome-chips {
-  padding: 0 0 0.1rem;
-  background: transparent;
-  border-top: 0;
+  background: #f3e8e6;
+  text-decoration: none;
 }
 
 .fridge-row .side-picker {
-  margin: 0.15rem 0 0;
+  grid-column: 1 / -1;
+  margin: 0;
   padding: 0.35rem;
   border-radius: 0.45rem;
   border: 1px solid rgba(0, 0, 0, 0.06);
@@ -945,6 +969,35 @@
 @media (max-width: 639px) {
   .buy-list {
     grid-template-columns: 1fr;
+  }
+
+  .main {
+    padding: 0.85rem 0.7rem 2rem;
+  }
+
+  .app-header {
+    padding: 0.65rem 0.7rem;
+    gap: 0.5rem 0.75rem;
+  }
+
+  .recommended-cook,
+  .upcoming-cook {
+    padding-left: 0.45rem;
+    padding-right: 0.45rem;
+  }
+
+  .menu-recipe-link-name {
+    font-size: 0.88rem;
+  }
+
+  .child-eats-mark {
+    width: 1.05rem;
+    height: 1.05rem;
+    margin-left: 0.25rem;
+  }
+
+  .fridge-list {
+    gap: 0.4rem;
   }
 }
 
@@ -1142,7 +1195,7 @@
   border: 0;
   border-radius: 0;
   background: transparent;
-  padding: 0.45rem 0.55rem;
+  padding: 0.38rem 0.5rem;
   text-align: left;
   cursor: pointer;
   font: inherit;
@@ -1160,14 +1213,13 @@
 
 .menu-recipe-link-text {
   display: grid;
-  gap: 0.12rem;
   min-width: 0;
 }
 
 .menu-recipe-link-name {
   font-weight: 700;
-  font-size: 1rem;
-  line-height: 1.3;
+  font-size: 0.92rem;
+  line-height: 1.25;
   color: #2c2924;
   min-width: 0;
 }
@@ -1236,13 +1288,14 @@
 
 .menu-replaced-tag {
   display: inline-block;
-  margin-left: 0.4rem;
-  font-size: 0.68rem;
+  margin-left: 0.3rem;
+  font-size: 0.62rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: #6b655b;
-  vertical-align: middle;
+  vertical-align: 0.08em;
+  white-space: nowrap;
 }
 
 .child-eats-mark {
@@ -1355,10 +1408,15 @@
 .outcome-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.2rem;
-  padding: 0.3rem 0.55rem 0.4rem;
+  align-items: center;
+  gap: 0.2rem 0.35rem;
+  padding: 0.22rem 0.5rem 0.28rem;
   background: #fffdf8;
   border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.outcome-chips .menu-last-cooked {
+  margin-right: auto;
 }
 
 .menu-dish-row--main .outcome-chips {

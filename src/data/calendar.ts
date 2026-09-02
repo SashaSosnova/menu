@@ -154,8 +154,16 @@ export function formatLastCookedOn(iso: string, today: Date = new Date()): strin
 }
 
 export function lastCookedCaption(iso?: string, today: Date = new Date()): string {
-  if (!iso) return 'ещё не готовили'
+  if (!iso) return 'не готовили'
   return `готовили ${formatLastCookedOn(iso, today)}`
+}
+
+/** Возраст остатка: сегодня в холодильнике не пишем, старше — «вчера» / «N дн. назад». */
+export function fridgeAgeCaption(iso?: string, today: Date = new Date()): string | undefined {
+  if (!iso) return undefined
+  const days = daysBetween(dateFromIso(iso), startOfDay(today))
+  if (days <= 0) return undefined
+  return formatLastCookedOn(iso, today)
 }
 
 /** «заморозили сегодня», «вчера», «N дн. назад» или дата. */
