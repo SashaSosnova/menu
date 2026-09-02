@@ -1,0 +1,237 @@
+{
+  "version": 1,
+  "exportedAt": "2026-08-07T10:31:29.429Z",
+  "dishes": {
+    "chicken_meatballs": {
+      "name": "Куриные фрикадельки в соусе",
+      "kcal": 152.7,
+      "protein": 18.4,
+      "fat": 6.5,
+      "carbs": 4.7
+    },
+    "bolognese": {
+      "name": "Паста болоньезе",
+      "kcal": 118.9,
+      "protein": 12.6,
+      "fat": 4.3,
+      "carbs": 4.3
+    },
+    "chicken_stroganoff": {
+      "name": "Куриный строганов",
+      "kcal": 176.4,
+      "protein": 20.7,
+      "fat": 9,
+      "carbs": 2.7
+    },
+    "trout": {
+      "name": "Форель в аэрогриле",
+      "kcal": 286,
+      "protein": 26.6,
+      "fat": 19.9,
+      "carbs": 0.1
+    },
+    "goulash": {
+      "name": "Гуляш с паприкой",
+      "kcal": 142.3,
+      "protein": 12.3,
+      "fat": 6.9,
+      "carbs": 5.5
+    },
+    "chicken_cutlets": {
+      "name": "Куриные котлеты",
+      "kcal": 171.3,
+      "protein": 26.8,
+      "fat": 4.9,
+      "carbs": 4.6
+    },
+    "mash": {
+      "name": "Картофельное пюре",
+      "kcal": 116.6,
+      "protein": 2.2,
+      "fat": 4.3,
+      "carbs": 17.7
+    },
+    "roast_veg": {
+      "name": "Овощи в духовке с маринадом",
+      "kcal": 68.6,
+      "protein": 2.1,
+      "fat": 3.4,
+      "carbs": 8
+    },
+    "beef_pulled": {
+      "name": "Рваная говядина в красном вине",
+      "kcal": 104.9,
+      "protein": 9.7,
+      "fat": 4.1,
+      "carbs": 4.2
+    },
+    "chicken_legs_paprika": {
+      "name": "Ножки в паприке",
+      "kcal": 219.6,
+      "protein": 28.4,
+      "fat": 11,
+      "carbs": 0.7
+    },
+    "beef_stroganoff": {
+      "name": "Бефстроганов",
+      "kcal": 186.9,
+      "protein": 16.2,
+      "fat": 10.5,
+      "carbs": 2.7
+    },
+    "beef_meatballs": {
+      "name": "Говяжьи тефтели в томатно-сметанном соусе",
+      "kcal": 160.2,
+      "protein": 14,
+      "fat": 8.1,
+      "carbs": 4.4
+    },
+    "broccoli_steam": {
+      "name": "Брокколи в аэрогриле с пармезаном",
+      "kcal": 60.5,
+      "protein": 4.7,
+      "fat": 2.4,
+      "carbs": 6.9
+    },
+    "chicken_schnitzel": {
+      "name": "Куриные отбивные в панировке",
+      "kcal": 214.6,
+      "protein": 22.9,
+      "fat": 9,
+      "carbs": 10.2
+    },
+    "pollock": {
+      "name": "Минтай с овощами и сыром",
+      "kcal": 150.7,
+      "protein": 17,
+      "fat": 7.8,
+      "carbs": 2.6
+    },
+    "wings_soy": {
+      "name": "Крылья соево-медовые",
+      "kcal": 241,
+      "protein": 22.8,
+      "fat": 16.3,
+      "carbs": 0.8
+    },
+    "rice_veg": {
+      "name": "Рис с луком и морковью",
+      "kcal": 141.8,
+      "protein": 2.5,
+      "fat": 3.6,
+      "carbs": 24.8
+    },
+    "wings_paprika": {
+      "name": "Крылья в паприке",
+      "kcal": 247.8,
+      "protein": 23.5,
+      "fat": 16.9,
+      "carbs": 0.5
+    },
+    "chicken_pasta_mushroom": {
+      "name": "Паста с курицей и грибами",
+      "kcal": 135.8,
+      "protein": 11.2,
+      "fat": 3.4,
+      "carbs": 14.7
+    },
+    "buckwheat_veg": {
+      "name": "Гречка с луком и морковью",
+      "kcal": 156.5,
+      "protein": 4.7,
+      "fat": 4.8,
+      "carbs": 25.8
+    },
+    "chicken_legs_honey": {
+      "name": "Ножки медово-чесночные",
+      "kcal": 219.9,
+      "protein": 28.3,
+      "fat": 10.9,
+      "carbs": 1
+    },
+    "boiled_potato": {
+      "name": "Картофель отварной",
+      "kcal": 103.8,
+      "protein": 2.2,
+      "fat": 2.1,
+      "carbs": 19.5
+    },
+    "shrimp_pasta": {
+      "name": "Паста с креветками",
+      "kcal": 149.3,
+      "protein": 10,
+      "fat": 4,
+      "carbs": 18
+    },
+    "bulgur_veg": {
+      "name": "Булгур с луком и морковью",
+      "kcal": 143.6,
+      "protein": 4.1,
+      "fat": 3.7,
+      "carbs": 24.8
+    },
+    "thighs_sour_cream": {
+      "name": "Бёдра в грибном сметанном соусе",
+      "kcal": 274.6,
+      "protein": 20.5,
+      "fat": 21.1,
+      "carbs": 0.7
+    },
+    "trout_spinach": {
+      "name": "Форель со шпинатом и черри в сливках",
+      "kcal": 227.8,
+      "protein": 17.7,
+      "fat": 16.7,
+      "carbs": 1.9
+    },
+    "pasta": {
+      "name": "Макароны",
+      "kcal": 151.8,
+      "protein": 6.1,
+      "fat": 0.7,
+      "carbs": 29.9
+    },
+    "veg_salad": {
+      "name": "Свежий овощной салат",
+      "kcal": 53.2,
+      "protein": 1.4,
+      "fat": 3.5,
+      "carbs": 4.7
+    },
+    "chicken_tomato_cream": {
+      "name": "Курица в томатно-сметанном соусе",
+      "kcal": 114.6,
+      "protein": 13,
+      "fat": 4.8,
+      "carbs": 4.6
+    },
+    "shrimp_rice_hainan": {
+      "name": "Золотой рис с креветками (Хайнань)",
+      "kcal": 125.9,
+      "protein": 7,
+      "fat": 2.5,
+      "carbs": 19.3
+    },
+    "beef_roast_herb": {
+      "name": "Говядина в горчично-травной корочке",
+      "kcal": 155.3,
+      "protein": 15.6,
+      "fat": 6.7,
+      "carbs": 2.3
+    },
+    "cauliflower": {
+      "name": "Цветная капуста",
+      "kcal": 53,
+      "protein": 2.4,
+      "fat": 2.7,
+      "carbs": 5.5
+    },
+    "beef_potato_stew": {
+      "name": "Картофель тушёный с говядиной",
+      "kcal": 116.2,
+      "protein": 10.2,
+      "fat": 2.9,
+      "carbs": 10.3
+    }
+  }
+}
