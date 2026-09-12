@@ -16,13 +16,6 @@
       "fat": 4.3,
       "carbs": 4.3
     },
-    "chicken_stroganoff": {
-      "name": "Куриный строганов",
-      "kcal": 176.4,
-      "protein": 20.7,
-      "fat": 9,
-      "carbs": 2.7
-    },
     "trout": {
       "name": "Форель в аэрогриле",
       "kcal": 286,
@@ -65,13 +58,6 @@
       "fat": 4.1,
       "carbs": 4.2
     },
-    "chicken_legs_paprika": {
-      "name": "Ножки в паприке",
-      "kcal": 219.6,
-      "protein": 28.4,
-      "fat": 11,
-      "carbs": 0.7
-    },
     "beef_stroganoff": {
       "name": "Бефстроганов",
       "kcal": 186.9,
@@ -107,26 +93,12 @@
       "fat": 7.8,
       "carbs": 2.6
     },
-    "wings_soy": {
-      "name": "Крылья соево-медовые",
-      "kcal": 241,
-      "protein": 22.8,
-      "fat": 16.3,
-      "carbs": 0.8
-    },
     "rice_veg": {
       "name": "Рис с луком и морковью",
       "kcal": 141.8,
       "protein": 2.5,
       "fat": 3.6,
       "carbs": 24.8
-    },
-    "wings_paprika": {
-      "name": "Крылья в паприке",
-      "kcal": 247.8,
-      "protein": 23.5,
-      "fat": 16.9,
-      "carbs": 0.5
     },
     "chicken_pasta_mushroom": {
       "name": "Паста с курицей и грибами",
@@ -141,13 +113,6 @@
       "protein": 4.7,
       "fat": 4.8,
       "carbs": 25.8
-    },
-    "chicken_legs_honey": {
-      "name": "Ножки медово-чесночные",
-      "kcal": 219.9,
-      "protein": 28.3,
-      "fat": 10.9,
-      "carbs": 1
     },
     "boiled_potato": {
       "name": "Картофель отварной",

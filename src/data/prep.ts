@@ -3,11 +3,16 @@
  * label = подпись на пакет; dishIds = блюда, для которых этот пакет.
  */
 
+import { getDish } from './dishes'
+import { parseIngredientAmount } from '../lib/portionScale'
+
 export type PrepPack = {
   id: string
   /** Подпись на пакет: «тип мяса · вид разделки · полное название блюда» */
   label: string
   amount: string
+  /** Сколько чего крутить в этот пакет */
+  how?: string
   /** Блюда из цикла, для которых достаём этот пакет */
   dishIds?: string[]
 }
@@ -42,8 +47,7 @@ export const prepGroups: PrepGroup[] = [
   {
     id: 'beef',
     title: 'Говядина',
-    intro:
-      '4,3 кг говядины, плюс 300 г свинины в фарш болоньезе. Сначала соломка, потом кубики, крупные куски, в конце фарш.',
+    intro: 'Сначала соломка, потом кубики, крупные куски, в конце фарш.',
     items: [
       {
         id: 'beef-strips-stroganoff',
@@ -92,29 +96,38 @@ export const prepGroups: PrepGroup[] = [
         ],
       },
       {
-        id: 'beef-mince-bolognese',
-        label: 'Говядина и свинина · фарш · Паста болоньезе',
-        amount: '700 г',
-        how: '400 г говядина + 300 г свинина, прокрутить вместе.',
-        dishIds: ['bolognese'],
-      },
-      {
         id: 'beef-mince',
         label: 'Фарш',
-        amount: '950 г',
-        how: 'Прокрутить или купить готовый.',
+        amount: '2 кг',
+        how: 'Прокрутить вместе. В каждом пакете — говядина и свинина.',
         packs: [
           {
+            id: 'beef-mince-bolognese',
+            label: 'Говядина и свинина · фарш · Паста болоньезе',
+            amount: '450 г',
+            how: '250 г говядина + 200 г свинина, прокрутить вместе.',
+            dishIds: ['bolognese'],
+          },
+          {
             id: 'beef-mince-navy',
-            label: 'Говядина · фарш · Макароны по-флотски',
+            label: 'Говядина и свинина · фарш · Макароны по-флотски',
             amount: '500 г',
+            how: '300 г говядина + 200 г свинина, прокрутить вместе.',
             dishIds: ['navy_pasta'],
           },
           {
             id: 'beef-meatballs-pack',
-            label: 'Говядина · фарш · Говяжьи тефтели в томатно-сметанном соусе',
+            label: 'Говядина и свинина · фарш · Говяжьи тефтели в томатно-сметанном соусе',
             amount: '450 г',
+            how: '250 г говядина + 200 г свинина, прокрутить вместе.',
             dishIds: ['beef_meatballs'],
+          },
+          {
+            id: 'beef-mince-cutlets',
+            label: 'Говядина и свинина · фарш · Котлеты из говядины и свинины',
+            amount: '600 г',
+            how: '350 г говядина + 250 г свинина, прокрутить вместе.',
+            dishIds: ['beef_pork_cutlets'],
           },
         ],
       },
@@ -123,7 +136,7 @@ export const prepGroups: PrepGroup[] = [
   {
     id: 'chicken-fillet',
     title: 'Курица',
-    intro: 'Филе, ножки, крылья, бёдра, печень.',
+    intro: 'Филе грудки, филе бедра, бедро на кости, печень.',
     items: [
       {
         id: 'chick-cubes',
@@ -145,20 +158,6 @@ export const prepGroups: PrepGroup[] = [
         ],
       },
       {
-        id: 'chick-strips',
-        label: 'Соломка',
-        amount: '600 г',
-        how: 'Как для бефстроганова — полоски ~1 см.',
-        packs: [
-          {
-            id: 'chick-strips-stroganoff',
-            label: 'Курица · соломка · Куриный строганов',
-            amount: '600 г',
-            dishIds: ['chicken_stroganoff'],
-          },
-        ],
-      },
-      {
         id: 'chick-schnitzel',
         label: 'Отбивные',
         amount: '600 г',
@@ -176,18 +175,20 @@ export const prepGroups: PrepGroup[] = [
         id: 'chick-mince',
         label: 'Фарш',
         amount: '1,2 кг',
-        how: 'Котлеты — из филе. Фрикадельки — лучше из бедра, не из одной грудки.',
+        how: 'Поровну грудка и филе бедра, прокрутить вместе.',
         packs: [
           {
             id: 'chick-mince-cutlets-w2',
             label: 'Курица · фарш · Куриные котлеты',
             amount: '600 г',
+            how: '300 г грудка + 300 г филе бедра, прокрутить вместе.',
             dishIds: ['chicken_cutlets'],
           },
           {
             id: 'chick-mince-meatballs-w4',
             label: 'Курица · фарш · Куриные фрикадельки в соусе',
             amount: '600 г',
+            how: '300 г грудка + 300 г филе бедра, прокрутить вместе.',
             dishIds: ['chicken_meatballs'],
           },
         ],
@@ -200,51 +201,11 @@ export const prepGroups: PrepGroup[] = [
         dishIds: ['chicken_grill'],
       },
       {
-        id: 'chick-legs',
-        label: 'Ножки',
-        amount: '2 кг',
-        how: 'Медово-чесночные: мёд 5 г + чеснок 10 г + паприка 2 г + масло + соль. Паприка: паприка 5 г + чеснок 10 г + масло + соль.',
-        packs: [
-          {
-            id: 'legs-w1',
-            label: 'Курица · ножки · Ножки медово-чесночные',
-            amount: '1 кг',
-            dishIds: ['chicken_legs_honey'],
-          },
-          {
-            id: 'legs-w3',
-            label: 'Курица · ножки · Ножки в паприке',
-            amount: '1 кг',
-            dishIds: ['chicken_legs_paprika'],
-          },
-        ],
-      },
-      {
-        id: 'wings',
-        label: 'Крылья',
-        amount: '3 кг',
-        how: 'Соево-медовые: соевый 45 г + мёд 5 г + паприка 2 г + чеснок 5 г. Паприка: паприка 5 г + чеснок 10 г + масло + соль.',
-        packs: [
-          {
-            id: 'wings-w2',
-            label: 'Курица · крылья · Крылья соево-медовые',
-            amount: '1,5 кг',
-            dishIds: ['wings_soy'],
-          },
-          {
-            id: 'wings-paprika',
-            label: 'Курица · крылья · Крылья в паприке',
-            amount: '1,5 кг',
-            dishIds: ['wings_paprika'],
-          },
-        ],
-      },
-      {
         id: 'thighs-cream',
-        label: 'Курица · бёдра · Бёдра в грибном сметанном соусе',
+        label: 'Курица · бедро на кости · Бёдра в грибном сметанном соусе',
         amount: '800 г',
         dishIds: ['thighs_sour_cream'],
-        how: 'Обсушить. Соус — свежий, в пакет не класть.',
+        how: 'На кости, с кожей. Обсушить. Соус — свежий, в пакет не класть.',
       },
       {
         id: 'chicken-liver',
@@ -416,6 +377,7 @@ function listPrepUnits(): PrepUnit[] {
             id: pack.id,
             label: pack.label,
             amount: pack.amount,
+            how: pack.how,
             dishIds: pack.dishIds ?? [],
             groupId: group.id,
             groupTitle: group.title,
@@ -449,6 +411,21 @@ function listPrepUnits(): PrepUnit[] {
   return units
 }
 
+/** Пакеты, которых больше нет в каталоге — не держим в морозилке. */
+export function dropUnknownPrepPacks(freezer: PrepFreezer): PrepFreezer {
+  const known = new Set(listPrepUnits().map((unit) => unit.id))
+  let changed = false
+  const next: PrepFreezer = {}
+  for (const [id, value] of Object.entries(freezer)) {
+    if (!known.has(id)) {
+      changed = true
+      continue
+    }
+    next[id] = value
+  }
+  return changed ? next : freezer
+}
+
 export function isPrepInFreezer(
   freezer: PrepFreezer | undefined,
   id: string,
@@ -475,6 +452,26 @@ export function dishHasFrozenPrep(
   dishId: string,
 ): boolean {
   return Boolean(pickFrozenPackForDish(freezer, dishId))
+}
+
+/** Остаток с готовки 24.08 посеяли без снятия пакета — после еды блюдо снова «готово готовить». */
+const LEFTOVER_PREP_DISH_IDS = ['beef_pulled', 'chicken_meatballs'] as const
+
+export function consumeLeftoverPrepPacks(
+  freezer: PrepFreezer,
+  lastCookedOn: Record<string, string> | undefined,
+): PrepFreezer {
+  let next = freezer
+  for (const dishId of LEFTOVER_PREP_DISH_IDS) {
+    const cookedOn = lastCookedOn?.[dishId]
+    if (!cookedOn) continue
+    const pack = pickFrozenPackForDish(next, dishId)
+    if (!pack) continue
+    const frozenOn = next[pack.id]?.frozenOn
+    if (frozenOn && frozenOn > cookedOn) continue
+    next = takePrepFromFreezer(next, pack.id)
+  }
+  return next
 }
 
 /** Пакет заготовки для блюда — его белок в покупках на готовку не дублируем. */
@@ -558,6 +555,108 @@ function formatGrams(grams: number): string {
     return `${String(kg).replace('.', ',')} кг`
   }
   return `${grams} г`
+}
+
+function ingredientGrams(line: string): number | null {
+  const parsed = parseIngredientAmount(line)
+  if (parsed.qty == null) return null
+  const unit = parsed.unit.toLowerCase().replace(/ё/g, 'е')
+  if (unit === 'кг') return Math.round(parsed.qty * 1000)
+  if (unit === 'г') return Math.round(parsed.qty)
+  return null
+}
+
+const BUY_KIND_ORDER = [
+  'говядина',
+  'свинина',
+  'филе грудки',
+  'филе бедра',
+  'бедро куриное',
+  'печень',
+  'голени',
+  'крылья',
+  'форель',
+  'минтай',
+  'креветки',
+] as const
+
+function proteinBuyKind(line: string): string | null {
+  const n = line.toLowerCase().replace(/ё/g, 'е')
+  if (/свинин/.test(n)) return 'свинина'
+  if (/говядин/.test(n)) return 'говядина'
+  if (/печен/.test(n)) return 'печень'
+  if (/филе/.test(n) && /бедр/.test(n)) return 'филе бедра'
+  if (/бедр/.test(n)) return 'бедро куриное'
+  if (/голен|ножк/.test(n)) return 'голени'
+  if (/крыл/.test(n)) return 'крылья'
+  if (/форел/.test(n)) return 'форель'
+  if (/минтай/.test(n)) return 'минтай'
+  if (/кревет/.test(n)) return 'креветки'
+  if (/грудк/.test(n) || (/филе/.test(n) && /куриц/.test(n))) return 'филе грудки'
+  if (/куриц/.test(n)) return 'филе грудки'
+  return null
+}
+
+function fallbackBuyKind(unit: PrepUnit): string {
+  const n = `${unit.label} ${unit.itemLabel}`.toLowerCase().replace(/ё/g, 'е')
+  if (/свинин/.test(n)) return 'свинина'
+  if (/печен/.test(n)) return 'печень'
+  if (/филе/.test(n) && /бедр/.test(n)) return 'филе бедра'
+  if (/бедр/.test(n) && /кост/.test(n)) return 'бедро куриное'
+  if (/бедр/.test(n)) return 'филе бедра'
+  if (/голен|ножк/.test(n)) return 'голени'
+  if (/крыл/.test(n)) return 'крылья'
+  if (/форел/.test(n)) return 'форель'
+  if (/минтай/.test(n)) return 'минтай'
+  if (/кревет/.test(n)) return 'креветки'
+  if (unit.groupId === 'chicken-fillet') return 'филе грудки'
+  if (unit.groupId === 'fish') return 'форель'
+  if (unit.groupId === 'shrimp') return 'креветки'
+  return 'говядина'
+}
+
+/** Сколько какого мяса купить на цикл — по группе заготовок. */
+export function prepGroupBuyTotals(groupId: string): { kind: string; grams: number }[] {
+  const gramsByKind = new Map<string, number>()
+  for (const unit of listPrepUnits()) {
+    if (unit.groupId !== groupId) continue
+    const ingredients = unit.dishIds[0]
+      ? (getDish(unit.dishIds[0])?.recipe?.ingredients ?? [])
+      : []
+    let found = false
+    for (const line of ingredients) {
+      const grams = ingredientGrams(line)
+      const kind = proteinBuyKind(line)
+      if (grams == null || !kind) continue
+      gramsByKind.set(kind, (gramsByKind.get(kind) ?? 0) + grams)
+      found = true
+    }
+    if (!found) {
+      const grams = parseAmountGrams(unit.amount)
+      if (grams == null) continue
+      const kind = fallbackBuyKind(unit)
+      gramsByKind.set(kind, (gramsByKind.get(kind) ?? 0) + grams)
+    }
+  }
+  const ordered = BUY_KIND_ORDER.filter((kind) => gramsByKind.has(kind)).map((kind) => ({
+    kind,
+    grams: gramsByKind.get(kind) ?? 0,
+  }))
+  for (const [kind, grams] of gramsByKind) {
+    if (BUY_KIND_ORDER.includes(kind as (typeof BUY_KIND_ORDER)[number])) continue
+    ordered.push({ kind, grams })
+  }
+  return ordered
+}
+
+/** «Говядина 4,1 кг · свинина 850 г» / «Филе 2,95 кг · бёдра 1,4 кг · печень 600 г» */
+export function formatPrepGroupBuy(groupId: string): string {
+  const parts = prepGroupBuyTotals(groupId).map(
+    ({ kind, grams }) => `${kind} ${formatGrams(grams)}`,
+  )
+  const line = parts.join(' · ')
+  if (!line) return ''
+  return line.charAt(0).toUpperCase() + line.slice(1)
 }
 
 export function sumPrepAmounts(amounts: string[]): string | undefined {

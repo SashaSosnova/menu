@@ -10,7 +10,7 @@ import {
   slotStartIso,
   type MenuSlotId,
 } from './calendar'
-import { cycleMains, getWeekMenu, menuRefIds, weekMenus, type MenuSlot } from './menu'
+import { cycleIndexOf, cycleMains, getWeekMenu, menuRefIds, weekMenus, type MenuSlot } from './menu'
 import { getEffectiveSlot, type MenuOverrides } from './menuOverrides'
 import {
   dishHasOutcomeThisCycle,
@@ -154,7 +154,7 @@ function withLastCookedOn(
 }
 
 function isPlannableMain(dishId: string): boolean {
-  return dishMeta[dishId]?.kind !== 'side'
+  return dishMeta[dishId]?.kind !== 'side' && cycleIndexOf(dishId) >= 0
 }
 
 function asPlannedMains(raw: unknown): string[] {
@@ -664,9 +664,30 @@ export function resolveCookBoard(
 ): CookBoard {
   let board = advanceCookBoard(normalizeCookBoard(raw), todayCycle)
   if (isBareCookBoard(board)) board = seedPastPlanCooks(board)
-  return applyLegsWingsCookedOnPatch(
-    applyMissingCookedOnFill(applyCookedOnPatch(applyFridgeLeftoverPatch(board))),
+  return dropRetiredCycleDishes(
+    applyLegsWingsCookedOnPatch(
+      applyMissingCookedOnFill(applyCookedOnPatch(applyFridgeLeftoverPatch(board))),
+    ),
   )
+}
+
+function dropRetiredCycleDishes(board: CookBoard): CookBoard {
+  const plannedDishIds = (board.plannedDishIds ?? []).filter((id) => cycleIndexOf(id) >= 0)
+  const fridge = board.fridge.filter(
+    (dish) => dishMeta[dish.dishId]?.kind === 'side' || cycleIndexOf(dish.dishId) >= 0,
+  )
+  const plannedSame =
+    plannedDishIds.length === (board.plannedDishIds ?? []).length &&
+    plannedDishIds.every((id, i) => id === board.plannedDishIds?.[i])
+  const fridgeSame = fridge.length === board.fridge.length
+  if (plannedSame && fridgeSame) return board
+  return {
+    ...board,
+    plannedDishIds,
+    plannedSideByMain: asPlannedSides(board.plannedSideByMain, plannedDishIds),
+    shopHave: emptyShopIfNoPlan(plannedDishIds, board.shopHave),
+    fridge,
+  }
 }
 
 function dishKeyMatches(key: string, dishId: string): boolean {

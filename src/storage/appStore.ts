@@ -3,7 +3,7 @@ import { seedStats, migrateMealStats, MEAL_STATS_KEY, type MealStatsStore } from
 import type { MenuOverrides } from '../data/menuOverrides'
 import type { PortionScales } from '../lib/portionScale'
 import { emptyCookBoard, resolveCookBoard, type CookBoard } from '../data/cookBoard'
-import { parsePrepFreezer, type PrepFreezer } from '../data/prep'
+import { consumeLeftoverPrepPacks, dropUnknownPrepPacks, parsePrepFreezer, type PrepFreezer } from '../data/prep'
 
 export const APP_STATE_KEY = 'menu-app-state-v1'
 
@@ -106,7 +106,13 @@ function hydrateState(raw: PersistedAppState): { state: MenuAppState; dirty: boo
   const prevPatches = new Set(prev?.patches ?? [])
   const patched = (cookBoard.patches ?? []).some((p) => !prevPatches.has(p))
   const { freezerStock, migrated } = resolveFreezerStock(raw)
-  const dirty = seeded || patched || migrated
+  const nextFreezer = dropUnknownPrepPacks(
+    consumeLeftoverPrepPacks(freezerStock, cookBoard.lastCookedOn),
+  )
+  const freezerDirty = nextFreezer !== freezerStock
+  const planDirty =
+    (prev?.plannedDishIds ?? []).join('\0') !== (cookBoard.plannedDishIds ?? []).join('\0')
+  const dirty = seeded || patched || migrated || freezerDirty || planDirty
   return {
     state: {
       cookbook: {
@@ -115,7 +121,7 @@ function hydrateState(raw: PersistedAppState): { state: MenuAppState; dirty: boo
         customDishes: raw.cookbook?.customDishes ?? [],
       },
       mealStats: mergeSeedStats(raw.mealStats ?? {}),
-      freezerStock,
+      freezerStock: nextFreezer,
       menuOverrides: raw.menuOverrides ?? {},
       portionScales: raw.portionScales ?? {},
       cookBoard,

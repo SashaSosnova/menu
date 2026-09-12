@@ -49,22 +49,17 @@ export const dishMeta: Record<string, DishMeta> = {
     protein: 'beef',
     sides: ['mash', 'pasta'],
   },
+  beef_pork_cutlets: {
+    kind: 'component',
+    protein: 'beef',
+    sides: ['mash', 'buckwheat_veg', 'fried_potato'],
+  },
 
   // —— Курица ——
   chicken_tomato_cream: {
     kind: 'component',
     protein: 'chicken',
     sides: ['rice_veg', 'mash'],
-  },
-  chicken_legs_honey: {
-    kind: 'component',
-    protein: 'chicken',
-    sides: ['rice_veg', 'broccoli_steam'],
-  },
-  chicken_legs_paprika: {
-    kind: 'component',
-    protein: 'chicken',
-    sides: ['rice_veg', 'boiled_potato', 'roast_veg'],
   },
   chicken_cutlets: {
     kind: 'component',
@@ -76,27 +71,10 @@ export const dishMeta: Record<string, DishMeta> = {
     protein: 'chicken',
     sides: ['fried_potato', 'mash', 'broccoli_steam', 'cauliflower'],
   },
-  chicken_stroganoff: {
-    kind: 'component',
-    protein: 'chicken',
-    sides: ['mash', 'rice_veg'],
-  },
   chicken_meatballs: {
     kind: 'component',
     protein: 'chicken',
     sides: ['mash', 'pasta', 'rice_veg'],
-  },
-  wings_soy: {
-    kind: 'component',
-    protein: 'chicken',
-    childEats: false,
-    sides: ['rice_veg', 'broccoli_steam'],
-  },
-  wings_paprika: {
-    kind: 'component',
-    protein: 'chicken',
-    childEats: false,
-    sides: ['fried_potato', 'rice_veg', 'roast_veg'],
   },
   thighs_sour_cream: {
     kind: 'component',

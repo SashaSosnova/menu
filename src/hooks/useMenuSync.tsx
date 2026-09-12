@@ -14,7 +14,7 @@ import { isAnonymousSuppressed, watchAuth } from '../lib/accountAuth'
 import type { CookbookStore } from '../data/cookbook'
 import type { CookBoard } from '../data/cookBoard'
 import { resolveCookBoard } from '../data/cookBoard'
-import { parsePrepFreezer } from '../data/prep'
+import { consumeLeftoverPrepPacks, dropUnknownPrepPacks, parsePrepFreezer } from '../data/prep'
 import {
   importAppState,
   isPlaceholderState,
@@ -46,10 +46,16 @@ const CLOUD_DEBOUNCE_MS = 600
 const RECOVERED_BACKUP_URL = `${import.meta.env.BASE_URL}recovered-menu-state.json`
 
 function withBoard(state: MenuAppState): MenuAppState {
+  const cookBoard = resolveCookBoard(state.cookBoard)
   return {
     ...state,
-    cookBoard: resolveCookBoard(state.cookBoard),
-    freezerStock: parsePrepFreezer(state.freezerStock),
+    cookBoard,
+    freezerStock: dropUnknownPrepPacks(
+      consumeLeftoverPrepPacks(
+        parsePrepFreezer(state.freezerStock),
+        cookBoard.lastCookedOn,
+      ),
+    ),
   }
 }
 

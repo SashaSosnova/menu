@@ -489,6 +489,19 @@
   margin: 0 0 1.35rem;
 }
 
+.prep-group {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.prep-group-buy {
+  margin: 0;
+  padding: 0 0.2rem;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #2f4a3a;
+}
+
 .prep-pool .cook-queue-heading {
   margin-top: 0;
   display: flex;
@@ -1255,6 +1268,15 @@
 .prep-body .menu-last-cooked {
   display: block;
   margin-top: 0.15rem;
+}
+
+.prep-how {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  line-height: 1.3;
+  color: #6b655b;
 }
 
 .prep-frozen-on {

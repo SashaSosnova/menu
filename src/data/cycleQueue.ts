@@ -14,6 +14,8 @@ import type { ProteinType } from './types'
 const MS_DAY = 24 * 60 * 60 * 1000
 const COOK_PAIR = 2
 const NEVER_COOKED_DAYS = 10_000
+/** Пакет в морозилке не вытягивает блюдо, которое готовили только что. */
+const COOK_COOLDOWN_DAYS = 21
 
 type ProteinFamily = 'beef' | 'chicken' | 'seafood' | 'veg'
 
@@ -154,9 +156,13 @@ function withoutFamilies(
 
 function withFrozenPrep(
   pool: MenuDishRef[],
-  freezer: PrepFreezer | undefined,
+  ctx: RecommendContext,
 ): MenuDishRef[] {
-  const ready = pool.filter((item) => entryHasFrozenPrep(freezer, item))
+  const ready = pool.filter(
+    (item) =>
+      entryHasFrozenPrep(ctx.freezer, item) &&
+      recencyDays(item, ctx) >= COOK_COOLDOWN_DAYS,
+  )
   return ready.length > 0 ? ready : pool
 }
 
@@ -176,7 +182,7 @@ function pickBest(
   const mixed = withoutFamilies(pool, opts?.excludeFamilies ?? new Set())
   if (mixed.length > 0) pool = mixed
   if (opts?.takeFish) pool = withFish(pool)
-  pool = withFrozenPrep(pool, ctx.freezer)
+  pool = withFrozenPrep(pool, ctx)
 
   let best: MenuDishRef | undefined
   let bestDays = -1
@@ -248,7 +254,7 @@ function withSuggestedSides(
 
 /**
  * Два блюда: разные белки → рыба в чт/пт если её не было на неделе →
- * заготовка → чем дольше не готовили, тем лучше.
+ * заготовка (если блюдо не готовили недавно) → чем дольше не готовили, тем лучше.
  * К каждому — подходящий гарнир, который готовили давнее всего.
  * Уже запланированные не предлагаем — добиваем пару до двух.
  */

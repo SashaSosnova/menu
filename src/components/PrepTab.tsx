@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import {
+  formatPrepGroupBuy,
   frozenOnOf,
   isPrepInFreezer,
   packWord,
@@ -7,7 +8,6 @@ import {
   prepGroups,
   prepMatchesNext,
   putPrepInFreezer,
-  sumPrepAmounts,
   takePrepFromFreezer,
   type PrepFreezer,
   type PrepItem,
@@ -81,6 +81,7 @@ function packUnits(item: PrepItem) {
 function PackLine({
   label,
   amount,
+  how,
   cookedLabel,
   frozenOn,
   isNext,
@@ -90,6 +91,7 @@ function PackLine({
 }: {
   label: string
   amount: string
+  how?: string
   cookedLabel?: string
   frozenOn?: string
   isNext?: boolean
@@ -116,6 +118,7 @@ function PackLine({
               <span className="prep-product">{label}</span>
               <span className="prep-amount">{amount}</span>
             </span>
+            {how ? <span className="prep-how">{how}</span> : null}
             {cookedLabel ? <span className="menu-last-cooked">{cookedLabel}</span> : null}
           </span>
         </div>
@@ -160,6 +163,7 @@ function GroupList({
             <PackLine
               label={pack.label}
               amount={pack.amount}
+              how={pack.how}
               cookedLabel={cookedLabel}
               frozenOn={frozenOnOf(freezer, pack.id)}
               isNext={isNext}
@@ -241,39 +245,40 @@ function PoolSection({
         />
       ) : (
         <div className="week-sections">
-          {rows.map((row) => (
-            <details key={row.group.id} className="fold">
-              <summary>
-                <span className="prep-fold-line">
-                  <span className="prep-fold-title">{row.group.title}</span>
-                  <span className="prep-group-count">
-                    {row.futureCount} {packWord(row.futureCount)}
-                    {row.futureAmount ? ` · ${row.futureAmount}` : ''}
-                  </span>
-                </span>
-              </summary>
-              <div className="fold-body">
-                <GroupList
-                  items={row.futureItems}
-                  freezer={freezer}
-                  nextCook={nextCook}
-                  pool={pool}
-                  board={board}
-                  stats={stats}
-                  onToggle={onToggle}
-                  onFrozenOnChange={onFrozenOnChange}
-                />
+          {rows.map((row) => {
+            const buy = formatPrepGroupBuy(row.group.id)
+            return (
+              <div key={row.group.id} className="prep-group">
+                {buy ? <p className="prep-group-buy">{buy}</p> : null}
+                <details className="fold">
+                  <summary>
+                    <span className="prep-fold-line">
+                      <span className="prep-fold-title">{row.group.title}</span>
+                      <span className="prep-group-count">
+                        {row.futureCount} {packWord(row.futureCount)}
+                      </span>
+                    </span>
+                  </summary>
+                  <div className="fold-body">
+                    <GroupList
+                      items={row.futureItems}
+                      freezer={freezer}
+                      nextCook={nextCook}
+                      pool={pool}
+                      board={board}
+                      stats={stats}
+                      onToggle={onToggle}
+                      onFrozenOnChange={onFrozenOnChange}
+                    />
+                  </div>
+                </details>
               </div>
-            </details>
-          ))}
+            )
+          })}
         </div>
       )}
     </section>
   )
-}
-
-function itemAmounts(item: PrepItem): string[] {
-  return packUnits(item).map((pack) => pack.amount)
 }
 
 function buildPools(freezer: PrepFreezer) {
@@ -288,8 +293,6 @@ function buildPools(freezer: PrepFreezer) {
       futureItems,
       frozenCount: frozenIds.length,
       futureCount: futureIds.length,
-      frozenAmount: sumPrepAmounts(frozenItems.flatMap(itemAmounts)),
-      futureAmount: sumPrepAmounts(futureItems.flatMap(itemAmounts)),
     }
   })
 }

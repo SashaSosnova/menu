@@ -46,7 +46,7 @@ export type WeekMenu = {
   slots: MenuSlot[]
 }
 
-/** Горячее по кругу. Пары на готовку: курица + говядина, через раз рыба. Ножки и крылья — одно блюдо. */
+/** Горячее по кругу. Пары на готовку: курица + говядина, через раз рыба. */
 export const cycleMains: MenuDishRef[] = [
   { dishId: 'chicken_grill' },
   { dishId: 'goulash' },
@@ -56,19 +56,17 @@ export const cycleMains: MenuDishRef[] = [
   { dishId: 'beef_roast_herb' },
   { dishId: 'chicken_tomato_cream' },
   { dishId: 'navy_pasta' },
-  { dishId: 'chicken_legs_honey', orDishIds: ['chicken_legs_paprika'], label: 'Ножки' },
-  { dishId: 'bolognese' },
   { dishId: 'chicken_cutlets' },
+  { dishId: 'beef_pork_cutlets' },
+  { dishId: 'bolognese' },
   { dishId: 'trout' },
-  { dishId: 'wings_soy', orDishIds: ['wings_paprika'], label: 'Крылья' },
   { dishId: 'beef_stroganoff' },
   { dishId: 'thighs_sour_cream' },
   { dishId: 'pollock' },
   { dishId: 'chicken_meatballs' },
   { dishId: 'beef_pulled' },
-  { dishId: 'chicken_stroganoff' },
-  { dishId: 'beef_meatballs' },
   { dishId: 'chicken_pasta_zucchini' },
+  { dishId: 'beef_meatballs' },
   { dishId: 'trout_spinach' },
   { dishId: 'shrimp_pasta' },
 ]
