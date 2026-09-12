@@ -638,12 +638,15 @@ export function prepGroupBuyTotals(groupId: string): { kind: string; grams: numb
       gramsByKind.set(kind, (gramsByKind.get(kind) ?? 0) + grams)
     }
   }
-  const ordered = BUY_KIND_ORDER.filter((kind) => gramsByKind.has(kind)).map((kind) => ({
+  const known = new Set<string>(BUY_KIND_ORDER)
+  const ordered: { kind: string; grams: number }[] = BUY_KIND_ORDER.filter(
+    (kind) => gramsByKind.has(kind),
+  ).map((kind) => ({
     kind,
     grams: gramsByKind.get(kind) ?? 0,
   }))
   for (const [kind, grams] of gramsByKind) {
-    if (BUY_KIND_ORDER.includes(kind as (typeof BUY_KIND_ORDER)[number])) continue
+    if (known.has(kind)) continue
     ordered.push({ kind, grams })
   }
   return ordered
